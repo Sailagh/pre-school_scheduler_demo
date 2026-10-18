@@ -18,13 +18,21 @@ Changes from the prototype:
 
 ## Schedule solver (OR-Tools)
 
-The demo starts with an empty schedule. The made-up staff, units, substitutes and children data are kept. **Make schedule** in the planner's top bar fills in the week on screen: shifts, breaks, planning time and who opens and closes each day.
+The demo starts with an empty schedule. The made-up staff, units, substitutes and children data are kept.
+
+An empty week is dimmed with three choices in front of it: **Make a suggestion for me**, **Draw it myself** and **Copy last week**. **Make schedule** (also in the top bar) opens a form written for the person who does the scheduling, not for a programmer:
+
+1. **Which weeks:** only this week, or 2, 4 or 7 weeks.
+2. **Is anything different from usual:** staff hope to finish early (a concert), the preschool closes early (the day before a holiday), fewer children than usual (school break), someone is away (holiday or a course; saved to the person's leave in Settings). These are stored as `special` days in the state and shown as a ★ note on the day in the planner.
+3. **What the schedule follows:** staff, days off, who may open and close, children and ratios, and the rules, read from Settings with links to change them, plus the order of priority when not everything fits.
+
+After solving, a report says per week what worked and what did not, and why, e.g. who works after 17:00 on the concert day because children are still there (`scheduleReport()` in `web/schedule-core-demo.js`). **Undo the schedule** removes it in one step.
 
 How it works:
 - `solverProblem()` in `web/schedule-core-demo.js` describes each week for the solver: each person's contract and planning minutes, the days and times they can work, whether they may open or close, and the adults needed in every 15-minute slot (from the same children forecast the planner shows).
 - `solver/schedule_solver.py` builds the schedule with OR-Tools CP-SAT. Hard rules: one shift a day of 4–9 hours inside the person's availability, 30-minute breaks, no more than 5 hours without a break, planning in blocks of at least 30 minutes, an opener at opening and a closer at closing. Goals, most important first: enough adults every 15 minutes, a trained adult in the unit while a child with special needs is there, contract hours, planning hours, enough adults per unit, and not more adults than needed.
 - `solver/server.py` serves it over HTTP. The planner calls `http://localhost:8000/solve`; add `?solver=https://your-server` to the planner URL to use another address.
-- If the solver can't be reached, the button loads that week from `web/solved-schedule.json`, a schedule OR-Tools made earlier for the demo's starting data. So the button also works on a static host with no server.
+- If the solver can't be reached, the weeks are loaded from `web/solved-schedule.json`, a schedule OR-Tools made earlier for the demo's starting data, and the report says that special days were not included. So it also works on a static host with no server.
 
 Run the solver:
 

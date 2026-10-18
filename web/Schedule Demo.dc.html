@@ -28,7 +28,7 @@
     <button onClick="{{ undo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ undoOp }}">↶ {{ L.undo }}</button>
     <button onClick="{{ redo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ redoOp }}">↷ {{ L.redo }}</button>
     <button onClick="{{ copyWeek }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer">{{ L.copyWeek }}</button>
-    <button onClick="{{ solveWeek }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:#1F7D97;color:#fff">{{ solveTxt }}</button>
+    <button onClick="{{ openGen }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:#1F7D97;color:#fff">{{ genBtnTxt }}</button>
     <button onClick="{{ startDemo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:{{ demoBtnBg }};color:{{ demoBtnFg }}">▶ Demo</button>
     <button onClick="{{ togglePhone }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ phoneBtnBg }};color:{{ phoneBtnFg }}">{{ phoneTxt }}</button>
     <button onClick="{{ toggleCover }}" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ covBtnBg }};color:{{ covBtnFg }}">{{ covTxt }}<sc-if value="{{ hasCovBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#D9A23A;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ covCount }}</span></sc-if></button>
@@ -56,7 +56,8 @@
         <button onClick="{{ w.go }}" title="{{ w.tip }}" style="flex:0 0 calc((100% - 24px) / 4);scroll-snap-align:start;box-sizing:border-box;text-align:left;border:0;border-radius:6px;background:{{ w.bg }};box-shadow:inset 3px 0 {{ w.edge }};padding:7px 10px;font:inherit;cursor:pointer;color:#1F2D3A;display:flex;align-items:center;gap:8px;min-width:0"><sc-if value="{{ w.code }}"><span style="flex:none;font:600 10.5px 'IBM Plex Mono',monospace;color:#1F2D3A;background:#fff;border-radius:4px;padding:2px 5px">{{ w.code }}</span></sc-if><span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ w.text }}</span></button>
       </sc-for>
     </div>
-    <div style="font-size:12px;color:#5A6B7A;white-space:nowrap;flex:none;padding-left:4px;border-left:1px solid #D3DDEA;padding-left:12px">{{ L.opens }} <b style="color:#1F2D3A">{{ opener }}</b> · {{ L.closes }} <b style="color:#1F2D3A">{{ closer }}</b></div>
+    <sc-if value="{{ hasDaySpecial }}"><sc-for list="{{ daySpecials }}" as="ds"><div style="flex:none;font-size:12px;font-weight:600;color:#6B5214;background:#FFF1CF;border-radius:6px;padding:4px 8px;white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis" title="{{ ds.text }}">★ {{ ds.text }}</div></sc-for></sc-if>
+      <div style="font-size:12px;color:#5A6B7A;white-space:nowrap;flex:none;padding-left:4px;border-left:1px solid #D3DDEA;padding-left:12px">{{ L.opens }} <b style="color:#1F2D3A">{{ opener }}</b> · {{ L.closes }} <b style="color:#1F2D3A">{{ closer }}</b></div>
   </div>
   <div style="display:flex;align-items:stretch;height:720px">
     <div data-guide="staff" style="width:260px;flex:none;background:#EEF4F7;border-right:1px solid #D3DDEA;display:flex;flex-direction:column;min-height:0">
@@ -95,6 +96,14 @@
       <div style="flex:none;padding:10px 18px;font-size:12px;color:#5A6B7A;border-top:1px solid #D3DDEA;margin-top:8px;display:flex;justify-content:space-between;gap:8px"><span>{{ L.thisWeek }}</span><span style="font-family:'IBM Plex Mono',monospace;color:#1F2D3A">{{ totalWeek }}</span></div>
     </div>
     <div style="position:relative;flex:1;min-width:0;background:#fff;padding:0;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box">
+      <sc-if value="{{ showEmpty }}">
+        <div style="position:absolute;inset:0;z-index:8;background:rgba(247,250,251,.78);display:flex;align-items:center;justify-content:center;padding:24px">
+          <div style="width:520px;max-width:100%;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.05);padding:24px;display:flex;flex-direction:column;gap:14px">
+            <div><div style="font-size:20px;font-weight:600">{{ emptyTitle }}</div><div style="font-size:15px;color:#5A6B7A;margin-top:4px">{{ emptySub }}</div></div>
+            <sc-for list="{{ emptyOpts }}" as="o"><button onClick="{{ o.go }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:14px 16px;border:1px solid {{ o.bd }};border-radius:10px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;cursor:pointer"><span style="font-size:16px;font-weight:600">{{ o.title }}</span><span style="font-size:14px;line-height:1.45;color:{{ o.sfg }}">{{ o.sub }}</span></button></sc-for>
+          </div>
+        </div>
+      </sc-if>
       <sc-if value="{{ isFocus }}">
       <div style="display:flex;align-items:center;gap:12px;height:48px;flex:none;padding:0 16px 0 18px;border-bottom:1px solid #F2C877;background:#FFF4D6;box-sizing:border-box">
         <sc-if value="{{ fHasUnit }}"><span style="flex:none;width:18px;height:18px;border-radius:5px;background:{{ fU.ub }};color:{{ fU.uf }};font:700 10px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ fU.letter }}</span></sc-if>
@@ -302,6 +311,78 @@
           <sc-if value="{{ r.canSee }}"><div style="display:flex;gap:10px"><button onClick="{{ r.yes }}" style="height:38px;padding:0 17px;border:1px solid #C9D5E0;border-radius:7px;background:#fff;color:#1F2D3A;font:inherit;font-size:16px;cursor:pointer">{{ seenTxt }}</button><button onClick="{{ r.show }}" style="height:38px;padding:0 10px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:16px;font-weight:600;cursor:pointer">{{ showDayTxt }}</button></div></sc-if>
         </div>
       </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ genOpen }}">
+    <div style="position:absolute;top:57px;right:0;bottom:0;width:600px;z-index:30;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
+        <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ genTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ genSub }}</div></div>
+        <button onClick="{{ genClose }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
+      </div>
+      <sc-if value="{{ gForm }}">
+        <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 24px 24px;display:flex;flex-direction:column;gap:22px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:16px;font-weight:600">{{ gWeeksHead }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ gWeeks }}" as="k"><button onClick="{{ k.pick }}" style="height:40px;padding:0 16px;border:1px solid {{ k.bd }};border-radius:8px;background:{{ k.bg }};color:{{ k.fg }};font:inherit;font-size:15px;cursor:pointer">{{ k.name }}</button></sc-for></div>
+            <sc-if value="{{ gReplace }}"><div style="font-size:14px;line-height:1.45;color:#6B5214;background:#FFF1CF;border-radius:8px;padding:8px 12px">{{ gReplaceTxt }}</div></sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div><div style="font-size:16px;font-weight:600">{{ gSpecHead }}</div><div style="font-size:14px;color:#5A6B7A;margin-top:2px">{{ gSpecSub }}</div></div>
+            <sc-if value="{{ gNoSpecs }}"><div style="font-size:14px;color:#5A6B7A">{{ gNoSpecsTxt }}</div></sc-if>
+            <sc-for list="{{ gSpecs }}" as="x"><div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #E3EAF0;border-radius:8px;background:#F7FAFB"><span style="color:#D9A23A">★</span><div style="flex:1;font-size:14px;line-height:1.4">{{ x.text }}</div><button onClick="{{ x.remove }}" title="×" style="border:0;background:transparent;font-size:18px;color:#8796A5;cursor:pointer">×</button></div></sc-for>
+            <sc-if value="{{ gAdding }}">
+              <div style="border:1px solid #9FCFDB;background:#EAF6F8;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+                <div><div style="font-size:15px;font-weight:600">{{ dHead }}</div><div style="font-size:13px;line-height:1.45;color:#3C4B5A;margin-top:2px">{{ dHelp }}</div></div>
+                <sc-if value="{{ dHasPerson }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dPersonLbl }}<select onChange="{{ dPickPerson }}" style="height:38px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dPeople }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label>
+                  <div style="display:flex;gap:6px"><sc-for list="{{ dLeaves }}" as="o"><button onClick="{{ o.pick }}" style="height:34px;padding:0 12px;border:1px solid #C9D5E0;border-radius:8px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:14px;cursor:pointer">{{ o.name }}</button></sc-for></div></sc-if>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dWeekLbl }}<select onChange="{{ dPickWeek }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dWeeks }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label>
+                <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dDaysLbl }}<div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ dDays }}" as="o"><button onClick="{{ o.pick }}" style="height:38px;min-width:54px;padding:0 10px;border:1px solid {{ o.bd }};border-radius:8px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:15px;cursor:pointer">{{ o.name }}</button></sc-for><button onClick="{{ dAllDays }}" style="height:38px;padding:0 10px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ dAllTxt }}</button></div></div>
+                <sc-if value="{{ dHasTime }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dTimeLbl }}<select onChange="{{ dPickTime }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dTimes }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label></sc-if>
+                <sc-if value="{{ dHasPct }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dPctLbl }}<select onChange="{{ dPickPct }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dPcts }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label></sc-if>
+                <sc-if value="{{ dHasNote }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dNoteLbl }}<input value="{{ dNote }}" onInput="{{ dOnNote }}" placeholder="{{ dNotePh }}" style="height:38px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A;outline-color:#2B91AD"></label></sc-if>
+                <div style="display:flex;gap:10px"><button onClick="{{ dSave }}" style="height:40px;padding:0 18px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;opacity:{{ dSaveOp }}">{{ dSaveTxt }}</button><button onClick="{{ dCancel }}" style="height:40px;padding:0 14px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:15px;cursor:pointer">{{ dCancelTxt }}</button></div>
+              </div>
+            </sc-if>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><sc-for list="{{ gAddBtns }}" as="a"><button onClick="{{ a.pick }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border:1px dashed #9FCFDB;border-radius:8px;background:#fff;font:inherit;cursor:pointer;color:#1F2D3A"><span style="font-size:14px;font-weight:600;color:#1F7D97">+ {{ a.name }}</span><span style="font-size:12px;color:#5A6B7A">{{ a.sub }}</span></button></sc-for></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div><div style="font-size:16px;font-weight:600">{{ gFollowHead }}</div><div style="font-size:14px;color:#5A6B7A;margin-top:2px">{{ gFollowSub }}</div></div>
+            <sc-for list="{{ gFollow }}" as="f"><div style="border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:baseline;gap:10px"><div style="flex:1;font-size:14px;font-weight:600">{{ f.head }}</div><sc-if value="{{ f.hasLink }}"><button onClick="{{ f.go }}" style="border:0;background:transparent;color:#1F7D97;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:0">{{ f.link }} →</button></sc-if></div>
+              <sc-for list="{{ f.lines }}" as="ln"><div style="font-size:14px;line-height:1.45;color:#3C4B5A">{{ ln.t }}</div></sc-for>
+            </div></sc-for>
+          </div>
+        </div>
+        <div style="flex:none;border-top:1px solid #E3EAF0;padding:14px 24px;display:flex;align-items:center;gap:14px">
+          <button onClick="{{ gRun }}" style="height:46px;padding:0 20px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:16px;font-weight:600;cursor:pointer">{{ gRunTxt }}</button>
+          <div style="font-size:13px;color:#5A6B7A">{{ gRunNote }}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ gRunning }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:24px 40px">
+          <div style="font-size:18px;font-weight:600">{{ gProgTxt }}</div>
+          <div style="height:8px;border-radius:4px;background:#EEF3F6;overflow:hidden"><div style="height:100%;width:{{ gProgW }}%;background:#1F7D97;transition:width .4s"></div></div>
+          <div style="font-size:14px;line-height:1.5;color:#5A6B7A">{{ gProgSub }}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ gDone }}">
+        <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 24px 24px;display:flex;flex-direction:column;gap:16px">
+          <div style="font-size:17px;font-weight:600">{{ gDoneHead }}</div>
+          <sc-if value="{{ gFailed }}"><div style="font-size:15px;line-height:1.5;color:#8E2A27;background:#FFDAD8;border-radius:8px;padding:10px 14px">{{ gFailedTxt }}</div></sc-if>
+          <sc-if value="{{ gSaved }}"><div style="font-size:14px;line-height:1.5;color:#6B5214;background:#FFF1CF;border-radius:8px;padding:10px 14px">{{ gSavedTxt }}</div></sc-if>
+          <sc-for list="{{ gReport }}" as="r"><div style="display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:14px;font-weight:600;color:#5A6B7A;text-transform:uppercase;letter-spacing:.06em">{{ r.head }}</div>
+            <sc-for list="{{ r.items }}" as="i"><div style="display:flex;gap:10px;align-items:flex-start">
+              <span style="flex:none;width:24px;height:24px;border-radius:50%;background:{{ i.ibg }};color:{{ i.ifg }};font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ i.icon }}</span>
+              <div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="font-size:15px;line-height:1.45">{{ i.text }}</div><sc-for list="{{ i.more }}" as="m"><div style="font-size:14px;line-height:1.4;color:#3C4B5A">· {{ m.t }}</div></sc-for></div>
+            </div></sc-for>
+          </div></sc-for>
+        </div>
+        <div style="flex:none;border-top:1px solid #E3EAF0;padding:14px 24px;display:flex;gap:10px">
+          <button onClick="{{ genClose }}" style="height:44px;padding:0 20px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ gOkTxt }}</button>
+          <button onClick="{{ gUndo }}" style="height:44px;padding:0 16px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:15px;cursor:pointer">{{ gUndoTxt }}</button>
+        </div>
+      </sc-if>
     </div>
   </sc-if>
   <sc-if value="{{ coverOpen }}">
@@ -571,6 +652,124 @@ class Component extends DCLogic {
       pCur: P && U[P.groupId] ? { ...U[P.groupId], name: P.groupName } : { letter: '', ub: 'transparent', uf: '#000', name: '' },
     };
   }
+  // Empty-week choices, the "Make schedule" form (weeks, special days, what the schedule follows) and its report.
+  genVals(v, sv, lang) {
+    const mod = this.mod, ctl = this.ctl, s = ctl.store.get(), w = v.weekNo, t = (a, b) => sv ? a : b, G = this.state.gen;
+    const setG = p => this.setState(st => ({ gen: { ...st.gen, ...p } }));
+    const has = x => s.shifts.some(z => z.week === x);
+    const firstName = id => (mod.person(id) || {}).name.split(' ')[0];
+    const out = {
+      genBtnTxt: t('Skapa schema', 'Make schedule'), openGen: () => this.setState({ gen: { n: 1 }, reqOpen: false, coverOpen: false, settings: false }),
+      daySpecials: mod.specialsOn(s, w, v.day).map(x => ({ text: mod.specialLabel(x, lang) })), hasDaySpecial: mod.specialsOn(s, w, v.day).length > 0,
+      showEmpty: !has(w) && !(this.state.drawn || {})[w] && !G && !this.state.settings && !this.state.demo,
+      emptyTitle: t('Vecka ' + w + ' har inget schema än', 'Week ' + w + ' has no schedule yet'), emptySub: t('Hur vill du börja?', 'How do you want to start?'),
+      emptyOpts: [
+        { title: t('Skapa ett förslag åt mig', 'Make a suggestion for me'), sub: t('Datorn lägger ett schema utifrån personalen, deras timmar och reglerna. Du ser vad den tagit hänsyn till och kan ändra allt efteråt.', 'The computer suggests a schedule from your staff, their hours and the rules. You see what it took into account and can change anything afterwards.'), go: () => this.setState({ gen: { n: 1 } }), bg: '#1F7D97', fg: '#fff', sfg: '#DDF1F5', bd: '#1F7D97' },
+        { title: t('Rita själv', 'Draw it myself'), sub: t('Börja med en tom vecka och dra ut passen för hand.', 'Start from an empty week and draw the shifts by hand.'), go: () => this.setState(st => ({ drawn: { ...st.drawn, [w]: true } })), bg: '#fff', fg: '#1F2D3A', sfg: '#5A6B7A', bd: '#C9D5E0' },
+        ...(w > mod.W0 && has(w - 1) ? [{ title: t('Kopiera vecka ' + (w - 1), 'Copy week ' + (w - 1)), sub: t('Börja från förra veckans schema.', "Start from last week's schedule."), go: () => ctl.store.set(st => { st.shifts = st.shifts.concat(st.shifts.filter(x => x.week === w - 1).map(x => ({ ...x, id: 'h' + (++st.nid), week: w }))); for (let d = 0; d < 5; d++) st.roles[w + '-' + d] = { ...(st.roles[(w - 1) + '-' + d] || {}) }; }), bg: '#fff', fg: '#1F2D3A', sfg: '#5A6B7A', bd: '#C9D5E0' }] : []),
+      ],
+      genOpen: !!G,
+    };
+    if (!G) return out;
+    const n = Math.min(G.n, mod.W1 - w + 1), range = Array.from({ length: n }, (_, i) => w + i), rangeTxt = n === 1 ? t('vecka ' + w, 'week ' + w) : t('vecka ' + w + '–' + (w + n - 1), 'weeks ' + w + '–' + (w + n - 1));
+    const close = () => this.setState({ gen: null });
+    Object.assign(out, {
+      genClose: close, genTitle: t('Skapa schema', 'Make schedule'), genSub: t('Välj veckor, berätta om något är annorlunda än vanligt, och se vad schemat följer.', 'Choose the weeks, tell it what is different from usual, and see what the schedule follows.'),
+      gForm: !G.running && !G.done, gRunning: !!G.running, gDone: !!G.done,
+      gWeeksHead: t('1. Vilka veckor?', '1. Which weeks?'),
+      gWeeks: [...new Set([1, 2, 4, 7].map(k => Math.min(k, mod.W1 - w + 1)))].map(k => ({
+        name: k === 1 ? t('Bara vecka ' + w, 'Only week ' + w) : t(k + ' veckor', k + ' weeks'), pick: () => setG({ n: k }),
+        bg: k === n ? '#1F2D3A' : '#fff', fg: k === n ? '#fff' : '#1F2D3A', bd: k === n ? '#1F2D3A' : '#C9D5E0' })),
+      gReplace: range.some(has), gReplaceTxt: t('Vecka ' + range.filter(has).join(', ') + ' har redan ett schema. Det nya ersätter det, men du kan ångra.', (range.filter(has).length > 1 ? 'Weeks ' : 'Week ') + range.filter(has).join(', ') + ' already ' + (range.filter(has).length > 1 ? 'have' : 'has') + ' a schedule. The new one replaces it, and you can undo.'),
+      gSpecHead: t('2. Är något annorlunda än vanligt?', '2. Is anything different from usual?'),
+      gSpecSub: t('Till exempel en konsert, en klämdag, lov eller någon som är bortrest.', 'For example a concert, a day before a holiday, a school break, or someone who is away.'),
+    });
+    // Special days and absences already entered for these weeks.
+    const specs = (s.special || []).filter(x => range.includes(x.week)).map(x => ({ text: t('Vecka ', 'Week ') + x.week + ' · ' + mod.daysLabel(x.days, lang) + ' – ' + mod.specialLabel(x, lang), remove: () => ctl.store.set(st => { st.special = st.special.filter(y => y.id !== x.id); }) }));
+    const kindTxt = { vacation: t('semester', 'holiday'), leave: t('ledig', 'away'), parental: t('föräldraledig', 'parental leave') };
+    const away = [];
+    for (const p of mod.STAFF) for (const l of p.leave || []) {
+      const days = range.flatMap(x => [0, 1, 2, 3, 4].filter(d => x * 10 + d >= l.w1 * 10 + l.d1 && x * 10 + d <= l.w2 * 10 + l.d2).map(d => [x, d]));
+      if (!days.length) continue;
+      const wk = [...new Set(days.map(z => z[0]))];
+      away.push({ text: p.name + ' – ' + (kindTxt[l.kind] || l.kind) + ', ' + wk.map(x => t('vecka ', 'week ') + x + ' ' + mod.daysLabel(days.filter(z => z[0] === x).map(z => z[1]), lang)).join('; '),
+        remove: () => ctl.store.set(() => { p.leave = p.leave.filter(y => y !== l); }) });
+    }
+    out.gSpecs = [...specs, ...away]; out.gNoSpecs = !out.gSpecs.length; out.gNoSpecsTxt = t('Inget särskilt än. Då blir det en vanlig vecka.', 'Nothing yet, so these are ordinary weeks.');
+    const D = G.add ? { week: w, days: [], time: G.add === 'closeEarly' ? 780 : 1020, pct: 50, staff: '', leave: 'vacation', note: '', ...(G.draft || {}) } : null;
+    const setD = p => setG({ draft: { ...D, ...p } });
+    out.gAdding = !!D;
+    out.gAddBtns = D ? [] : [
+      { kind: 'finishBy', name: t('Personalen vill sluta tidigt', 'Staff hope to finish early'), sub: t('T.ex. konsert eller möte på kvällen', 'E.g. a concert or meeting in the evening') },
+      { kind: 'closeEarly', name: t('Förskolan stänger tidigt', 'The preschool closes early'), sub: t('T.ex. dag före helgdag', 'E.g. the day before a holiday') },
+      { kind: 'fewer', name: t('Färre barn än vanligt', 'Fewer children than usual'), sub: t('T.ex. höstlov eller jullov', 'E.g. autumn or Christmas break') },
+      { kind: 'away', name: t('Någon är borta', 'Someone is away'), sub: t('Semester, kurs eller ledighet', 'Holiday, a course or leave') },
+    ].map(x => ({ ...x, pick: () => setG({ add: x.kind, draft: null }) }));
+    if (D) {
+      const kind = G.add, times = []; for (let m = 600; m <= 1080; m += 30) times.push(m);
+      const ok = D.days.length > 0 && (kind !== 'away' || D.staff);
+      Object.assign(out, {
+        dHead: { finishBy: t('Personalen vill sluta tidigt', 'Staff hope to finish early'), closeEarly: t('Förskolan stänger tidigt', 'The preschool closes early'), fewer: t('Färre barn än vanligt', 'Fewer children than usual'), away: t('Någon är borta', 'Someone is away') }[kind],
+        dHelp: { finishBy: t('Schemat försöker låta alla gå hem i tid. Några kan behöva stanna så länge barn är kvar, och då ser du vilka.', 'The schedule tries to let everyone go home in time. Some may have to stay while children are still there, and you will see who.'), closeEarly: t('Inga barn och ingen personal efter den tiden. Stängaren arbetar till dess.', 'No children and no staff after that time. The closer works until then.'), fewer: t('Färre barn betyder att färre vuxna behövs.', 'Fewer children means fewer adults are needed.'), away: t('Personen schemaläggs inte de dagarna. Det sparas också under Personal.', 'The person gets no shifts on those days. It is also saved under Staff.') }[kind],
+        dWeekLbl: t('Vecka', 'Week'), dWeeks: range.map(x => ({ v: x, name: t('Vecka ', 'Week ') + x, sel: x === D.week })), dPickWeek: e => setD({ week: +e.target.value }),
+        dDaysLbl: t('Dagar', 'Days'), dDays: [0, 1, 2, 3, 4].map(d => { const on = D.days.includes(d); return { name: v.L.short[d], pick: () => setD({ days: on ? D.days.filter(x => x !== d) : [...D.days, d].sort() }), bg: on ? '#1F7D97' : '#fff', fg: on ? '#fff' : '#1F2D3A', bd: on ? '#1F7D97' : '#C9D5E0' }; }),
+        dAllDays: () => setD({ days: [0, 1, 2, 3, 4] }), dAllTxt: t('Hela veckan', 'All week'),
+        dHasTime: kind === 'finishBy' || kind === 'closeEarly', dTimeLbl: kind === 'finishBy' ? t('Sluta senast', 'Finish by') : t('Stänger', 'Closes at'),
+        dTimes: times.map(m => ({ v: m, name: mod.fmt(m), sel: m === D.time })), dPickTime: e => setD({ time: +e.target.value }),
+        dHasPct: kind === 'fewer', dPctLbl: t('Ungefär hur många av barnen kommer?', 'About how many of the children come?'),
+        dPcts: [25, 40, 50, 60, 75, 90].map(x => ({ v: x, name: x + ' %', sel: x === D.pct })), dPickPct: e => setD({ pct: +e.target.value }),
+        dHasPerson: kind === 'away', dPersonLbl: t('Vem?', 'Who?'),
+        dPeople: [{ v: '', name: t('Välj person', 'Choose a person'), sel: !D.staff }, ...mod.STAFF.slice().sort((a, b) => a.name.localeCompare(b.name, 'sv')).map(p => ({ v: p.id, name: p.name, sel: p.id === D.staff }))], dPickPerson: e => setD({ staff: e.target.value }),
+        dLeaves: [['vacation', t('Semester', 'Holiday')], ['leave', t('Kurs eller annat', 'Course or other')]].map(([k, name]) => ({ name, pick: () => setD({ leave: k }), bg: D.leave === k ? '#1F2D3A' : '#fff', fg: D.leave === k ? '#fff' : '#1F2D3A' })),
+        dHasNote: kind !== 'away', dNoteLbl: t('Vad gäller det? (frivilligt)', 'What is it? (optional)'), dNotePh: t('T.ex. Luciakonsert', 'E.g. Christmas concert'), dNote: D.note, dOnNote: e => setD({ note: e.target.value }),
+        dSaveTxt: t('Lägg till', 'Add'), dCancelTxt: t('Avbryt', 'Cancel'), dCancel: () => setG({ add: null, draft: null }), dSaveOp: ok ? 1 : .45,
+        dSave: () => {
+          if (!ok) return;
+          ctl.store.set(st => {
+            if (kind === 'away') {
+              // One leave entry per run of days in a row, as Settings › Staff stores them.
+              const p = mod.person(D.staff), runs = [];
+              for (const d of D.days) { const r = runs[runs.length - 1]; if (r && r[1] === d - 1) r[1] = d; else runs.push([d, d]); }
+              p.leave = [...(p.leave || []), ...runs.map(([d1, d2]) => ({ id: 'l' + Date.now() + d1, kind: D.leave, w1: D.week, d1, w2: D.week, d2 }))];
+            }
+            else st.special = [...(st.special || []), { id: 'x' + Date.now(), kind, week: D.week, days: D.days, time: D.time, pct: D.pct, note: D.note.trim() }];
+          });
+          setG({ add: null, draft: null });
+        },
+      });
+    }
+    // What the schedule follows, in plain words, with links to where each thing is changed.
+    const P = mod.STAFF.filter(p => range.some(x => mod.contractH(p, x) > 0)), offs = P.filter(p => (p.off || []).length);
+    const rules = (s.rules || []).map(r => ({ r, ver: mod.ruleVer(r, w) })).filter(x => x.ver && x.ver.on).map(x => mod.ruleLabel(x.r.type, x.ver.p, lang));
+    const goSet = k => () => this.setState({ gen: null, settings: k, setPid: null });
+    out.gFollowHead = t('3. Det här följer schemat', '3. What the schedule follows');
+    out.gFollowSub = t('Hämtas från Inställningar. Stämmer något inte, ändra det där först.', 'Taken from Settings. If something is wrong, change it there first.');
+    out.gFollow = [
+      { head: t('Personal', 'Staff'), lines: [t(P.length + ' personer med sina avtalade timmar, hemavdelning och tider de kan arbeta.', P.length + ' people with their contract hours, home unit and the times they can work.'), ...(offs.length ? [t('Fasta lediga dagar: ', 'Fixed days off: ') + offs.map(p => firstName(p.id) + ' (' + p.off.map(d => v.L.short[d]).join(', ') + ')').join(', ')] : []), t('Får öppna: ', 'May open: ') + mod.STAFF.filter(p => p.open).map(p => firstName(p.id)).join(', '), t('Får stänga: ', 'May close: ') + mod.STAFF.filter(p => p.close).map(p => firstName(p.id)).join(', ')], link: t('Ändra personal', 'Change staff'), go: goSet('staff') },
+      { head: t('Barn', 'Children'), lines: [...mod.GROUPS.map(g => g.name + ': ' + t(g.max + ' barn, 1 vuxen per ' + g.ratio + ' barn, öppet ' + mod.fmt(g.open) + '–' + mod.fmt(g.close), g.max + ' children, 1 adult per ' + g.ratio + ', open ' + mod.fmt(g.open) + '–' + mod.fmt(g.close))), ...((s.snKids || []).length ? [t((s.snKids || []).length + ' barn behöver en vuxen utbildad för särskilt stöd.', (s.snKids || []).length + ' children need an adult trained for special needs.')] : [])], link: t('Ändra barn och avdelningar', 'Change children and units'), go: goSet('kids') },
+      { head: t('Regler', 'Rules'), lines: [...rules, t('Raster är 30 minuter. Ett pass är 4–9 timmar.', 'Breaks are 30 minutes. A shift is 4–9 hours.')], link: t('Ändra regler', 'Change rules'), go: goSet('rules') },
+      { head: t('Om allt inte går ihop', 'If not everything fits'), lines: [t('1. Tillräckligt många vuxna med barnen, och en utbildad vuxen för barn i behov av särskilt stöd.', '1. Enough adults with the children, and a trained adult for children who need special support.'), t('2. Allas avtalade timmar.', "2. Everyone's contract hours."), t('3. Önskemål som att sluta tidigt.', '3. Wishes such as finishing early.'), t('4. Planeringstid.', '4. Planning time.'), t('Det som inte går visas efteråt, med förklaring.', 'Anything that does not fit is shown afterwards, with the reason.')], link: '', go: null },
+    ].map(x => ({ ...x, lines: x.lines.map(t => ({ t })), hasLink: !!x.go }));
+    const secs = n * 20;
+    out.gRunTxt = t('Skapa schema för ', 'Make schedule for ') + rangeTxt; out.gRunNote = t('Tar ungefär ' + (secs < 60 ? secs + ' sekunder' : Math.round(secs / 60) + ' minuter') + '.', 'Takes about ' + (secs < 60 ? secs + ' seconds' : Math.round(secs / 60) + ' minutes') + '.');
+    out.gRun = async () => {
+      if (G.add) return;
+      this.setState({ gen: { ...G, running: { i: 0, n, w } } });
+      const res = await ctl.generate(range, (i, k, x) => setG({ running: { i, n: k, w: x } }));
+      setG({ running: null, done: res ? { weeks: range, saved: res.saved } : { weeks: [], failed: true } });
+    };
+    if (G.running) { const r = G.running; out.gProgTxt = t('Gör vecka ' + r.w + (r.n > 1 ? ' (' + (r.i + 1) + ' av ' + r.n + ')' : '') + '…', 'Making week ' + r.w + (r.n > 1 ? ' (' + (r.i + 1) + ' of ' + r.n + ')' : '') + '…'); out.gProgW = Math.round((r.i + .5) / r.n * 100); out.gProgSub = t('Datorn provar många sätt att lägga passen och väljer det som följer reglerna bäst.', 'The computer tries many ways to place the shifts and picks the one that follows the rules best.'); }
+    if (G.done) {
+      const R = G.done;
+      out.gFailed = !!R.failed; out.gFailedTxt = t('Det gick inte att skapa ett schema: lösaren är inte igång och det finns inget sparat schema för de här veckorna.', 'No schedule could be made: the solver is not running and there is no saved schedule for these weeks.');
+      out.gSaved = !!R.saved; out.gSavedTxt = t('Lösaren var inte igång, så schemat hämtades från ett som gjorts tidigare för demodata. Det du lagt till under 2 är inte med.', 'The solver was not running, so the schedule was loaded from one made earlier for the demo data. What you added under 2 is not included.');
+      out.gReport = R.failed ? [] : mod.scheduleReport(s, R.weeks, lang).map(r => ({ head: t('Vecka ', 'Week ') + r.week, items: r.items.map(i => ({ ...i, icon: i.ok ? '✓' : '!', ibg: i.ok ? '#E2F6D4' : '#FFF1CF', ifg: i.ok ? '#2D6A1F' : '#6B5214', more: (i.more || []).map(t => ({ t })) })) }));
+      out.gDoneHead = R.failed ? t('Inget schema', 'No schedule') : t('Klart. Så här blev det:', 'Done. This is how it turned out:');
+      out.gOkTxt = t('Bra, stäng', 'Good, close'); out.gUndoTxt = t('Ångra schemat', 'Undo the schedule');
+      out.gUndo = () => { if (!R.failed) ctl.store.undo(); close(); };
+    }
+    return out;
+  }
   renderVals() {
     const lang = (!this.props.onLang && this.state.langPicked) ? this.state.lang : (this.props.lang ?? this.state.lang), sv = lang === 'sv';
     const setLang = l => this.props.onLang ? this.props.onLang(l) : this.setState({ lang: l, langPicked: true });
@@ -630,7 +829,7 @@ class Component extends DCLogic {
           if (moved) st0.commit(); else this.setState(st => ({ dd: st.dd === 'merge' && st.mergeAt === b.left ? null : 'merge', mergeAt: b.left })); };
         window.addEventListener('pointermove', mv); window.addEventListener('pointerup', upH); }, label: (b.from <= 360 ? (sv ? 'Öppningsavdelning' : 'Opening unit') : (sv ? 'Stängningsavdelning' : 'Closing unit')) + ' · ' + room, tip: (sv ? 'Alla avdelningar är tillsammans i ' : 'All units are together in ') + room + ' ' + fm(b.from) + '–' + fm(b.to) + (sv ? '. 1 vuxen per ' + v.merge.ratio + ' barn. Dra för att ändra tiden, tryck för att byta avdelning.' : '. 1 adult per ' + v.merge.ratio + ' children. Drag to change the time, tap to change the unit.') }));
     return {
-      ...v, ...base, lang, setLangFn: setLang, mergeBands, ...(() => {
+      ...v, ...base, lang, setLangFn: setLang, mergeBands, ...this.genVals(v, sv, lang), ...(() => {
         const RQ = (ctl.store.get().requests || []).slice().sort((a, b) => b.at - a.at), open = RQ.filter(r => r.status === 'pending' || r.status === 'new' || r.status === 'matched');
         const ST = { open: [sv ? 'Väntar på kollega' : 'Waiting for a colleague', '#8A5F0C'], matched: [sv ? 'Kollega har tackat ja' : 'A colleague said yes', '#1F7D97'], nobody: [sv ? 'Ingen kan' : 'Nobody can', '#8E2A27'], pending: [sv ? 'Väntar på svar' : 'Waiting', '#8A5F0C'], new: [sv ? 'Ny' : 'New', '#C2413D'], approved: [sv ? 'Godkänd' : 'Approved', '#2D6A1F'], declined: [sv ? 'Inte godkänd' : 'Declined', '#8E2A27'], seen: [sv ? 'Sedd' : 'Seen', '#5A6B7A'] };
         return { reqOpen: !!this.state.reqOpen, toggleReq: () => this.setState(st => ({ reqOpen: !st.reqOpen, settings: false, coverOpen: false })), reqCount: open.length, hasReqBadge: open.length > 0,

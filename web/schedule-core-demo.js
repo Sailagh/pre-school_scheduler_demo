@@ -67,8 +67,7 @@ export const T = {
   en: {
     app: 'Preschool schedule', schedule: 'Schedule', staff: 'Staff', groups: 'Groups', hours: 'Hours', cover: 'Cover',
     week: 'Week', block: 'Block', weekOf: 'week {n} of {m}', undo: 'Undo', redo: 'Redo', copyWeek: 'Copy to next week',
-    copied: 'Week {a} copied onto week {b}', solve: 'Make schedule', solving: 'Making schedule…',
-    solved: 'OR-Tools made the schedule for week {w}.', solvedSaved: 'The solver is not running, so week {w} was loaded from a schedule OR-Tools made earlier for the demo data.', solveFailed: 'Could not make a schedule. Start the solver: see README.', warnings: 'Warnings', noWarnings: 'No warnings. Everything follows the rules.',
+    copied: 'Week {a} copied onto week {b}', warnings: 'Warnings', noWarnings: 'No warnings. Everything follows the rules.',
     children: 'Children', need: 'Needed', have: 'Working', haveNeed: 'Staff working / needed', coverage: 'Staffing',
     contact: 'With children', break: 'Break', planning: 'Planning', meeting: 'Meeting',
     opens: 'Opens', closes: 'Closes', nobody: 'nobody', opener: 'Opener', closer: 'Closer',
@@ -104,8 +103,7 @@ export const T = {
   sv: {
     app: 'Förskolans schema', schedule: 'Schema', staff: 'Personal', groups: 'Grupper', hours: 'Timmar', cover: 'Ersättare',
     week: 'Vecka', block: 'Period', weekOf: 'vecka {n} av {m}', undo: 'Ångra', redo: 'Gör om', copyWeek: 'Kopiera till nästa vecka',
-    copied: 'Vecka {a} kopierad till vecka {b}', solve: 'Skapa schema', solving: 'Skapar schema…',
-    solved: 'OR-Tools har gjort schemat för vecka {w}.', solvedSaved: 'Lösaren är inte igång, så vecka {w} hämtades från ett schema som OR-Tools gjort tidigare för demodata.', solveFailed: 'Kunde inte skapa ett schema. Starta lösaren: se README.', warnings: 'Varningar', noWarnings: 'Inga varningar. Allt följer reglerna.',
+    copied: 'Vecka {a} kopierad till vecka {b}', warnings: 'Varningar', noWarnings: 'Inga varningar. Allt följer reglerna.',
     children: 'Barn', need: 'Behövs', have: 'I tjänst', haveNeed: 'Personal i tjänst / behov', coverage: 'Bemanning',
     contact: 'Barntid', break: 'Rast', planning: 'Planering', meeting: 'Möte',
     opens: 'Öppnar', closes: 'Stänger', nobody: 'ingen', opener: 'Öppnare', closer: 'Stängare',
@@ -147,7 +145,7 @@ const monday = w => 5 + (w - 41) * 7; // Oct 5 2026 = Monday of week 41
 // ---------- seed ----------
 function seed() {
   // No shifts or opener/closer roles: the schedule is left empty for the OR-Tools solver to fill.
-  return { week: PLAN_WEEK, slot: 15, shifts: [], roles: {}, absences: [], nid: 0, rules: seedRules(), rid: 10, merge: { ...MERGE0 }, requests: [], notes: [], snKids: [{ id: 'k1', unit: 'g2', days: [0, 1, 2, 3], from: 480, to: 840 }, { id: 'k2', unit: 'g3', days: [1], from: 600, to: 765 }], free: [], prefs: { school: 'Förskolan Solrosen', notifySick: true, notifyWeek: false, notifyRules: true } };
+  return { week: PLAN_WEEK, slot: 15, shifts: [], roles: {}, absences: [], nid: 0, rules: seedRules(), rid: 10, merge: { ...MERGE0 }, requests: [], notes: [], special: [], snKids: [{ id: 'k1', unit: 'g2', days: [0, 1, 2, 3], from: 480, to: 840 }, { id: 'k2', unit: 'g3', days: [1], from: 600, to: 765 }], free: [], prefs: { school: 'Förskolan Solrosen', notifySick: true, notifyWeek: false, notifyRules: true } };
 }
 
 // ---------- store with undo ----------
@@ -227,9 +225,10 @@ export function decideRequest(st, id, ok) {
 export const MERGE0 = { on: true, am: 450, pm: 960, ratio: 8, room: 'g3' };
 // Children, adults needed and merge state at minute `mid` of `day`. Shared by the planner's staffing row and the solver.
 function needAt(s, day, mid) {
-  const f = day === 4 ? .7 : 1, M = s.merge || MERGE0, merged = !!M.on && (mid < M.am || mid >= M.pm);
+  const sp = specialsOn(s, s.week, day), fewer = sp.find(x => x.kind === 'fewer'), shut = sp.find(x => x.kind === 'closeEarly');
+  const f = (day === 4 ? .7 : 1) * (fewer ? fewer.pct / 100 : 1), M = s.merge || MERGE0, merged = !!M.on && (mid < M.am || mid >= M.pm);
   const groups = GROUPS.map(g => {
-    const c = (mid < g.open || mid > g.close) ? 0 : Math.round(g.max * curve(mid) * f);
+    const c = (mid < g.open || mid > g.close || (shut && mid > shut.time)) ? 0 : Math.round(g.max * curve(mid) * f);
     const sn = 0;
     return { id: g.id, children: c, need: c ? Math.ceil(c / g.ratio) + sn : 0, frac: c / g.ratio, sn };
   });
@@ -248,6 +247,21 @@ function slotsFor(s, day, uncovSet) {
   }
   return out;
 }
+
+// ---------- special days ----------
+// Things that make a day different from usual, added by the principal before making a schedule:
+//   finishBy   – staff hope to finish by `time` (a wish; the solver tries, the report says who could not)
+//   closeEarly – the preschool closes at `time`, so no children after it
+//   fewer      – only about `pct` % of the children come (e.g. autumn break)
+export const SPECIAL_KINDS = ['finishBy', 'closeEarly', 'fewer'];
+export const specialsOn = (s, w, d) => (s.special || []).filter(x => x.week === w && x.days.includes(d));
+export function specialLabel(x, lang) {
+  const sv = lang === 'sv', note = x.note ? x.note + ': ' : '';
+  if (x.kind === 'finishBy') return note + (sv ? 'personalen vill sluta senast ' : 'staff hope to finish by ') + fmt(x.time);
+  if (x.kind === 'closeEarly') return note + (sv ? 'förskolan stänger ' : 'the preschool closes at ') + fmt(x.time);
+  return note + (sv ? 'ungefär ' + x.pct + ' % av barnen kommer' : 'about ' + x.pct + '% of the children come');
+}
+export const daysLabel = (days, lang) => days.length === 5 ? (lang === 'sv' ? 'hela veckan' : 'all week') : days.map(d => dayName(d, lang)).join(', ');
 
 // ---------- OR-Tools solver ----------
 // The solver (solver/ in the repo) gets one self-contained problem per week and returns shifts and opener/closer roles.
@@ -268,8 +282,11 @@ export function solverProblem(s, weeks) {
         earliest: p.earliest, latest: p.latest,
       })),
       days: [0, 1, 2, 3, 4].map(d => {
-        const at = mids.map(m => needAt(s, d, m));
+        const sw = { ...s, week: w }, at = mids.map(m => needAt(sw, d, m)), sp = specialsOn(s, w, d);
+        const shut = sp.find(x => x.kind === 'closeEarly'), fin = sp.find(x => x.kind === 'finishBy');
         return {
+          closeSlot: shut ? Math.max(0, Math.ceil((shut.time - DS) / SOLVER_SLOT) - 1) : n - 1,
+          finishBy: fin ? Math.max(0, Math.round((fin.time - DS) / SOLVER_SLOT)) : null,
           need: at.map(x => x.need), merged: at.map(x => x.merged),
           groupNeed: Object.fromEntries(GROUPS.map((g, i) => [g.id, at.map(x => x.merged ? 0 : x.groups[i].need)])),
           sn: (s.snKids || []).filter(k => k.days.includes(d)).map(k => ({ group: k.unit, slots: mids.map((m, i) => m > k.from && m < k.to ? i : -1).filter(i => i >= 0) })),
@@ -286,6 +303,41 @@ export function applySolution(st, sol) {
   }
 }
 export const seedState = () => seed();
+
+// Plain-language summary of how the made schedule turned out, per week: what worked and what did not, and why.
+export function scheduleReport(s, weeks, lang) {
+  const sv = lang === 'sv', L = T[lang] || T.en, h = m => hrs(m, lang);
+  return weeks.map(w => {
+    const items = [], warns = checkWeek(s, w, lang);
+    const staffing = warns.filter(x => x.kind === 'staffing'), other = warns.filter(x => x.kind !== 'staffing');
+    items.push(staffing.length ? { ok: false, text: sv ? 'Ibland är det för få vuxna. Överväg en vikarie eller ändra passen för hand:' : 'Some times have too few adults. Consider a substitute or adjust the shifts by hand:', more: staffing.map(x => x.text) }
+      : { ok: true, text: sv ? 'Tillräckligt många vuxna med barnen hela dagarna.' : 'Enough adults with the children all day, every day.' });
+    if (other.length) items.push({ ok: false, text: sv ? 'Saker att kontrollera:' : 'Things to check:', more: other.map(x => x.text) });
+    const more = [], less = [], lessPlan = [];
+    for (const p of STAFF) {
+      const q = personWeek(s, p.id, w);
+      if (!q.C) continue;
+      const line = p.name.split(' ')[0] + ' ' + h(q.worked) + (sv ? ' av ' : ' of ') + h(q.C);
+      if (q.worked > q.C + 15) more.push(line); else if (q.worked < q.C - 15) less.push(line);
+      if (q.non < q.N - 15) lessPlan.push(p.name.split(' ')[0] + ' ' + h(q.non) + (sv ? ' av ' : ' of ') + h(q.N));
+    }
+    if (!more.length && !less.length) items.push({ ok: true, text: sv ? 'Alla får sina avtalade timmar.' : 'Everyone gets their contract hours.' });
+    if (more.length) items.push({ ok: false, text: sv ? 'Arbetar mer än sina avtalade timmar, eftersom barnen annars hade haft för få vuxna:' : 'Work more than their contract hours, because otherwise the children would have too few adults:', more });
+    if (less.length) items.push({ ok: false, text: sv ? 'Får färre timmar än sitt avtal den här veckan. Du kan lägga till tid för hand:' : 'Get fewer hours than their contract this week. You can add time by hand:', more: less });
+    if (lessPlan.length) items.push({ ok: false, text: sv ? 'Mindre planeringstid än vanligt, eftersom barnen behövde de vuxna:' : 'Less planning time than usual, because the children needed the adults:', more: lessPlan });
+    for (const x of (s.special || []).filter(x => x.week === w)) {
+      if (x.kind !== 'finishBy') { items.push({ ok: true, text: daysLabel(x.days, lang) + ': ' + specialLabel(x, lang) + (sv ? ' – med i schemat.' : ' – included.') }); continue; }
+      for (const d of x.days) {
+        const late = STAFF.filter(p => s.shifts.some(z => z.staff === p.id && z.week === w && z.day === d && z.end > x.time));
+        const role = s.roles[w + '-' + d] || {}, why = p => p.id === role.close ? (sv ? ' (stänger)' : ' (closes)') : '';
+        const working = STAFF.filter(p => s.shifts.some(z => z.staff === p.id && z.week === w && z.day === d)).length;
+        items.push(late.length ? { ok: false, text: dayName(d, lang) + ': ' + specialLabel(x, lang) + '. ' + (sv ? (working - late.length) + ' av ' + working + ' slutar i tid. De här arbetar längre eftersom barn fortfarande är kvar:' : (working - late.length) + ' of ' + working + ' finish in time. These work later because children are still there:'), more: late.map(p => p.name + why(p)) }
+          : { ok: true, text: dayName(d, lang) + ': ' + specialLabel(x, lang) + (sv ? ' – alla slutar i tid.' : ' – everyone finishes in time.') });
+      }
+    }
+    return { week: w, items };
+  });
+}
 
 // ---------- substitutes, free shifts & cover ----------
 export const nowMin = () => { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); };
@@ -524,7 +576,7 @@ export function controller(comp) {
   const load = () => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!j || !j.s) return null;
     j.staff.forEach(x => { const p = STAFF.find(y => y.id === x.id); if (p) Object.assign(p, x); else STAFF.push(x); });
     for (let i = STAFF.length - 1; i >= 0; i--) if (!j.staff.some(x => x.id === STAFF[i].id)) STAFF.splice(i, 1);
-    (j.groups || []).forEach(x => { const g = GROUPS.find(y => y.id === x.id); if (g) Object.assign(g, x); }); (j.subs || []).forEach(x => { const p = SUBS.find(y => y.id === x.id); if (p) Object.assign(p, x); }); if (!j.s.free) j.s.free = []; if (!j.s.requests) j.s.requests = []; if (!j.s.notes) j.s.notes = []; return j.s; } catch (e) { return null; } };
+    (j.groups || []).forEach(x => { const g = GROUPS.find(y => y.id === x.id); if (g) Object.assign(g, x); }); (j.subs || []).forEach(x => { const p = SUBS.find(y => y.id === x.id); if (p) Object.assign(p, x); }); if (!j.s.free) j.s.free = []; if (!j.s.requests) j.s.requests = []; if (!j.s.special) j.s.special = []; if (!j.s.notes) j.s.notes = []; return j.s; } catch (e) { return null; } };
   const store = createStore(load() || seed());
   const me = Math.random().toString(36).slice(2); let syncing = false;
   let saveT; const save = () => { if (syncing) return; clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify({ s: store.get(), staff: STAFF, groups: GROUPS, subs: SUBS })); window.dispatchEvent(new CustomEvent('schema-sync', { detail: me })); } catch (e) {} }, 300); };
@@ -538,7 +590,7 @@ export function controller(comp) {
   store.sub(() => comp.forceUpdate());
   const up = p => { Object.assign(ui, p); comp.forceUpdate(); };
   let toastT;
-  const toast = (msg, ms = 2600) => { clearTimeout(toastT); up({ toast: msg }); toastT = setTimeout(() => up({ toast: null }), ms); };
+  const toast = msg => { clearTimeout(toastT); up({ toast: msg }); toastT = setTimeout(() => up({ toast: null }), 2600); };
 
   function drag(e, ctx) {
     if (e.button != null && e.button !== 0) return;
@@ -756,22 +808,27 @@ export function controller(comp) {
         store.set(st => { st.shifts = st.shifts.filter(x => x.week !== b).concat(st.shifts.filter(x => x.week === a).map(x => ({ ...x, id: 'h' + (++st.nid), week: b }))); for (let d = 0; d < 5; d++) st.roles[b + '-' + d] = { ...(st.roles[a + '-' + d] || {}) }; });
         toast(tf(L.copied, { a, b }));
       },
-      solving: !!ui.solving, solveTxt: ui.solving ? L.solving : L.solve,
-      solveWeek: async () => {
-        if (ui.solving) return; const w = s.week; up({ solving: true });
-        let sol = null, saved = false;
-        try { const r = await fetch(SOLVER_URL + '/solve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(solverProblem(store.get(), [w])) }); if (r.ok) sol = await r.json(); } catch (e) {}
-        if (!sol) try { const all = await (await fetch(new URL('solved-schedule.json', import.meta.url))).json(); sol = { weeks: all.weeks.filter(x => x.week === w) }; saved = true; } catch (e) {}
-        up({ solving: false });
-        if (!sol || !sol.weeks.length) return toast(L.solveFailed, 6000);
-        up({ sel: null }); store.set(st => applySolution(st, sol));
-        toast(tf(saved ? L.solvedSaved : L.solved, { w }), saved ? 7000 : 3500);
-      },
       set15: () => store.live(st => { st.slot = 15; }), set30: () => store.live(st => { st.slot = 30; }),
       toggleSlot: () => store.live(st => { st.slot = st.slot === 15 ? 30 : 15; }),
       clearSel: () => up({ sel: null, person: null }),
       expand: () => up({ expanded: !ui.expanded }), expanded: ui.expanded,
     };
   }
-  return { store, ui, view, up, touch, resetDemo };
+  // Makes the schedule for `weeks` with the solver, one week at a time; falls back to the saved schedule.
+  // Applies everything as one change (one Undo). Returns { saved } or null if nothing could be made.
+  const generate = async (weeks, onProgress) => {
+    const weeksOut = []; let saved = false;
+    for (let i = 0; i < weeks.length; i++) {
+      onProgress && onProgress(i, weeks.length, weeks[i]);
+      let sol = null;
+      if (!saved) try { const r = await fetch(SOLVER_URL + '/solve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(solverProblem(store.get(), [weeks[i]])) }); if (r.ok) sol = await r.json(); } catch (e) {}
+      if (!sol) { saved = true; break; }
+      weeksOut.push(...sol.weeks);
+    }
+    if (saved) try { const all = await (await fetch(new URL('solved-schedule.json', import.meta.url))).json(); weeksOut.splice(0, weeksOut.length, ...all.weeks.filter(x => weeks.includes(x.week))); } catch (e) { return null; }
+    if (!weeksOut.length) return null;
+    up({ sel: null }); store.set(st => applySolution(st, { weeks: weeksOut }));
+    return { saved };
+  };
+  return { store, ui, view, up, touch, resetDemo, generate };
 }

@@ -11,8 +11,10 @@ Hard rules (as checked by the planner):
   - one 30-minute break, inside the shift, and nobody works more than 5 hours without one
   - planning time comes in blocks of at least 30 minutes, at most one block a day
   - the opener works from opening time and the closer until closing time
+Special days: on an early closing nobody works after it and the closer works until it;
+a wish to finish by a time makes every slot worked after it cost a little.
 Soft goals, in order of weight: enough adults every slot, a special-needs trained adult
-in the unit while a child with special needs is there, contract hours, planning hours,
+in the unit while a child with special needs is there, contract hours, wishes to finish early, planning hours,
 time with children in blocks of at least 30 minutes, enough adults per unit, and not more
 adults than needed.
 """
@@ -27,7 +29,7 @@ BREAK_LEN = 2  # slots: 30 min
 MAX_RUN = 20  # slots of work without a break: 5 h
 
 W_SHORT, W_SN, W_ROLE = 1000, 1000, 1000
-W_HOURS, W_PLAN, W_GROUP, W_OVER, W_LONE = 60, 20, 30, 4, 40
+W_HOURS, W_PLAN, W_GROUP, W_OVER, W_LONE, W_FINISH = 60, 20, 30, 4, 40, 25
 WEEK_MAX = 160  # slots: the 40-hour week
 
 
@@ -46,6 +48,7 @@ def _build(problem, wk, days, targets):
                 continue
             first = 0 if p["earliest"] is None else max(0, -(-(p["earliest"] - day_start) // slot))
             last = n if p["latest"] is None else min(n, (p["latest"] - day_start) // slot)
+            last = min(last, wk["days"][d].get("closeSlot", n - 1) + 1)  # nobody works after an early closing
             c = [m.new_bool_var("") for _ in range(n)]
             b = [m.new_bool_var("") for _ in range(n)]
             pl = [m.new_bool_var("") for _ in range(n)]
@@ -99,7 +102,11 @@ def _build(problem, wk, days, targets):
                 m.add_implication(opener[pid, d], wv[0])
             if p["close"]:
                 closer[pid, d] = m.new_bool_var("")
-                m.add_implication(closer[pid, d], wv[n - 1])
+                m.add_implication(closer[pid, d], wv[wk["days"][d].get("closeSlot", n - 1)])
+            # A wish to finish early (e.g. a concert in the evening): every slot worked after it costs.
+            fin = wk["days"][d].get("finishBy")
+            if fin is not None:
+                cost += [W_FINISH * wv[t] for t in range(fin, n)]
 
         mine = [d for d in days if (pid, d) in work]
         total = sum(sum(work[pid, d]) for d in mine)
@@ -143,12 +150,20 @@ def _build(problem, wk, days, targets):
     return m, contact, brk, plan, work, opener, closer
 
 
-def _split(total, parts, unit):
-    """Splits `total` slots over `parts` days in whole `unit`s, as evenly as possible."""
-    if not parts:
-        return []
-    k = round(total / unit)
-    return [(k // parts + (i < k % parts)) * unit for i in range(parts)]
+def _split(total, caps, unit):
+    """Splits `total` slots over days in whole `unit`s, as evenly as possible without going over
+    each day's cap (a short day, e.g. an early closing, gets less and the others more)."""
+    out, left = [0] * len(caps), round(total / unit)
+    open_ = [i for i in range(len(caps)) if caps[i] >= unit]
+    while left > 0 and open_:
+        for i in list(open_):
+            if left == 0:
+                break
+            out[i] += unit
+            left -= 1
+            if out[i] + unit > caps[i]:
+                open_.remove(i)
+    return out
 
 
 def _solve(model, time_limit, workers, hint=None):
@@ -170,7 +185,9 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
     share = {}
     for p in wk["staff"]:
         on = [d for d in range(5) if p["days"][d]]
-        hours, planning = _split(p["target"] / slot, len(on), 1), _split(p["planning"] / slot, len(on), 2)
+        caps = [min(MAX_SHIFT, wk["days"][d].get("closeSlot", n - 1) + 1) for d in on]
+        hours = _split(p["target"] / slot, caps, 1)
+        planning = _split(p["planning"] / slot, [max(0, h - MIN_SHIFT) for h in hours], 2)
         share[p["id"]] = {d: (hours[i], planning[i]) for i, d in enumerate(on)}
     day_limit = time_limit * 0.4 / 5
     hint = {}
