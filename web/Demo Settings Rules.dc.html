@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="width:100%;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#fff">
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-direction:column;gap:32px;padding:36px 48px 64px;max-width:860px">
+    <div style="display:flex;align-items:flex-start;gap:24px">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:22px;font-weight:600;letter-spacing:-.01em">{{ tx.title }}</div>
+        <div style="font-size:14px;line-height:1.5;color:#5A6B7A;max-width:600px;text-wrap:pretty">{{ tx.sub }}</div>
+      </div>
+      <button onClick="{{ toggleAdd }}" style="flex:none;height:40px;padding:0 16px;border:{{ addBd }};border-radius:6px;background:{{ addBg }};color:{{ addFg }};font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">{{ addBtn }}</button>
+    </div>
+
+    <sc-if value="{{ adding }}">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.pick }}</div>
+        <div style="border:1px solid #D3DDEA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+          <sc-for list="{{ addable }}" as="a">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:10px 16px;min-height:56px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+              <div style="font-size:14px">{{ a.label }}</div>
+              <button onClick="{{ a.add }}" style="height:36px;padding:0 14px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.add }}</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.secRules }}</div>
+      <div style="border:1px solid #D3DDEA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+        <sc-for list="{{ rules }}" as="r" hint-placeholder-count="8">
+          <div style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:start;column-gap:16px;row-gap:12px;padding:14px 16px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0;background:{{ r.rowBg }}">
+            <div style="font:600 13px/20px 'IBM Plex Mono',monospace;color:{{ r.codeFg }};padding-top:1px">{{ r.code }}</div>
+            <div style="min-width:0">
+              <div style="font-size:14px;font-weight:500;line-height:1.45;color:{{ r.fg }};text-wrap:pretty">{{ r.label }}</div>
+              <div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px;text-wrap:pretty">{{ r.how }}</div>
+              <sc-for list="{{ r.notes }}" as="n"><div style="font-size:13px;line-height:1.45;color:#8A5F0C;font-weight:500;margin-top:4px">{{ n.txt }}</div></sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <sc-if value="{{ r.canEdit }}"><button onClick="{{ r.edit }}" style="height:32px;padding:0 6px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">{{ tx.change }}</button></sc-if>
+              <sc-if value="{{ r.canToggle }}"><button onClick="{{ r.flip }}" title="{{ r.onTxt }}" style="position:relative;width:44px;height:26px;border:0;border-radius:13px;background:{{ r.tb }};cursor:pointer;padding:0;flex:none"><span style="position:absolute;top:3px;left:{{ r.kx }};width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)"></span></button></sc-if>
+              <sc-if value="{{ r.fixed }}"><div style="font-size:13px;color:#5A6B7A">{{ tx.always }}</div></sc-if>
+            </div>
+            <sc-if value="{{ r.editing }}">
+              <div style="grid-column:2 / -1;display:flex;flex-direction:column;gap:14px;background:#F7FAFB;border:1px solid #E3EAF0;border-radius:6px;padding:14px">
+                <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px">
+                  <sc-for list="{{ r.params }}" as="x">
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      <div style="font-size:12px;font-weight:500;color:#5A6B7A">{{ x.label }}</div>
+                      <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                        <button onClick="{{ x.dec }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">−</button>
+                        <div style="min-width:68px;padding:0 4px;display:flex;align-items:center;justify-content:center;font:500 13px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0;white-space:nowrap">{{ x.val }}</div>
+                        <button onClick="{{ x.inc }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">+</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    <div style="font-size:12px;font-weight:500;color:#5A6B7A">{{ tx.from }}</div>
+                    <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                      <button onClick="{{ r.fDec }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">−</button>
+                      <div style="min-width:68px;padding:0 4px;display:flex;align-items:center;justify-content:center;font:500 13px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0;white-space:nowrap">{{ r.fromTxt }}</div>
+                      <button onClick="{{ r.fInc }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">+</button>
+                    </div>
+                  </div>
+                </div>
+                <div style="font-size:14px;line-height:1.45;padding-top:12px;border-top:1px solid #E3EAF0">{{ r.preview }}</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <sc-if value="{{ r.canDelete }}"><button onClick="{{ r.del }}" style="height:36px;padding:0 6px;border:0;background:transparent;color:#C2413D;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.del }}</button></sc-if>
+                  <div style="flex:1"></div>
+                  <button onClick="{{ cancel }}" style="height:36px;padding:0 14px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.cancel }}</button>
+                  <button onClick="{{ r.save }}" style="height:36px;padding:0 16px;border:0;border-radius:6px;background:#1F7D97;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">{{ tx.save }}</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:start;column-gap:16px;padding:14px 16px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+          <div style="font:600 13px/20px 'IBM Plex Mono',monospace;color:#1F2D3A;padding-top:1px">R0</div>
+          <div><div style="font-size:14px;font-weight:500;line-height:1.45">{{ tx.ratio }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ tx.ratioSub }}</div></div>
+          <button onClick="{{ goKids }}" style="height:32px;padding:0 6px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">{{ tx.ratioBtn }} ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;ctl&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;mod&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;rev&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onNav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(s:string)=&gt;void&quot;}}">
+const HOW = {
+  en: { rest: 'Looks at the time from a person\'s last shift one day to their first shift the next day.', week: 'Adds up all shifts for each person in the week you are looking at.', avg: 'Adds up the four weeks of the period and divides by four.', cont: 'Counts work time in a row. A break, or a gap of 15 minutes or more, starts the count again.', breakLen: 'Checks the length of every shift marked as Break.', count: 'All four kinds of time count toward a person\'s contract hours.', openClose: 'Checks that each day has someone set to open and someone set to close.', avail: 'Compares shifts with each person\'s days off, working hours and contract end under Staff.', absent: 'Shifts for someone who is sick or on leave are shown as needing cover.', sn: 'While a child with special needs is there, an adult trained in special needs must be working in that unit.', breaks: 'Counts breaks of at least the given length on days longer than the given number of hours.', dayMax: 'Adds up a person\'s work time in a day, not counting breaks.', minStaff: 'Counts the adults with children at each time of day while children are there.' },
+  sv: { rest: 'Tittar på tiden från en persons sista pass en dag till första passet nästa dag.', week: 'Summerar alla pass för varje person under veckan du tittar på.', avg: 'Summerar periodens fyra veckor och delar med fyra.', cont: 'Räknar arbetstid i följd. En rast, eller ett uppehåll på minst 15 minuter, börjar räkningen om.', breakLen: 'Kontrollerar längden på varje pass som är markerat som Rast.', count: 'Alla fyra sorters tid räknas in i personens avtalade timmar.', openClose: 'Kontrollerar att varje dag har någon som öppnar och någon som stänger.', avail: 'Jämför passen med varje persons lediga dagar, arbetstider och slutdatum under Personal.', absent: 'Pass för någon som är sjuk eller ledig visas som att de behöver ersättare.', sn: 'När ett barn med särskilda behov är på plats måste en vuxen utbildad för särskilt stöd arbeta på den avdelningen.', breaks: 'Räknar raster av minst angiven längd på dagar som är längre än angivet antal timmar.', dayMax: 'Summerar en persons arbetstid under en dag, utan raster.', minStaff: 'Räknar vuxna med barnen vid varje tid på dagen när barn är där.' },
+};
+const PL = { en: { h: 'Hours', a: 'Minutes', b: 'Up to minutes', n: 'How many', over: 'Days longer than (h)' }, sv: { h: 'Timmar', a: 'Minuter', b: 'Upp till minuter', n: 'Hur många', over: 'Dagar längre än (h)' } };
+class Component extends DCLogic {
+  state = { edit: null, draft: null, from: null, adding: false };
+  renderVals() {
+    const { ctl, mod } = this.props, lang = this.props.lang === 'sv' ? 'sv' : 'en', sv = lang === 'sv', t = (a, b) => sv ? a : b;
+    if (!ctl || !mod) return { ready: false };
+    const s = ctl.store.get(), wk = s.week, rules = s.rules || [], lab = (ty, p) => mod.ruleLabel(ty, p, lang);
+    const putVer = (id, ver) => ctl.touch(st => { const r = st.rules.find(x => x.id === id); r.versions = [...r.versions.filter(v => v.from !== ver.from), ver]; });
+    const open = (r, p, from) => this.setState({ edit: r.id, draft: { ...p }, from, adding: false });
+    const cancel = () => this.setState({ edit: null, draft: null });
+    const list = rules.map(r => {
+      const v = mod.ruleVer(r, wk), first = r.versions.slice().sort((a, b) => a.from - b.from)[0], cur = v || first, on = !!(v && v.on), fixed = r.type === 'count';
+      const later = r.versions.filter(x => x.from > wk).sort((a, b) => a.from - b.from);
+      const notes = [...(v && v.from > mod.W0 ? [v] : []), ...later].map(x => ({ txt: x.on ? t('Från vecka ' + x.from + ': ', 'From week ' + x.from + ': ') + lab(r.type, x.p) : t('Av från vecka ' + x.from, 'Off from week ' + x.from) }));
+      if (!v) notes.unshift({ txt: t('Börjar gälla vecka ' + first.from, 'Starts in week ' + first.from) });
+      const PR = mod.RULE_PARAMS[r.type], editing = this.state.edit === r.id, d = editing ? this.state.draft : null, from = editing ? this.state.from : wk, live = on || fixed;
+      return {
+        code: r.id.toUpperCase(), label: lab(r.type, cur.p), how: (HOW[lang] || HOW.en)[r.type] || '', notes,
+        rowBg: live ? '#fff' : '#FAFBFC', fg: live ? '#1F2D3A' : '#8796A5', codeFg: live ? '#1F2D3A' : '#8796A5',
+        canToggle: !fixed, fixed, tb: on ? '#1F7D97' : '#C9D5E0', kx: on ? '21px' : '3px', onTxt: on ? t('På', 'On') : t('Av', 'Off'),
+        flip: () => putVer(r.id, { from: wk, on: !on, p: { ...cur.p } }),
+        canEdit: !!PR && !editing, edit: () => open(r, cur.p, wk), editing, canDelete: !r.base,
+        params: editing ? PR.map(([k, unit, lo, hi, step]) => ({ label: (PL[lang] || PL.en)[k], val: mod.fmtN(d[k], lang) + (unit ? ' ' + unit : ''),
+          dec: () => this.setState(st => ({ draft: { ...st.draft, [k]: Math.max(lo, Math.round((st.draft[k] - step) * 10) / 10) } })),
+          inc: () => this.setState(st => ({ draft: { ...st.draft, [k]: Math.min(hi, Math.round((st.draft[k] + step) * 10) / 10) } })) })) : [],
+        fromTxt: t('v. ', 'w. ') + from, fDec: () => this.setState(st => ({ from: Math.max(mod.W0, st.from - 1) })), fInc: () => this.setState(st => ({ from: Math.min(mod.W1, st.from + 1) })),
+        preview: editing ? t('Från vecka ' + from + ': ', 'From week ' + from + ': ') + lab(r.type, d) : '',
+        save: () => { putVer(r.id, { from, on: true, p: { ...this.state.draft } }); cancel(); },
+        del: () => { ctl.touch(st => { st.rules = st.rules.filter(x => x.id !== r.id); }); cancel(); },
+      };
+    });
+    const addable = Object.entries(mod.ADDABLE).map(([ty, p]) => ({ label: lab(ty, p), add: () => {
+      let id; ctl.touch(st => { st.rid = (st.rid || 10) + 1; id = 'r' + st.rid; st.rules.push({ id, type: ty, versions: [{ from: wk, on: true, p: { ...p } }] }); });
+      this.setState({ edit: id, draft: { ...p }, from: wk, adding: false }); } }));
+    const A = this.state.adding;
+    return {
+      ready: true, rules: list, addable, cancel, adding: A,
+      toggleAdd: () => this.setState(st => ({ adding: !st.adding, edit: null })), addBtn: A ? t('Stäng', 'Close') : t('Lägg till regel', 'Add a rule'),
+      addBg: A ? '#fff' : '#1F7D97', addFg: A ? '#1F2D3A' : '#fff', addBd: A ? '1px solid #C9D5E0' : '0',
+      goKids: () => this.props.onNav && this.props.onNav('kids'),
+      tx: { title: t('Regler', 'Rules'), sub: t('Reglerna kontrolleras varje gång schemat ändras. Det som bryter mot en regel visas under Att kontrollera med regelns kod. En ändring gäller från den vecka du väljer.', 'The rules are checked every time the schedule changes. Anything that breaks a rule shows up under Things to check with the rule\'s code. A change applies from the week you choose.'),
+        secRules: t('Regler som kontrolleras', 'Rules that are checked'), pick: t('Välj en sorts regel', 'Choose a kind of rule'), add: t('Lägg till', 'Add'), change: t('Ändra', 'Change'), always: t('Gäller alltid', 'Always applies'),
+        from: t('Gäller från vecka', 'Applies from week'), cancel: t('Avbryt', 'Cancel'), save: t('Spara', 'Save'), del: t('Ta bort regeln', 'Delete the rule'),
+        ratio: t('Tillräckligt med vuxna för antalet barn', 'Enough adults for the number of children'), ratioSub: t('Barn per vuxen ställs in för varje avdelning.', 'Children per adult is set for each unit.'), ratioBtn: t('Barn och avdelningar', 'Children and units') },
+    };
+  }
+}
+</script>
+</body>
+</html>

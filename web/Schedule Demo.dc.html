@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Schema">
+<title>Schema</title>
+<meta name="ext-resource-dependency" content="./schedule-core-demo.js" data-resource-id="core">
+<script src="./support.js"></script>
+</head>
+<body>
+<template id="__bundler_thumbnail" data-bg-color="#EEF4F7"><svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect x="300" y="250" width="600" height="300" rx="24" fill="#fff"/><rect x="360" y="310" width="260" height="50" rx="10" fill="#BFE6EF"/><rect x="460" y="380" width="300" height="50" rx="10" fill="#F6C9D6"/><rect x="400" y="450" width="220" height="50" rx="10" fill="#F5E3A1"/></svg></template>
+<x-dc>
+<helmet><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#16627A}@media print{[data-ghost]{display:none!important}}</style></helmet>
+<div data-root="1" ref="{{ rootRef }}" style="position:relative;width:1440px;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#fff;user-select:none;-webkit-user-select:none;border:1px solid #D3DDEA;box-sizing:border-box;transform-origin:0 0">
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;border-bottom:1px solid #D3DDEA">
+    <div style="font-weight:600;font-size:16px;white-space:nowrap">{{ L.app }}</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:12px;flex:none">
+      <button onClick="{{ prevWeek }}" style="white-space:nowrap;flex:none;width:32px;height:32px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font-size:16px;cursor:pointer">‹</button>
+      <div style="display:flex;flex-direction:column;align-items:center;min-width:130px;white-space:nowrap"><div style="font-weight:600;font-size:15px">{{ weekLabel }}</div><div style="font-size:12px;color:#5A6B7A">{{ dateRange }}</div></div>
+      <button onClick="{{ nextWeek }}" style="white-space:nowrap;flex:none;width:32px;height:32px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font-size:16px;cursor:pointer">›</button>
+    </div>
+    <div style="flex:1"></div>
+    <button onClick="{{ undo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ undoOp }}">↶ {{ L.undo }}</button>
+    <button onClick="{{ redo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ redoOp }}">↷ {{ L.redo }}</button>
+    <button onClick="{{ copyWeek }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer">{{ L.copyWeek }}</button>
+    <button onClick="{{ startDemo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:{{ demoBtnBg }};color:{{ demoBtnFg }}">▶ Demo</button>
+    <button onClick="{{ togglePhone }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ phoneBtnBg }};color:{{ phoneBtnFg }}">{{ phoneTxt }}</button>
+    <button onClick="{{ toggleCover }}" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ covBtnBg }};color:{{ covBtnFg }}">{{ covTxt }}<sc-if value="{{ hasCovBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#D9A23A;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ covCount }}</span></sc-if></button>
+    <button onClick="{{ toggleReq }}" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ reqBtnBg }};color:{{ reqBtnFg }}">{{ reqTxt }}<sc-if value="{{ hasReqBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#C2413D;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ reqCount }}</span></sc-if></button>
+    <button data-guide="settings" onClick="{{ toggleSettings }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ setBtnBg }};color:{{ setBtnFg }}">⚙ {{ setTxt }}</button>
+    
+    <div style="display:flex;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;flex:none">
+      <button onClick="{{ setEn }}" style="white-space:nowrap;flex:none;border:0;padding:6px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;background:{{ enBg }};color:{{ enFg }}">EN</button>
+      <button onClick="{{ setSv }}" style="white-space:nowrap;flex:none;border:0;padding:6px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;background:{{ svBg }};color:{{ svFg }}">SV</button>
+    </div>
+  </div>
+  <div style="display:flex;padding:0 24px;background:#fff;border-bottom:1px solid #D3DDEA">
+    <sc-for list="{{ days }}" as="d" hint-placeholder-count="5">
+      <button onClick="{{ d.select }}" style="flex:1;border:0;border-bottom:3px solid {{ d.line }};background:transparent;padding:11px 12px 9px;text-align:left;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:2px">
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600;font-size:14px;color:{{ d.fg }}">{{ d.name }}</span><span style="font-size:12px;color:#5A6B7A">{{ d.date }}</span>
+          <sc-if value="{{ d.hasWarn }}"><span style="font-size:11px;font-weight:600;background:#C2413D;color:#fff;border-radius:9px;padding:1px 7px">{{ d.warnCount }}</span></sc-if>
+        </div>
+      </button>
+    </sc-for>
+  </div>
+  <div data-guide="warnings" style="display:flex;align-items:center;gap:12px;padding:8px 24px;background:#EEF4F7;border-bottom:1px solid #D3DDEA;min-height:52px;box-sizing:border-box">
+    <div style="display:flex;align-items:center;gap:8px;flex:none"><div style="font-weight:600;font-size:13px">{{ checkTitle }}</div><span style="font-size:12px;font-weight:700;background:{{ countBg }};color:#fff;border-radius:999px;padding:2px 9px">{{ dayWarnCount }}</span></div>
+    <div style="flex:1;min-width:0;display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#D3DDEA transparent;scroll-snap-type:x proximity;padding:2px 0">
+      <sc-for list="{{ dayWarns }}" as="w" hint-placeholder-count="2">
+        <button onClick="{{ w.go }}" title="{{ w.tip }}" style="flex:0 0 calc((100% - 24px) / 4);scroll-snap-align:start;box-sizing:border-box;text-align:left;border:0;border-radius:6px;background:{{ w.bg }};box-shadow:inset 3px 0 {{ w.edge }};padding:7px 10px;font:inherit;cursor:pointer;color:#1F2D3A;display:flex;align-items:center;gap:8px;min-width:0"><sc-if value="{{ w.code }}"><span style="flex:none;font:600 10.5px 'IBM Plex Mono',monospace;color:#1F2D3A;background:#fff;border-radius:4px;padding:2px 5px">{{ w.code }}</span></sc-if><span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ w.text }}</span></button>
+      </sc-for>
+    </div>
+    <div style="font-size:12px;color:#5A6B7A;white-space:nowrap;flex:none;padding-left:4px;border-left:1px solid #D3DDEA;padding-left:12px">{{ L.opens }} <b style="color:#1F2D3A">{{ opener }}</b> · {{ L.closes }} <b style="color:#1F2D3A">{{ closer }}</b></div>
+  </div>
+  <div style="display:flex;align-items:stretch;height:720px">
+    <div data-guide="staff" style="width:260px;flex:none;background:#EEF4F7;border-right:1px solid #D3DDEA;display:flex;flex-direction:column;min-height:0">
+      <div style="flex:none;display:flex;flex-direction:column;gap:8px;padding:10px 14px 10px 18px;border-bottom:1px solid #D3DDEA">
+        <div style="display:flex;align-items:center;gap:8px;height:24px"><button onClick="{{ openStaff }}" title="{{ staffTip }}" style="flex:1;display:flex;align-items:center;gap:5px;border:0;background:none;padding:0;font:inherit;font-size:13px;font-weight:600;color:#1F2D3A;cursor:pointer;text-align:left">{{ L.staff }} <span style="font-weight:500;color:#5A6B7A">{{ staffCount }}</span><span style="font-size:12px;color:#1F7D97">↗</span></button>
+          <div style="display:flex;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;flex:none;background:#fff"><sc-for list="{{ sorts }}" as="so"><button onClick="{{ so.pick }}" title="{{ so.tip }}" style="white-space:nowrap;flex:none;border:0;padding:4px 7px;font:inherit;font-size:11px;font-weight:500;cursor:pointer;background:{{ so.bg }};color:{{ so.fg }}">{{ so.label }}</button></sc-for></div>
+        </div>
+        <div style="position:relative;display:flex;align-items:center">
+          <span style="position:absolute;left:10px;font-size:13px;color:#8796A5;pointer-events:none">⌕</span>
+          <input value="{{ q }}" onInput="{{ onQ }}" placeholder="{{ searchPh }}" style="width:100%;box-sizing:border-box;height:32px;border:1px solid #C9D5E0;border-radius:8px;padding:0 30px 0 28px;font:inherit;font-size:13px;background:#fff;color:#1F2D3A;outline-color:#2B91AD">
+          <sc-if value="{{ hasQ }}"><button onClick="{{ clearQ }}" title="{{ clearTxt }}" style="position:absolute;right:4px;border:0;background:#EEF3F6;width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:13px;color:#3C4B5A">×</button></sc-if>
+        </div>
+      </div>
+      <div style="flex:none;display:flex;align-items:center;gap:10px;padding:6px 18px 0;white-space:nowrap;overflow:hidden;font-size:11px;color:#5A6B7A"><span style="flex:none;display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="flex:none;width:14px;height:6px;border-radius:2px;background:#6CC24A"></span>{{ barLegA }}</span><span style="flex:none;display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="flex:none;width:10px;height:6px;border-radius:2px;background:#8E6CCF"></span>{{ barLegB }}</span><span style="flex:none;display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="flex:none;width:10px;height:6px;border-radius:2px;background:repeating-linear-gradient(45deg,#F2A9A3 0 3px,#FBE3E1 3px 5px)"></span>{{ barLegS }}</span></div>
+      <div data-staff-scroll="1" style="position:relative;flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#D3DDEA transparent;display:flex;flex-direction:column;gap:0;padding:6px 8px 6px 10px">
+      <sc-if value="{{ noMatch }}"><div style="padding:16px 10px;font-size:13px;color:#5A6B7A">{{ noMatchTxt }}</div></sc-if>
+      <sc-for list="{{ rosterF }}" as="r" hint-placeholder-count="8">
+        <div data-staff="{{ r.id }}" onPointerDown="{{ r.dragName }}" style="border-radius:8px;background:{{ r.bg }};box-shadow:{{ r.selRing }};padding:7px 10px;cursor:grab;touch-action:none;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="color:#B4C3D0;font-size:11px;letter-spacing:-1px">⋮⋮</span>
+            <sc-if value="{{ r.hasUnit }}"><span title="{{ r.unitName }}" style="flex:none;width:18px;height:18px;border-radius:5px;background:{{ r.ub }};color:{{ r.uf }};font:700 10px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ r.uLetter }}</span></sc-if>
+            <span style="font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:{{ r.strike }}">{{ r.name }}</span>
+            <sc-if value="{{ r.sick }}"><span style="font-size:10px;font-weight:700;color:#C2413D">{{ L.sickToday }}</span></sc-if>
+            <span onPointerDown="{{ stopPD }}" onClick="{{ r.focusMe }}" title="{{ focusTip }}" style="font:600 12px 'IBM Plex Mono',monospace;color:{{ r.hCol }};white-space:nowrap;cursor:pointer">{{ r.hTxt }}</span>
+          </div>
+          <sc-if value="{{ r.hasBar }}">
+            <div title="{{ r.barTip }}" style="display:flex;align-items:stretch;gap:0;height:7px">
+              <div style="position:relative;flex:none;width:{{ r.aW }}%;background:#E6EDF2;border-radius:3px 0 0 3px;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ r.aFill }}%;background:{{ r.aBg }}"></div><div style="position:absolute;top:0;bottom:0;left:{{ r.aFill }}%;width:{{ r.sFill }}%;background:repeating-linear-gradient(45deg,#F2A9A3 0 3px,#FBE3E1 3px 5px)"></div></div>
+              <div style="flex:none;width:2px;margin:-2px 0;background:#1F2D3A;border-radius:1px"></div><div style="position:relative;flex:1;background:#ECE6F5;border-radius:0 3px 3px 0;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ r.bFill }}%;background:{{ r.bBg }}"></div></div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+      </div>
+      <div style="flex:none;padding:8px 10px 0 10px"><button onClick="{{ addPerson }}" style="width:100%;height:34px;border:1px dashed #9FCFDB;background:#fff;color:#1F7D97;border-radius:8px;font:inherit;font-size:13px;font-weight:600;cursor:pointer">+ {{ addTxt }}</button></div>
+      <div style="flex:none;padding:10px 18px;font-size:12px;color:#5A6B7A;border-top:1px solid #D3DDEA;margin-top:8px;display:flex;justify-content:space-between;gap:8px"><span>{{ L.thisWeek }}</span><span style="font-family:'IBM Plex Mono',monospace;color:#1F2D3A">{{ totalWeek }}</span></div>
+    </div>
+    <div style="position:relative;flex:1;min-width:0;background:#fff;padding:0;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box">
+      <sc-if value="{{ isFocus }}">
+      <div style="display:flex;align-items:center;gap:12px;height:48px;flex:none;padding:0 16px 0 18px;border-bottom:1px solid #F2C877;background:#FFF4D6;box-sizing:border-box">
+        <sc-if value="{{ fHasUnit }}"><span style="flex:none;width:18px;height:18px;border-radius:5px;background:{{ fU.ub }};color:{{ fU.uf }};font:700 10px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ fU.letter }}</span></sc-if>
+        <div style="font-size:14px;font-weight:600;white-space:nowrap">{{ fTitle }}</div>
+        <div style="font:600 12px 'IBM Plex Mono',monospace;color:{{ fCol }};white-space:nowrap">{{ fHours }}</div>
+        <div style="font-size:12px;font-weight:500;color:{{ fCol }};white-space:nowrap">{{ fFlag }}</div>
+        <div style="flex:1"></div>
+        <button onClick="{{ unfocus }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:#fff;color:#1F2D3A">× {{ showAllTxt }}</button>
+      </div>
+      </sc-if>
+      <sc-if value="{{ notFocus }}">
+      <div style="display:flex;align-items:center;gap:10px;height:48px;flex:none;padding:0 16px 0 18px;border-bottom:1px solid #D3DDEA;box-sizing:border-box">
+        <div style="font-size:12px;font-weight:600;color:#3C4B5A;white-space:nowrap">{{ unitLabel }}:</div>
+        <div data-guide="unit" style="position:relative">
+          <button onClick="{{ ddFilterToggle }}" style="display:flex;align-items:center;gap:8px;height:32px;padding:0 10px 0 8px;border:1px solid #C9D5E0;background:#fff;border-radius:8px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;color:#1F2D3A;white-space:nowrap;min-width:190px">
+            <sc-if value="{{ curUnit.hasLetter }}"><span style="flex:none;width:18px;height:18px;border-radius:5px;background:{{ curUnit.ub }};color:{{ curUnit.uf }};font:700 10px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ curUnit.letter }}</span></sc-if>
+            <span style="flex:1;text-align:left;padding-left:2px">{{ curUnit.name }}</span><span style="font-size:10px;color:#5A6B7A">▾</span>
+          </button>
+          <sc-if value="{{ ddFilter }}">
+            <div style="position:absolute;top:36px;left:0;min-width:220px;max-height:260px;overflow-y:auto;scrollbar-width:thin;background:#fff;border-radius:10px;box-shadow:0 12px 32px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.06);padding:4px;z-index:12;display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ unitTabs }}" as="u"><button onClick="{{ u.pick }}" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:0;border-radius:6px;background:{{ u.optBg }};font:inherit;font-size:13px;cursor:pointer;color:#1F2D3A;text-align:left;white-space:nowrap"><sc-if value="{{ u.hasLetter }}"><span style="flex:none;width:18px;height:18px;border-radius:5px;background:{{ u.ub }};color:{{ u.uf }};font:700 10px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ u.letter }}</span></sc-if><sc-if value="{{ u.noLetter }}"><span style="flex:none;width:18px"></span></sc-if><span style="flex:1">{{ u.name }}</span><span style="color:#1F7D97;font-weight:700">{{ u.tick }}</span></button></sc-for>
+            </div>
+          </sc-if>
+        </div>
+        <div style="flex:1"></div>
+      </div>
+      </sc-if>
+      <div style="display:flex;height:40px;flex:none;border-bottom:1px solid #D3DDEA;overflow:hidden;scrollbar-gutter:stable;scrollbar-width:thin">
+        <div style="width:150px;flex:none;display:flex;align-items:center;gap:6px;padding-left:16px;box-sizing:border-box;font-size:11px;color:#5A6B7A">{{ L.slot }}
+          <div style="display:flex;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;flex:none">
+            <button onClick="{{ set15 }}" style="white-space:nowrap;flex:none;border:0;padding:5px 8px;font:inherit;font-size:12px;cursor:pointer;background:{{ s15bg }};color:{{ s15fg }}">15</button>
+            <button onClick="{{ set30 }}" style="white-space:nowrap;flex:none;border:0;padding:5px 8px;font:inherit;font-size:12px;cursor:pointer;background:{{ s30bg }};color:{{ s30fg }}">30</button>
+          </div>
+        </div>
+        <div style="position:relative;flex:1;margin-right:12px">
+          <sc-for list="{{ mergeBands }}" as="mb"><div onPointerDown="{{ mb.down }}" title="{{ mb.tip }}" style="cursor:ew-resize;touch-action:none;position:absolute;top:22px;height:14px;left:{{ mb.left }}%;width:{{ mb.width }}%;box-sizing:border-box;padding:0 6px;background:{{ mb.ub }};color:{{ mb.uf }};border-radius:3px;font:600 10px/14px 'IBM Plex Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">{{ mb.label }} ▾</div></sc-for>
+          <sc-for list="{{ ticks }}" as="t" hint-placeholder-count="13"><div style="position:absolute;left:{{ t.left }}%;top:5px;transform:translateX(-50%);font:500 11px 'IBM Plex Mono',monospace;color:#5A6B7A">{{ t.label }}</div></sc-for>
+        </div>
+      </div>
+      <div data-sched-scroll="1" data-guide="schedule" style="position:relative;flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#D3DDEA transparent">
+      <sc-if value="{{ noMatch }}"><div style="padding:24px 18px;font-size:13px;color:#5A6B7A">{{ noMatchTxt }}</div></sc-if>
+      <sc-for list="{{ rowsF }}" as="r" hint-placeholder-count="8">
+        <div data-row="{{ r.id }}" style="display:flex;height:52px;flex:none;border-bottom:1px solid #E3EAF0;background:{{ r.rowBg }};box-shadow:{{ r.rowRing }}">
+          <div onClick="{{ r.pick }}" onDoubleClick="{{ r.dbl }}" title="{{ r.dblTip }}" style="width:150px;flex:none;display:flex;align-items:center;gap:6px;padding:0 8px 0 18px;cursor:pointer;box-sizing:border-box">
+            <sc-if value="{{ r.hasUnit }}"><span title="{{ r.unitName }}" style="flex:none;width:18px;height:18px;border-radius:5px;background:{{ r.ub }};color:{{ r.uf }};font:700 10px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ r.uLetter }}</span></sc-if>
+            <div style="flex:1;min-width:0;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:{{ r.strike }}">{{ r.name }}</div>
+            <sc-if value="{{ r.isSub }}"><span style="flex:none;font-size:10px;font-weight:700;background:#FFF1CF;color:#6B5214;border-radius:3px;padding:2px 5px">{{ subTag }}</span></sc-if>
+            <sc-if value="{{ r.isOpener }}"><span title="{{ L.opener }}" style="font:600 10px 'IBM Plex Mono',monospace;background:#1F2D3A;color:#fff;border-radius:3px;padding:2px 4px">{{ openTag }}</span></sc-if>
+            <sc-if value="{{ r.isCloser }}"><span title="{{ L.closer }}" style="font:600 10px 'IBM Plex Mono',monospace;border:1px solid #1F2D3A;border-radius:3px;padding:1px 4px">{{ closeTag }}</span></sc-if>
+          </div>
+          <div data-track="1" onPointerDown="{{ r.down }}" style="position:relative;flex:1;margin-right:12px;cursor:crosshair;touch-action:none;background-image:{{ gridBg }};background-size:{{ gridSize }}"><sc-for list="{{ mergeBands }}" as="mb"><div style="position:absolute;top:0;bottom:0;left:{{ mb.left }}%;width:{{ mb.width }}%;background:{{ mb.tint }};pointer-events:none"></div></sc-for>
+            <sc-for list="{{ r.shifts }}" as="sh">
+              <div onPointerDown="{{ sh.down }}" title="{{ sh.tip }}" style="position:absolute;top:8px;bottom:8px;left:{{ sh.left }}%;width:{{ sh.width }}%;background:{{ sh.bg }};color:{{ sh.fg }};box-shadow:{{ sh.ring }};border-radius:6px;cursor:grab;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;overflow:hidden;white-space:nowrap;box-sizing:border-box">
+                <div onPointerDown="{{ sh.dStart }}" style="position:absolute;left:0;top:0;bottom:0;width:16px;cursor:ew-resize"></div>
+                {{ sh.label }}
+                <div onPointerDown="{{ sh.dEnd }}" style="position:absolute;right:0;top:0;bottom:0;width:16px;cursor:ew-resize"></div>
+              </div>
+            </sc-for>
+            <sc-for list="{{ r.ghosts }}" as="gh"><div data-ghost="1" title="{{ gh.tip }}" style="position:absolute;top:8px;bottom:8px;left:{{ gh.left }}%;width:{{ gh.width }}%;border:1.5px dashed #B4C3D0;border-radius:6px;box-sizing:border-box;background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(180,195,208,.28) 6px 7px);display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:#8796A5;white-space:nowrap;overflow:hidden;pointer-events:none"><span style="text-decoration:line-through">{{ gh.time }}</span><span style="font-weight:600;color:#5A6B7A">{{ gh.who }}</span></div></sc-for>
+            <sc-if value="{{ r.preview }}"><div style="position:absolute;top:6px;bottom:6px;left:{{ r.preview.left }}%;width:{{ r.preview.width }}%;border:2px dashed #1F7D97;background:rgba(232,145,122,.14);border-radius:6px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:600 11px 'IBM Plex Mono',monospace;color:#1F7D97;white-space:nowrap;pointer-events:none">{{ r.preview.label }}</div></sc-if>
+          </div>
+        </div>
+      </sc-for>
+      </div>
+      <sc-if value="{{ notFocus }}">
+      <div data-guide="kids" style="display:flex;height:32px;flex:none;border-top:1px solid #D3DDEA;background:#EEF4F7;overflow:hidden;scrollbar-gutter:stable;scrollbar-width:thin">
+        <div style="width:150px;flex:none;padding:0 8px 0 16px;display:flex;align-items:center;font-size:12px;font-weight:600;box-sizing:border-box">{{ L.children }}</div>
+        <div style="position:relative;flex:1;margin-right:12px"><sc-for list="{{ mergeBands }}" as="mb"><div style="position:absolute;top:0;bottom:0;left:{{ mb.left }}%;width:{{ mb.width }}%;background:{{ mb.tint }};pointer-events:none"></div></sc-for><sc-for list="{{ cov }}" as="c"><div style="position:absolute;top:0;bottom:0;left:{{ c.left }}%;width:{{ c.width }}%;display:flex;align-items:center;justify-content:center;font:500 11px 'IBM Plex Mono',monospace;color:#3C4B5A">{{ c.kl }}</div></sc-for></div>
+      </div>
+      <div data-guide="need" style="display:flex;height:32px;flex:none;background:#EEF4F7;overflow:hidden;scrollbar-gutter:stable;scrollbar-width:thin">
+        <div title="{{ needTip }}" style="width:150px;flex:none;padding:0 8px 0 16px;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;box-sizing:border-box;white-space:nowrap">{{ L.need }}<button onClick="{{ toggleRatio }}" title="{{ ratioTitle }}" style="display:flex;align-items:center;gap:4px;height:22px;padding:0 7px;border:1px solid {{ ratioBd }};background:{{ ratioBg }};color:{{ ratioFg }};border-radius:999px;font:500 11px 'IBM Plex Mono',monospace;cursor:pointer;white-space:nowrap">{{ needSub }}<span style="font-family:'IBM Plex Sans',sans-serif;font-size:11px">✎</span></button></div>
+        <div style="position:relative;flex:1;margin-right:12px"><sc-for list="{{ mergeBands }}" as="mb"><div style="position:absolute;top:0;bottom:0;left:{{ mb.left }}%;width:{{ mb.width }}%;background:{{ mb.tint }};pointer-events:none"></div></sc-for><sc-for list="{{ cov }}" as="c"><div style="position:absolute;top:0;bottom:0;left:{{ c.left }}%;width:{{ c.width }}%;display:flex;align-items:center;justify-content:center;font:500 11px 'IBM Plex Mono',monospace;color:#3C4B5A">{{ c.nl }}</div></sc-for></div>
+      </div>
+      <div data-guide="working" style="display:flex;height:40px;flex:none;border-bottom:1px solid #E3EAF0;background:#EEF4F7;overflow:hidden;scrollbar-gutter:stable;scrollbar-width:thin">
+        <div style="width:150px;flex:none;padding:0 8px 0 16px;display:flex;align-items:center;font-size:12px;font-weight:600;box-sizing:border-box">{{ L.have }}</div>
+        <div style="position:relative;flex:1;margin-right:12px"><sc-for list="{{ mergeBands }}" as="mb"><div style="position:absolute;top:0;bottom:0;left:{{ mb.left }}%;width:{{ mb.width }}%;background:{{ mb.tint }};pointer-events:none"></div></sc-for><sc-for list="{{ cov }}" as="c"><div style="position:absolute;top:4px;bottom:4px;left:{{ c.left }}%;width:{{ c.width }}%;background:{{ c.wb }};color:{{ c.wf }};display:flex;align-items:center;justify-content:center;font:600 11px 'IBM Plex Mono',monospace;box-shadow:inset -1px 0 #EEF4F7">{{ c.wl }}</div></sc-for></div>
+      </div>
+      </sc-if>
+      <div style="display:flex;flex:none;flex-wrap:wrap;align-items:center;gap:14px;padding:12px 16px;background:#EEF4F7;border-top:1px solid #D3DDEA;font-size:12px;color:#3C4B5A">
+        <sc-for list="{{ legend }}" as="lg"><div style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:{{ lg.bg }}"></span>{{ lg.name }}</div></sc-for>
+        <div style="width:1px;height:16px;background:#C9D5E0"></div>
+        <sc-for list="{{ statusLegend }}" as="lg"><div style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:{{ lg.bg }}"></span>{{ lg.name }}</div></sc-for>
+        <div style="width:1px;height:16px;background:#C9D5E0"></div>
+        <div style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:{{ mergeSw }}"></span>{{ mergeLegend }}</div>
+        <div style="flex:1"></div>
+        <button onClick="{{ startTour }}" style="border:1px solid #C9D5E0;background:{{ helpBg }};color:{{ helpFg }};border-radius:999px;height:28px;padding:0 12px;font:inherit;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap">? {{ helpTxt }}</button>
+      </div>
+      <sc-if value="{{ ddMerge }}">
+        <div style="position:absolute;top:92px;left:{{ mergeDd.left }};width:240px;background:#fff;border-radius:10px;box-shadow:0 12px 32px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.06);padding:4px;z-index:12;display:flex;flex-direction:column;gap:2px">
+          <div style="font-size:11px;font-weight:600;color:#5A6B7A;padding:6px 10px 4px">{{ mergeDd.head }}</div>
+          <sc-for list="{{ mergeRooms }}" as="u"><button onClick="{{ u.pick }}" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border:0;border-radius:6px;background:{{ u.optBg }};font:inherit;font-size:13px;cursor:pointer;color:#1F2D3A;text-align:left;white-space:nowrap"><span style="flex:none;width:16px;height:16px;border-radius:5px;background:{{ u.ub }};color:{{ u.uf }};font:700 9px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ u.letter }}</span><span style="flex:1">{{ u.name }}</span><span style="color:#1F7D97;font-weight:700">{{ u.tick }}</span></button></sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ ratioOpen }}">
+        <div style="position:absolute;left:12px;bottom:128px;width:300px;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.05);padding:14px 16px;display:flex;flex-direction:column;gap:10px;z-index:7">
+          <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-weight:600;font-size:14px">{{ ratioHead }}</div><div style="font-size:12px;color:#5A6B7A;line-height:1.4;text-wrap:pretty">{{ ratioSub }}</div></div><button onClick="{{ toggleRatio }}" style="border:0;background:#EEF3F6;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px">×</button></div>
+          <sc-for list="{{ ratioRows }}" as="rr" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="flex:none;width:20px;height:20px;border-radius:5px;background:{{ rr.ub }};color:{{ rr.uf }};font:700 10px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ rr.letter }}</span>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">{{ rr.name }}</div><div style="font-size:11px;color:#5A6B7A">{{ rr.ages }}</div></div>
+              <button onClick="{{ rr.dec }}" style="width:28px;height:28px;border:1px solid #C9D5E0;background:#fff;border-radius:8px;font-size:15px;cursor:pointer;color:#1F2D3A">−</button>
+              <div style="width:54px;text-align:center;font:600 13px 'IBM Plex Mono',monospace">1:{{ rr.ratio }}</div>
+              <button onClick="{{ rr.inc }}" style="width:28px;height:28px;border:1px solid #C9D5E0;background:#fff;border-radius:8px;font-size:15px;cursor:pointer;color:#1F2D3A">+</button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showHelp }}">
+        <div style="position:absolute;right:16px;bottom:52px;width:340px;background:#1F2D3A;color:#fff;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.5;display:flex;flex-direction:column;gap:8px;z-index:6;box-shadow:0 12px 32px rgba(15,30,45,.25)">
+          <div>{{ L.drawHint }}</div><div style="color:#C9D5E0">{{ dragHint }}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showFloat }}">
+        <div data-guide="card" style="position:absolute;top:40px;right:20px;width:300px;max-height:calc(100% - 60px);overflow-y:auto;scrollbar-width:thin;box-sizing:border-box;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.05);padding:16px;display:flex;flex-direction:column;gap:12px;z-index:5">
+          <sc-if value="{{ hasSel }}">
+            <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-weight:600;font-size:15px">{{ sel.staffName }}</div><div style="font-size:12px;color:#5A6B7A">{{ sel.dayName }} · {{ sel.time }}</div></div><button onClick="{{ sel.close }}" style="border:0;background:#EEF3F6;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px">×</button></div>
+            <div style="font-size:12px;font-weight:600">{{ L.type }}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><sc-for list="{{ sel.types }}" as="ty"><button onClick="{{ ty.pick }}" style="border:0;border-radius:8px;padding:10px 6px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;background:{{ ty.bg }};color:{{ ty.fg }};box-shadow:{{ ty.ring }}">{{ ty.name }}</button></sc-for></div>
+            <sc-if value="{{ sel.isBreak }}"><div style="display:flex;align-items:center;gap:8px"><div style="font-size:12px;font-weight:600;flex:1">{{ L.breakLen }}</div><sc-for list="{{ sel.breakLens }}" as="bl"><button onClick="{{ bl.pick }}" style="border:1px solid {{ bl.bd }};border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer;background:{{ bl.bg }};color:{{ bl.fg }}">{{ bl.label }}</button></sc-for></div></sc-if>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font-size:12px;color:#3C4B5A">{{ unitLabel }}:</div>
+              <div style="position:relative;flex:1">
+                <button onClick="{{ ddShiftToggle }}" style="display:flex;align-items:center;gap:8px;height:32px;padding:0 10px 0 8px;border:1px solid #C9D5E0;background:#fff;border-radius:8px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;color:#1F2D3A;white-space:nowrap;width:100%"><span style="flex:none;width:16px;height:16px;border-radius:5px;background:{{ sCur.ub }};color:{{ sCur.uf }};font:700 9px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ sCur.letter }}</span><span style="flex:1;text-align:left">{{ sCur.name }}</span><span style="font-size:10px;color:#5A6B7A">▾</span></button>
+                <sc-if value="{{ ddShift }}">
+                  <div style="position:absolute;top:36px;left:0;right:0;min-width:220px;max-height:260px;overflow-y:auto;scrollbar-width:thin;background:#fff;border-radius:10px;box-shadow:0 12px 32px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.06);padding:4px;z-index:12;display:flex;flex-direction:column;gap:2px">
+                    <sc-for list="{{ sel.groups }}" as="u"><button onClick="{{ u.pickDd }}" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:0;border-radius:6px;background:{{ u.optBg }};font:inherit;font-size:13px;cursor:pointer;color:#1F2D3A;text-align:left;white-space:nowrap"><span style="flex:none;width:16px;height:16px;border-radius:5px;background:{{ u.ub }};color:{{ u.uf }};font:700 9px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ u.letter }}</span><span style="flex:1">{{ u.name }}</span><span style="color:#1F7D97;font-weight:700">{{ u.tick }}</span></button></sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+            <button onClick="{{ sel.del }}" style="border:1px solid #F5B9B5;color:#C2413D;background:#fff;border-radius:8px;padding:9px;font:inherit;font-size:13px;cursor:pointer">{{ L.del }}</button>
+          </sc-if>
+          <sc-if value="{{ hasPerson }}">
+            <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><button onClick="{{ focusPerson }}" title="{{ focusTip }}" style="border:0;background:none;padding:0;font:inherit;font-weight:600;font-size:15px;color:#1F2D3A;cursor:pointer;text-align:left;text-decoration:underline;text-decoration-color:#C9D5E0;text-underline-offset:3px" style-hover="text-decoration-color:#1F7D97;color:#1F7D97">{{ person.name }}</button><div style="font-size:12px;color:#5A6B7A">{{ personMeta }}</div></div><button onClick="{{ person.close }}" style="border:0;background:#EEF3F6;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px">×</button></div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <div style="font-size:11px;color:#5A6B7A">{{ daysHint }}</div>
+              <div style="display:flex;gap:4px"><sc-for list="{{ pDays }}" as="a"><button onClick="{{ a.go }}" title="{{ a.tip }}" style="flex:1;text-align:center;font:inherit;font-size:11px;font-weight:{{ a.fw }};padding:5px 0;border-radius:6px;border:1px solid {{ a.bd }};background:{{ a.bg }};color:{{ a.fg }};cursor:pointer">{{ a.short }}</button></sc-for></div>
+            </div>
+            <sc-if value="{{ person.isStaff }}">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="font-size:12px;color:#3C4B5A">{{ unitLabel }}:</div>
+                <div style="position:relative;flex:1">
+                  <button onClick="{{ ddCardToggle }}" style="display:flex;align-items:center;gap:8px;height:32px;padding:0 10px 0 8px;border:1px solid #C9D5E0;background:#fff;border-radius:8px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;color:#1F2D3A;white-space:nowrap;width:100%"><span style="flex:none;width:16px;height:16px;border-radius:5px;background:{{ pCur.ub }};color:{{ pCur.uf }};font:700 9px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ pCur.letter }}</span><span style="flex:1;text-align:left">{{ pCur.name }}</span><span style="font-size:10px;color:#5A6B7A">▾</span></button>
+                  <sc-if value="{{ ddCard }}">
+                    <div style="position:absolute;top:36px;left:0;min-width:220px;max-height:260px;overflow-y:auto;scrollbar-width:thin;background:#fff;border-radius:10px;box-shadow:0 12px 32px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.06);padding:4px;z-index:12;display:flex;flex-direction:column;gap:2px;right:0">
+                      <sc-for list="{{ pUnits }}" as="u"><button onClick="{{ u.pick }}" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:0;border-radius:6px;background:{{ u.optBg }};font:inherit;font-size:13px;cursor:pointer;color:#1F2D3A;text-align:left;white-space:nowrap"><span style="flex:none;width:16px;height:16px;border-radius:5px;background:{{ u.ub }};color:{{ u.uf }};font:700 9px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ u.letter }}</span><span style="flex:1">{{ u.name }}</span><span style="color:#1F7D97;font-weight:700">{{ u.tick }}</span></button></sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ person.isStaff }}">
+              <div style="display:flex;gap:6px">
+                <button onClick="{{ person.setOpen }}" style="flex:1;border:1px solid #C9D5E0;border-radius:8px;padding:8px 4px;font:inherit;font-size:12px;cursor:pointer;background:{{ pOpenBg }};color:{{ pOpenFg }}">{{ L.setOpener }}</button>
+                <button onClick="{{ person.setClose }}" style="flex:1;border:1px solid #C9D5E0;border-radius:8px;padding:8px 4px;font:inherit;font-size:12px;cursor:pointer;background:{{ pCloseBg }};color:{{ pCloseFg }}">{{ L.setCloser }}</button>
+              </div>
+              <button onClick="{{ editPerson }}" style="border:1px solid #C9D5E0;border-radius:8px;padding:9px;background:#fff;color:#1F7D97;font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ editPersonTxt }}</button>
+              <button onClick="{{ person.toggleSick }}" style="border:0;border-radius:8px;padding:9px;background:#C2413D;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ person.sickLabel }}</button>
+            </sc-if>
+          </sc-if>
+          <sc-for list="{{ coverF }}" as="u">
+            <div style="display:flex;flex-direction:column;gap:8px;border-top:1px dashed #D3DDEA;padding-top:12px">
+              <div style="font-size:12px;font-weight:700;color:#C2413D">{{ L.needsCover }}: {{ u.name }} · {{ u.time }}</div>
+              <sc-for list="{{ u.cands }}" as="c">
+                <div style="display:flex;align-items:center;gap:8px;opacity:{{ c.op }}"><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">{{ c.name }}</div><div style="font-size:11px;color:{{ c.col }}">{{ c.line }}</div></div><sc-if value="{{ c.ok }}"><button onClick="{{ c.assign }}" style="border:0;background:#1F7D97;color:#fff;border-radius:8px;padding:6px 12px;font:inherit;font-size:12px;font-weight:600;cursor:pointer">{{ L.assign }}</button></sc-if></div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  <sc-if value="{{ phoneOpen }}">
+    <div onClick="{{ togglePhone }}" style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:35;background:rgba(15,30,45,.32)"></div>
+    <div style="position:absolute;top:70px;right:32px;z-index:36;display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:8px;padding:6px 6px 6px 12px;box-shadow:0 8px 24px rgba(15,30,45,.18)">
+        <div style="font-size:13px;color:#5A6B7A">{{ phoneOf }}</div>
+        <div style="position:relative;display:inline-flex">
+          <select value="{{ phoneMe }}" onChange="{{ pickPhoneMe }}" style="appearance:none;-webkit-appearance:none;height:32px;min-width:170px;padding:0 28px 0 10px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;font:inherit;font-size:13px;color:#1F2D3A;cursor:pointer">
+            <sc-for list="{{ phoneOpts }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for>
+          </select>
+          <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:#5A6B7A">▾</span>
+        </div>
+        <button onClick="{{ togglePhone }}" style="height:32px;padding:0 12px;border:0;border-radius:6px;background:#1F2D3A;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ phoneClose }}</button>
+      </div>
+      <div style="position:relative;width:342px;height:743px">
+        <div style="position:absolute;top:0;right:0;width:402px;height:874px;transform:scale(.85);transform-origin:top right">
+          <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+            <dc-import name="Staff App" variant="b" others="unit" split="{{ true }}" ctl="{{ ctl }}" mod="{{ mod }}" rev="{{ rev }}" lang="{{ lang }}" me="{{ phoneMe }}" cmd="{{ phoneCmd }}" hint-size="402px,874px" style="display:block;width:402px;height:874px"></dc-import>
+          </x-import>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ reqOpen }}">
+    <div style="position:absolute;top:52px;right:24px;width:552px;max-height:672px;overflow-y:auto;z-index:28;background:#fff;border-radius:12px;box-shadow:0 19px 48px rgba(15,30,45,.2),0 0 0 1px rgba(0,0,0,.06);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:12px;padding:17px 19px;border-bottom:1px solid #E3EAF0"><div style="flex:1;font-size:18px;font-weight:600">{{ reqTitle }}</div><button onClick="{{ toggleReq }}" style="border:0;background:transparent;font-size:22px;color:#5A6B7A;cursor:pointer;padding:0 5px">×</button></div>
+      <sc-if value="{{ noReq }}"><div style="padding:22px 19px;font-size:17px;color:#5A6B7A">{{ noReqTxt }}</div></sc-if>
+      <sc-for list="{{ reqList }}" as="r">
+        <div style="display:flex;flex-direction:column;gap:10px;padding:14px 19px;border-bottom:1px solid #EEF3F6;background:{{ r.bg }}">
+          <div style="display:flex;align-items:baseline;gap:10px"><div style="flex:1;font-size:17px;font-weight:600">{{ r.name }}</div><div style="font-size:14px;font-weight:600;color:{{ r.sFg }}">{{ r.status }}</div></div>
+          <div style="font-size:16px;line-height:1.45;color:#3C4B5A">{{ r.label }}</div>
+          <sc-for list="{{ r.lines }}" as="ln"><div style="font-size:16px;line-height:1.45;color:{{ ln.fg }}">{{ ln.t }}</div></sc-for>
+          <sc-if value="{{ r.canDecide }}"><div style="display:flex;gap:10px"><button onClick="{{ r.yes }}" style="height:38px;padding:0 17px;border:0;border-radius:7px;background:#1F7D97;color:#fff;font:inherit;font-size:16px;font-weight:600;cursor:pointer">{{ yesTxt }}</button><button onClick="{{ r.no }}" style="height:38px;padding:0 17px;border:1px solid #C9D5E0;border-radius:7px;background:#fff;color:#1F2D3A;font:inherit;font-size:16px;cursor:pointer">{{ noTxt }}</button><button onClick="{{ r.show }}" style="height:38px;padding:0 10px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:16px;font-weight:600;cursor:pointer">{{ showDayTxt }}</button></div></sc-if>
+          <sc-if value="{{ r.canSee }}"><div style="display:flex;gap:10px"><button onClick="{{ r.yes }}" style="height:38px;padding:0 17px;border:1px solid #C9D5E0;border-radius:7px;background:#fff;color:#1F2D3A;font:inherit;font-size:16px;cursor:pointer">{{ seenTxt }}</button><button onClick="{{ r.show }}" style="height:38px;padding:0 10px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:16px;font-weight:600;cursor:pointer">{{ showDayTxt }}</button></div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ coverOpen }}">
+    <div data-guide="free" style="position:absolute;top:57px;right:0;bottom:0;width:600px;z-index:29;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
+        <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ covTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ covSub }}</div></div>
+        <button onClick="{{ toggleCover }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
+      </div>
+      <div style="display:flex;gap:2px;margin:14px 24px 4px;padding:3px;background:#EEF3F6;border-radius:8px;align-self:flex-start">
+        <sc-for list="{{ covTabs }}" as="x"><button onClick="{{ x.pick }}" style="height:34px;padding:0 16px;border:0;border-radius:6px;font:inherit;font-size:14px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer;white-space:nowrap">{{ x.name }}</button></sc-for>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:10px 24px 24px;display:flex;flex-direction:column;gap:12px">
+        <sc-if value="{{ noFree }}"><div style="padding:18px;border:1px solid #E3EAF0;border-radius:10px;font-size:15px;line-height:1.5;color:#5A6B7A">{{ noFreeTxt }}</div></sc-if>
+        <sc-for list="{{ freeCards }}" as="f">
+          <div style="border:1px solid {{ f.bd }};border-radius:12px;overflow:hidden;flex:none">
+            <button onClick="{{ f.toggle }}" style="width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;column-gap:12px;padding:14px 16px;border:0;background:{{ f.headBg }};font:inherit;color:#1F2D3A;cursor:pointer;text-align:left">
+              <span style="flex:none;width:24px;height:24px;border-radius:5px;background:{{ f.ub }};color:{{ f.uf }};font:700 13px 'IBM Plex Mono',monospace;display:flex;align-items:center;justify-content:center">{{ f.letter }}</span>
+              <div style="min-width:0"><div style="font-size:16px;font-weight:600">{{ f.when }} · {{ f.time }}</div><div style="font-size:13px;color:#5A6B7A;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.unit }} · {{ f.short }}</div></div>
+              <span style="font-size:13px;font-weight:600;padding:4px 10px;border-radius:6px;background:{{ f.pillBg }};color:{{ f.pillFg }};white-space:nowrap">{{ f.pill }}</span>
+              <span style="font-size:14px;color:#5A6B7A;width:14px;text-align:center">{{ f.chev }}</span>
+            </button>
+            <sc-if value="{{ f.open }}">
+              <div style="display:flex;flex-direction:column;gap:14px;padding:4px 16px 16px">
+                <div style="font-size:14px;line-height:1.5;color:#3C4B5A">{{ f.replaces }}</div>
+                <sc-if value="{{ f.hasTags }}"><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ f.tags }}" as="tg"><span style="font-size:13px;font-weight:600;padding:3px 8px;border-radius:5px;background:#EEF3F6;color:#3C4B5A">{{ tg.t }}</span></sc-for></div></sc-if>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"><sc-for list="{{ f.steps }}" as="sp"><div style="display:flex;flex-direction:column;gap:6px"><div style="height:6px;border-radius:3px;background:{{ sp.bar }}"></div><div style="font-size:13px;font-weight:{{ sp.fw }};color:{{ sp.fg }}">{{ sp.name }}</div></div></sc-for></div>
+                <div style="font-size:16px;font-weight:600;line-height:1.4">{{ f.statusLine }}</div>
+                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid #EEF3F6;padding-top:12px"><sc-for list="{{ f.log }}" as="lg"><div style="display:grid;grid-template-columns:52px minmax(0,1fr);column-gap:10px;font-size:14px;line-height:1.45"><span style="font-family:'IBM Plex Mono',monospace;color:#5A6B7A">{{ lg.t }}</span><span style="color:#1F2D3A">{{ lg.text }}</span></div></sc-for></div>
+                <sc-if value="{{ f.hasEx }}">
+                  <div style="display:flex;flex-direction:column;gap:6px;background:#F7FAFB;border-radius:10px;padding:12px 14px">
+                    <div style="font-size:13px;font-weight:600;color:#5A6B7A">{{ f.exTitle }}</div>
+                    <sc-for list="{{ f.ex }}" as="x"><div style="display:grid;grid-template-columns:130px minmax(0,1fr);column-gap:10px;font-size:14px;line-height:1.45"><span style="font-weight:600">{{ x.name }}</span><span style="color:#8E2A27">{{ x.why }}</span></div></sc-for>
+                  </div>
+                </sc-if>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <sc-if value="{{ f.canConfirm }}"><button onClick="{{ f.confirm }}" style="height:42px;padding:0 18px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ f.confirmTxt }}</button></sc-if>
+                  <sc-if value="{{ f.canSkip }}"><button onClick="{{ f.skip }}" style="height:42px;padding:0 16px;border:1px dashed #9FCFDB;border-radius:8px;background:#fff;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ f.skipTxt }}</button></sc-if>
+                  <button onClick="{{ f.show }}" style="height:42px;padding:0 16px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ f.showTxt }}</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ setOpen }}">
+    <div style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:30;background:#fff;display:flex">
+      <dc-import name="Demo Settings" ctl="{{ ctl }}" mod="{{ mod }}" lang="{{ lang }}" rev="{{ rev }}" section="{{ setSection }}" pid="{{ setPid }}" on-nav="{{ setNav }}" on-close="{{ toggleSettings }}" on-show="{{ showPerson }}" set-lang="{{ setLangFn }}" hint-size="100%,100%" style="width:100%;height:100%"></dc-import>
+    </div>
+  </sc-if>
+  <sc-if value="{{ hasGhost }}">
+    <div style="position:absolute;left:{{ ghost.x }}px;top:{{ ghost.y }}px;transform:translate(-20px,-50%);pointer-events:none;z-index:20;background:#1F2D3A;color:#fff;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:8px;align-items:center">{{ ghost.name }}<span style="font:500 11px 'IBM Plex Mono',monospace;color:#B4C3D0">{{ ghost.label }}</span></div>
+  </sc-if>
+  <sc-if value="{{ hasToast }}"><div style="position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#1F2D3A;color:#fff;font-size:13px;padding:10px 16px;border-radius:8px;z-index:21">{{ toast }}</div></sc-if>
+  <sc-if value="{{ demoOn }}">
+    <div style="position:absolute;left:24px;bottom:24px;width:440px;z-index:45;background:#1F2D3A;color:#fff;border-radius:14px;padding:18px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px;box-sizing:border-box">
+      <div style="display:flex;align-items:center;gap:10px"><span style="font:600 12px 'IBM Plex Mono',monospace;background:#2B91AD;color:#fff;border-radius:999px;padding:3px 10px">{{ demoStep }}</span><div style="flex:1;font-size:12px;color:#A9B9C8">{{ demoLabel }}</div></div>
+      <div style="font-size:20px;font-weight:600;line-height:1.25">{{ demo.title }}</div>
+      <div style="font-size:15px;line-height:1.55;color:#DCE5EC;text-wrap:pretty">{{ demo.body }}</div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:2px"><button onClick="{{ stopDemo }}" style="border:0;background:{{ demoEndBg }};color:#fff;border-radius:8px;height:36px;padding:0 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ demoEndTxt }}</button></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ tourOn }}">
+    <div style="position:absolute;inset:0;overflow:hidden;z-index:40;pointer-events:none">
+      <div style="position:absolute;left:{{ tb.sx }}px;top:{{ tb.sy }}px;width:{{ tb.sw }}px;height:{{ tb.sh }}px;border-radius:10px;box-shadow:0 0 0 3px #2B91AD,0 0 0 9999px rgba(12,22,32,.58);transition:left .25s,top .25s,width .25s,height .25s"></div>
+    </div>
+    <div onClick="{{ tourEnd }}" style="position:absolute;inset:0;z-index:41;cursor:default"></div>
+    <div style="position:absolute;left:{{ bub.left }}px;top:{{ bub.top }};bottom:{{ bub.bottom }};width:380px;background:#1F2D3A;color:#fff;border-radius:18px;padding:20px 22px 18px;box-shadow:0 20px 50px rgba(0,0,0,.35);z-index:42;display:flex;flex-direction:column;gap:12px;box-sizing:border-box">
+      <sc-if value="{{ bub.hasArrow }}"><div style="position:absolute;left:{{ bub.ax }};top:{{ bub.ay }};width:18px;height:18px;background:#1F2D3A;transform:rotate(45deg);border-radius:3px"></div></sc-if>
+      <div style="display:flex;align-items:center;gap:10px;position:relative">
+        <span style="font:600 12px 'IBM Plex Mono',monospace;background:#2B91AD;color:#fff;border-radius:999px;padding:3px 10px">{{ tourStep }}</span>
+        <div style="flex:1"></div>
+        <button onClick="{{ tourEnd }}" title="{{ tourCloseTxt }}" style="border:0;background:rgba(255,255,255,.12);color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:15px">×</button>
+      </div>
+      <div style="font-size:21px;font-weight:600;line-height:1.25;position:relative">{{ tourTitle }}</div>
+      <div style="font-size:15px;line-height:1.55;color:#DCE5EC;text-wrap:pretty;position:relative">{{ tourBody }}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;position:relative">
+        <sc-if value="{{ tourHasBack }}"><button onClick="{{ tourBack }}" style="border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;border-radius:8px;height:36px;padding:0 14px;font:inherit;font-size:14px;cursor:pointer">{{ tourBackTxt }}</button></sc-if>
+        <div style="flex:1"></div>
+        <button onClick="{{ tourNext }}" style="border:0;background:#2B91AD;color:#fff;border-radius:8px;height:36px;padding:0 18px;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ tourNextTxt }}</button>
+      </div>
+    </div>
+  </sc-if>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;onLang&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(l:string)=&gt;void&quot;}}">
+const DARK = false;
+const L_ = (sv, a, b) => sv ? a : b;
+class Component extends DCLogic {
+  state = { lang: 'en', sort: 'az', dir: 1, q: '', help: false, unit: 'all' };
+  U = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
+  pal = {
+    contact: { bg: '#CDECEF', fg: '#134e5e' }, break: { bg: '#FFDAD8', fg: '#7a2a26' }, planning: { bg: '#D8F4C0', fg: '#2f5a17' }, meeting: { bg: '#D3DDEA', fg: '#2a3a52' },
+    under: '#FFDAD8', underFg: '#8E2A27', over: '#FFF1CF', overFg: '#6B5214', ok: '#E2F6D4', okFg: '#3B7A22',
+    selRing: '0 0 0 2px #1F2D3A', warnRing: '0 0 0 2px #D9534F', w_rule: '#C2413D', w_cover: '#C2413D', w_staffing: '#D9A23A', w_role: '#1F7D97',
+  };
+  rootRef = React.createRef();
+  STEPS = [
+    { t: ['warnings'], en: ['Things to check', 'Everything that breaks a rule on the day you are looking at shows up here. Click a card to jump straight to the shift.'], sv: ['Att kontrollera', 'Allt som bryter mot en regel den dag du tittar på visas här. Klicka på ett kort för att gå direkt till passet.'] },
+    { t: ['unit'], en: ['Choose a unit', 'Pick a unit to see only its teachers and children. The coloured letter next to each name shows which unit the teacher belongs to.'], sv: ['Välj avdelning', 'Välj en avdelning för att bara se dess personal och barn. Den färgade bokstaven vid varje namn visar vilken avdelning personen tillhör.'] },
+    { t: ['staff'], en: ['Your staff', 'The bar under each name fills up as their contract hours are planned: yellow means more to plan, green means done, red means too many. Drag a name onto the schedule to add a 1-hour shift.'], sv: ['Din personal', 'Stapeln under varje namn fylls i takt med att avtalade timmar planeras: gul betyder mer att planera, grön betyder klart, röd betyder för många. Dra ett namn till schemat för att lägga till ett pass på 1 timme.'] },
+    { t: ['card'], open: 'person', en: ['A teacher\'s card', 'Clicking a name opens this card. Click the name at the top to see only their week. The card shows their contract and which unit they belong to, which you can change in the list. The day buttons show the days they are available; click one to jump to that day. Below, you can set who opens or closes that day and mark the person sick.'], sv: ['Lärarens kort', 'När du klickar på ett namn öppnas det här kortet. Klicka på namnet högst upp för att bara se personens vecka. Kortet visar avtalet och vilken avdelning personen tillhör, som du kan ändra i listan. Dagknapparna visar vilka dagar personen är tillgänglig; klicka på en för att gå till den dagen. Längre ner kan du välja vem som öppnar eller stänger den dagen och sjukanmäla personen.'] },
+    { t: ['schedule'], en: ['The schedule', 'Drag across an empty part of a row to draw a shift. Drag a shift to move it, or drag its edges to change the time. Click a shift to change what kind of time it is.'], sv: ['Schemat', 'Dra över en tom del av en rad för att rita ett pass. Dra ett pass för att flytta det, eller dra i kanterna för att ändra tiden. Klicka på ett pass för att ändra vilken sorts tid det är.'] },
+    { t: ['kids', 'need'], en: ['Children and staff needed', 'The program works out how many adults are needed from the number of children. Click the pencil to change how many children each adult can have.'], sv: ['Barn och behov', 'Programmet räknar ut hur många vuxna som behövs utifrån antalet barn. Klicka på pennan för att ändra hur många barn varje vuxen kan ha.'] },
+    { t: ['working'], en: ['Who is working', 'Shows how many staff are working at each time. Red means too few, green means enough, yellow means more than needed.'], sv: ['Vem som arbetar', 'Visar hur många som arbetar vid varje tid. Rött betyder för få, grönt betyder tillräckligt, gult betyder fler än behövs.'] },
+    { t: ['settings'], en: ['Settings', 'Import staff and children, export the schedule, set up each person and change the rules the program checks.'], sv: ['Inställningar', 'Importera personal och barn, exportera schemat, ställ in varje person och ändra reglerna som programmet kontrollerar.'] },
+  ];
+  measureTour() {
+    const root = this._root, i = this.state.tour; if (!root || i == null) return;
+    const els = this.STEPS[i].t.map(k => root.querySelector('[data-guide="' + k + '"]')).filter(Boolean);
+    if (!els.length) return;
+    const rr = root.getBoundingClientRect(), sc = rr.width / root.offsetWidth || 1;
+    let x1 = 1e9, y1 = 1e9, x2 = -1e9, y2 = -1e9;
+    els.forEach(e => { const b = e.getBoundingClientRect(); x1 = Math.min(x1, b.left); y1 = Math.min(y1, b.top); x2 = Math.max(x2, b.right); y2 = Math.max(y2, b.bottom); });
+    this.setState({ tbox: { x: (x1 - rr.left) / sc, y: (y1 - rr.top) / sc, w: (x2 - x1) / sc, h: (y2 - y1) / sc, W: root.offsetWidth, H: root.offsetHeight } });
+  }
+  goTour(i, root) {
+    if (root) this._root = root;
+    const step = this.STEPS[i];
+    if (step.open === 'person') { const list = this.mod.STAFF, p = list[Math.floor(Math.random() * list.length)]; this.ctl.up({ person: p.id, sel: null }); this._tourOpened = true; }
+    else if (this._tourOpened) { this.ctl.up({ person: null, sel: null }); this._tourOpened = false; }
+    this.setState({ tour: i, focus: null, settings: false, dd: null, ratioOpen: false, unit: 'all' });
+    setTimeout(() => this.measureTour(), 60);
+  }
+  endTour() { if (this._tourOpened) { this.ctl.up({ person: null, sel: null }); this._tourOpened = false; } this.setState({ tour: null }); }
+  tourVals(sv) {
+    const i = this.state.tour; if (i == null) return { tourOn: false };
+    const st = this.STEPS[i], [title, body] = sv ? st.sv : st.en, n = this.STEPS.length, b = this.state.tbox;
+    const P = 6, BW = 380, BH = 250, G = 20;
+    let tb = { sx: 0, sy: 0, sw: 0, sh: 0 }, bub = { left: 530, top: '200px', bottom: 'auto', hasArrow: false, ax: '0', ay: '0' };
+    if (b) {
+      tb = { sx: b.x - P, sy: b.y - P, sw: b.w + 2 * P, sh: b.h + 2 * P };
+      const cx = b.x + b.w / 2, clampL = l => Math.max(16, Math.min(b.W - BW - 16, l));
+      if (b.y + b.h + G + BH < b.H) { const l = clampL(cx - BW / 2); bub = { left: l, top: (b.y + b.h + G) + 'px', bottom: 'auto', hasArrow: true, ax: Math.max(20, Math.min(BW - 38, cx - l - 9)) + 'px', ay: '-8px' }; }
+      else if (b.y - G - BH > 0) { const l = clampL(cx - BW / 2); bub = { left: l, top: 'auto', bottom: (b.H - b.y + G) + 'px', hasArrow: true, ax: Math.max(20, Math.min(BW - 38, cx - l - 9)) + 'px', ay: 'calc(100% - 10px)' }; }
+      else if (b.x - G - BW > 0 && b.x > b.W / 2) { const t = Math.max(16, Math.min(b.H - BH - 16, b.y + 40)); bub = { left: b.x - G - BW, top: t + 'px', bottom: 'auto', hasArrow: true, ax: 'calc(100% - 10px)', ay: '28px' }; }
+      else if (b.x + b.w + G + BW < b.W) { const t = Math.max(16, Math.min(b.H - BH - 16, b.y + 40)); bub = { left: b.x + b.w + G, top: t + 'px', bottom: 'auto', hasArrow: true, ax: '-8px', ay: '28px' }; }
+      else { bub = { left: Math.max(16, b.x + b.w - BW - 24), top: (b.y + 24) + 'px', bottom: 'auto', hasArrow: false, ax: '0', ay: '0' }; }
+    }
+    return {
+      tourOn: true, tb, bub, tourTitle: title, tourBody: body, tourStep: (i + 1) + ' / ' + n,
+      tourHasBack: i > 0, tourBackTxt: sv ? 'Tillbaka' : 'Back', tourNextTxt: i < n - 1 ? (sv ? 'Nästa' : 'Next') : (sv ? 'Klar' : 'Done'), tourCloseTxt: sv ? 'Stäng guiden' : 'Close the guide',
+      tourNext: () => i < n - 1 ? this.goTour(i + 1) : this.endTour(),
+      tourBack: () => this.goTour(i - 1), tourEnd: () => this.endTour(),
+    };
+  }
+  fitToWindow = () => {
+    const el = this.rootRef.current || document.querySelector('[data-root]'); if (!el) return;
+    if (window.__fitOverride) { el.style.transform = window.__fitOverride; return; }
+    if (el !== this._obs && window.ResizeObserver) { this._ro && this._ro.disconnect(); this._ro = new ResizeObserver(() => this.fitToWindow()); this._ro.observe(el); this._obs = el; }
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const s = Math.min(vw / el.offsetWidth, vh / el.offsetHeight), hh = Math.floor(el.offsetHeight * s) + 'px';
+    const dx = Math.max(0, (vw - el.offsetWidth * s) / 2);
+    el.style.transform = 'translate(' + dx + 'px,0) scale(' + s + ')';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.background = '#fff';
+    for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) { n.style.height = hh; n.style.overflow = 'hidden'; }
+  };
+  componentWillUnmount() { window.removeEventListener('resize', this.fitToWindow); this._ro && this._ro.disconnect(); }
+  async componentDidMount() {
+    window.addEventListener('resize', this.fitToWindow);
+    this.fitToWindow();
+    const m = await import(window.__resources && window.__resources.core ? window.__resources.core : new URL('schedule-core-demo.js', document.baseURI).href);
+    this.mod = m; this.ctl = m.controller(this); this.forceUpdate();
+  }
+  async runDemo(sv) {
+    const run = this._demoRun = (this._demoRun || 0) + 1, ctl = this.ctl, mod = this.mod, alive = () => this._demoRun === run, t = (a, b) => sv ? a : b;
+    const wait = ms => new Promise(r => setTimeout(r, ms)), W = 42, D = 1;
+    const cap = (n, title, body, done) => alive() && this.setState({ demo: { n, title, body, done: !!done } });
+    const cmd = c => this.setState(st => ({ phoneCmd: { n: ((st.phoneCmd || {}).n || 0) + 1, ...c } }));
+    const fr = st => (st.free || []).find(x => x.staff === 'p1' && x.week === W && x.day === D);
+    ctl.store.set(st => { mod.removeFree(st, 'p1', W, D); st.absences = st.absences.filter(z => !(z.staff === 'p1' && z.week === W && z.day === D));
+      st.requests = (st.requests || []).filter(r => !(r.staff === 'p1' && r.type === 'sick' && r.week === W && r.day === D)); st.notes = (st.notes || []).filter(n => !(n.key === 'subConfirmed' && n.p && n.p.week === W && n.p.day === D)); st.week = W; });
+    ctl.up({ day: D, person: null, sel: null });
+    this.setState({ coverOpen: false, focus: null, unit: 'all', settings: false, reqOpen: false, dd: null, tour: null, ratioOpen: false, phone: true, phoneMe: 'p1' });
+    cmd({ week: W, day: D, bTab: 'me', inbox: false, sheet: { kind: 'sick', w: W, d: D } });
+    cap(1, t('06:40 · Anna Lindqvist är sjuk', '06:40 · Anna Lindqvist is sick'), t('Anna sjukanmäler sig i appen. Hennes pass i dag är 10:00–18:00 i Hjortron.', 'Anna reports sick in the app. Her shift today is 10:00–18:00 in Hjortron.'));
+    await wait(3400); if (!alive()) return;
+    ctl.touch(st => mod.submitRequest(st, { staff: 'p1', week: W, day: D, type: 'sick', clock: 400 })); cmd({ sheet: null });
+    await wait(2000); if (!alive()) return;
+    this.setState({ phone: false, unit: 'g3', coverOpen: true, freeTab: 'active', freeOpen: {} });
+    cap(2, t('06:41 · Ledigt pass', '06:41 · Free shift'), t('Passet blir ett ledigt pass. Det kräver en vuxen utbildad för särskilt stöd. Först erbjuds det Karin Öberg, föredragen vikarie för Hjortron.', 'The shift becomes a free shift. It needs an adult trained for special needs. It is first offered to Karin Öberg, the preferred substitute for Hjortron.'));
+    await wait(5500); if (!alive()) return;
+    ctl.touch(st => { const f = fr(st); if (f) mod.skipFree(st, f.id); });
+    cap(3, t('06:56 · Inget svar', '06:56 · No answer'), t('Karin har inte svarat på 15 minuter. Passet går nu till alla vikarier som kan ta det. Kortet visar vilka som inte kan och varför.', 'Karin has not answered in 15 minutes. The shift now goes to every substitute who can take it. The card shows who cannot and why.'));
+    await wait(6000); if (!alive()) return;
+    this.setState({ phone: true, phoneMe: 's1' });
+    cap(4, t('07:02 · Sara Ek tar passet', '07:02 · Sara Ek takes the shift'), t('Sara ser ett ledigt pass med tid, avdelning och vad som krävs. Hon ser inte vem som är sjuk eller varför.', 'Sara sees a free shift with the time, unit and what it needs. She does not see who is sick or why.'));
+    await wait(3800); if (!alive()) return;
+    ctl.touch(st => { const f = fr(st); if (f) mod.acceptFree(st, f.id, 's1'); });
+    await wait(3200); if (!alive()) return;
+    this.setState({ phone: false, unit: 'g3' });
+    cap(5, t('Accepterat', 'Accepted'), t('Sara Ek står nu i schemat för tisdag med taggen Vikarie. Hennes timmar räknas in.', 'Sara Ek is now in Tuesday\'s schedule with a Substitute tag. Her hours are counted.'));
+    await wait(5000); if (!alive()) return;
+    ctl.touch(st => { const f = fr(st); if (f) mod.confirmFree(st, f.id); }); this.setState({ freeTab: 'done', freeOpen: {} });
+    cap(6, t('Bekräftat', 'Confirmed'), t('Rektor bekräftar med ett klick. Sara får en bekräftelse i appen, och hennes timmar kommer med i exporten.', 'The principal confirms with one click. Sara gets a confirmation in the app, and her hours are included in the export.'), true);
+  }
+  flash(msg) { clearTimeout(this._ft); this.ctl.up({ toast: msg }); this._ft = setTimeout(() => this.ctl.up({ toast: null }), 2800); }
+  scrollTo(root, id) {
+    const el = root && root.querySelector('[data-row="' + id + '"]'), box = el && el.closest('[data-sched-scroll]');
+    if (!box) return;
+    box.scrollTo({ top: Math.max(0, el.offsetTop - box.clientHeight / 2 + el.offsetHeight / 2), behavior: 'smooth' });
+  }
+  componentDidUpdate() {
+    this.fitToWindow();
+    const sp = this.ctl && this.ctl.ui.person;
+    if (sp !== this._lastPS) { this._lastPS = sp; if (sp) setTimeout(() => {
+      const se = document.querySelector('[data-staff="' + sp + '"]'), sb = se && se.closest('[data-staff-scroll]');
+      if (sb) sb.scrollTo({ top: Math.max(0, se.offsetTop - sb.clientHeight / 2 + se.offsetHeight / 2), behavior: 'smooth' });
+    }, 50); }
+    const pid = this.ctl && this.ctl.ui.person;
+    if (pid === this._lastP) return; this._lastP = pid;
+    if (!pid || !this.rootRef.current) return;
+    const se = this.rootRef.current.querySelector('[data-staff="' + pid + '"]'), sb = se && se.closest('[data-staff-scroll]');
+    if (sb) sb.scrollTo({ top: Math.max(0, se.offsetTop - sb.clientHeight / 2 + se.offsetHeight / 2), behavior: 'smooth' });
+    const el = this.rootRef.current.querySelector('[data-row="' + pid + '"]'), box = el && el.closest('[data-sched-scroll]');
+    if (!box) return;
+    const top = el.offsetTop - box.clientHeight / 2 + el.offsetHeight / 2;
+    box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  }
+  extra(v, sv, U, ST) {
+    const ctl = this.ctl, fid = this.state.focus, P = v.person, t = (a, b) => sv ? a : b;
+    const oc = (ok, title) => ({ title, icon: ok ? '✓' : '✕', bg: ok ? '#E2F6D4' : '#FFDAD8', fg: ok ? '#2D6A1F' : '#8E2A27' });
+    const fw = fid ? v.focusRow : null, hc = { over: '#B33A35', under: '#8A5F0C', ok: '#2D6A1F' };
+    const fUnit = fw && U[fw.groupId];
+    const rows = [
+      [t('Minst 11 timmar mellan slutet av en dags arbete och början av nästa', 'At least 11 hours between the end of one day\'s work and the start of the next'), '11 h'],
+      [t('Högst 40 ordinarie timmar per vecka', 'No more than 40 regular hours in a week'), '40 h'],
+      [t('40 timmar i snitt över fyra veckor, som alternativ kontroll', '40 hours averaged over four weeks, as the alternative check'), '40 h'],
+      [t('Högst 5 timmars sammanhängande arbete utan rast', 'No more than 5 hours of continuous work without a break'), '5 h'],
+      [t('En rast är mellan 15 och 30 minuter', 'A break is between 15 and 30 minutes'), '15–30 min'],
+      [t('Avtalade timmar räknas som barntid plus rast plus planering plus möte', 'Contract hours counted as contact plus break plus planning plus meeting'), ''],
+      [t('Det finns en öppnare och en stängare varje dag förskolan är öppen', 'An opener and a closer exist for every day the preschool is open'), ''],
+      [t('En person schemaläggs inte en dag de inte är tillgängliga', 'A person is not scheduled on a day they are unavailable'), ''],
+      [t('En person schemaläggs inte när de är frånvaroanmälda', 'A person is not scheduled while marked absent'), '']];
+    return {
+      stopPD: e => e.stopPropagation(), focusTip: t('Visa bara den här personens vecka', 'Show only this person\'s week'),
+      isFocus: !!fid, notFocus: !fid, unfocus: () => this.setState({ focus: null }), showAllTxt: t('Visa alla', 'Show everyone'),
+      fTitle: fw ? t(fw.name + ' – veckan', fw.name + ' – the week') : '', fHours: fw ? fw.text : '', fFlag: fw ? fw.flagText : '', fCol: fw ? hc[fw.flag] : '#1F2D3A',
+      fHasUnit: !!fUnit, fU: fUnit || {},
+      setOpen: !!this.state.settings, toggleSettings: () => this.setState(st => ({ settings: st.settings ? false : 'general', setPid: null, dd: null })),
+      setSection: this.state.settings || 'general', setPid: this.state.setPid || null, setNav: k => this.setState({ settings: k }),
+      showPerson: id => { this.setState({ settings: false, focus: id }); }, ctl: this.ctl, mod: this.mod, rev: (this._rev = (this._rev || 0) + 1),
+      editPerson: () => P && (ctl.up({ person: null }), this.setState({ settings: 'staff', setPid: P.id })), editPersonTxt: t('Ändra uppgifter', 'Edit details'), setTxt: t('Inställningar', 'Settings'),
+      setBtnBg: this.state.settings ? '#1F2D3A' : '#fff', setBtnFg: this.state.settings ? '#fff' : '#1F2D3A',
+      sGeneral: t('Allmänt', 'General'), sLang: t('Språk', 'Language'), sTheme: t('Utseende', 'Appearance'), sLight: t('Ljust', 'Light'), sDark: t('Mörkt', 'Dark'),
+      sCols: t('Kolumner i schemat', 'Schedule columns'), sHours: t('Öppettider', 'Opening hours'), sRules: t('Regler som kontrolleras', 'Rules the program checks'),
+      rules: rows.map(([name, val]) => ({ name, val, hasVal: !!val })),
+      openStaff: () => this.setState({ settings: 'staff', setPid: null }),
+      addPerson: () => { const id = 'p' + Date.now(); ctl.touch(() => { this.mod.STAFF.push({ id, name: t('Ny person', 'New person'), pct: 100, hours: 40, group: 'g1', open: false, close: false, sn: false, off: [], earliest: null, latest: null, end: null, changes: [], leave: [] }); }); this.setState({ settings: 'staff', setPid: id }); },
+      staffTip: t('Öppna personallistan', 'Open the staff list'), addTxt: t('Lägg till person', 'Add person'),
+      daysHint: t('Klicka på en dag för att gå dit', 'Click a day to go to it'),
+      pDays: P ? P.avail.map((a, i) => { const act = i === v.day; return { ...a, fw: act ? 700 : 500,
+        bg: act ? '#1F2D3A' : a.ok ? '#E2F6D4' : '#EEF3F6', fg: act ? '#fff' : a.ok ? '#2D6A1F' : '#9AA8B5', bd: act ? '#1F2D3A' : 'transparent',
+        tip: a.ok ? '' : t('Inte tillgänglig', 'Not available'),
+        go: e => { const root = e.currentTarget.closest('[data-root]'), id = P.id; this.setState({ focus: null }); ctl.up({ day: i, person: id, sel: null }); setTimeout(() => this.scrollTo(root, id), 80); } }; }) : [],
+      pUnits: P ? v.groups.map(g => { const a = P.groupId === g.id; return { name: g.name, letter: U[g.id].letter, ub: U[g.id].ub, uf: U[g.id].uf, tick: a ? '✓' : '', optBg: a ? '#EAF6F8' : 'transparent',
+        bg: a ? '#1F2D3A' : '#fff', fg: a ? '#fff' : '#1F2D3A', bd: a ? '#1F2D3A' : '#C9D5E0',
+        pick: () => { this.setState({ dd: null }); if (a) return; const S = this.mod.STAFF.find(x => x.id === P.id), old = S.group; S.group = g.id;
+          ctl.store.set(st => st.shifts.forEach(x => { if (x.staff === P.id && x.week === st.week && x.group === old) x.group = g.id; }));
+          this.flash(t(P.name + ' tillhör nu ' + g.name, P.name + ' now belongs to ' + g.name)); } }; }) : [],
+      focusPerson: () => P && this.setState({ focus: P.id }), 
+      ddFilter: this.state.dd === 'filter', ddCard: this.state.dd === 'card',
+      ddFilterToggle: () => this.setState(st => ({ dd: st.dd === 'filter' ? null : 'filter' })), ddCardToggle: () => this.setState(st => ({ dd: st.dd === 'card' ? null : 'card' })),
+      pCur: P && U[P.groupId] ? { ...U[P.groupId], name: P.groupName } : { letter: '', ub: 'transparent', uf: '#000', name: '' },
+    };
+  }
+  renderVals() {
+    const lang = (!this.props.onLang && this.state.langPicked) ? this.state.lang : (this.props.lang ?? this.state.lang), sv = lang === 'sv';
+    const setLang = l => this.props.onLang ? this.props.onLang(l) : this.setState({ lang: l, langPicked: true });
+    const on = a => a ? ['#1F2D3A', '#fff'] : ['#fff', '#1F2D3A'];
+    const base = { setEn: () => setLang('en'), setSv: () => setLang('sv'), enBg: on(!sv)[0], enFg: on(!sv)[1], svBg: on(sv)[0], svFg: on(sv)[1] };
+    if (!this.ctl) return { ready: false, ...base };
+    const ctl = this.ctl, fid = this.state.focus;
+    if (fid) ctl.ui.focus = fid;
+    const v = ctl.view(lang, { pal: this.pal });
+    const slotPct = v.slot / 750 * 100;
+    const hc = { over: '#B33A35', under: '#8A5F0C', ok: '#2D7A38' };
+    const dayWarns = v.warnings.filter(w => w.day === v.day || w.day == null);
+    const PW = this.ctl.store.get(), hf = m => this.mod.fmtN(Math.round(m / 6) / 10, lang) + ' h';
+    const bar = r => {
+      const total = parseFloat(String(r.h.total).replace(',', '.')), c = parseFloat(String(r.h.contract).replace(',', '.')) || 0;
+      if (!c) return { hasBar: false };
+      const q = this.mod.personWeek(PW, r.id, v.weekNo), A = Math.max(1, q.A), N = Math.max(1, q.N), over = q.worked > q.C + 15;
+      const af = Math.min(100, q.child / A * 100), sf = Math.min(100 - af, q.sick / A * 100), bf = Math.min(100, q.non / N * 100);
+      return { hasBar: true, aW: q.C ? Math.round(q.A / q.C * 1000) / 10 : 88, aFill: af, sFill: sf, bFill: bf,
+        aBg: over ? '#E5534B' : af >= 99.5 ? '#6CC24A' : 'color-mix(in oklch, #6CC24A ' + Math.round(af) + '%, #F59A93)', bBg: over ? '#E5534B' : q.non > q.N + 15 ? '#5B3F9E' : '#8E6CCF',
+        barTip: (sv ? 'Med barn (inkl. rast) ' : 'With children (incl. breaks) ') + hf(q.child) + ' / ' + hf(q.A) + ' · ' + (sv ? 'Utan barn ' : 'Without children ') + hf(q.non) + ' / ' + hf(q.N) + (q.sick ? ' · ' + (sv ? 'Sjuk ' : 'Sick ') + hf(q.sick) : '') };
+      const ratio = total / c;
+      if (ratio > 1.005) return { hasBar: true, barW: 100, barBg: '#E5534B' };
+      const p = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
+      return { hasBar: true, barW: p, barBg: 'color-mix(in oklch, #6CC24A ' + p + '%, #F59A93)' };
+    };
+    const num = x => parseFloat(String(x || '0').replace(',', '.')) || 0;
+    const srt = this.state.sort, dir = this.state.dir;
+    const keyOf = r => srt === 'az' ? r.name : srt === 'filled' ? (num(r.h.contract) ? num(r.h.total) / num(r.h.contract) : 0) : num(r.h.contract);
+    const cmp = (a, b) => { const x = keyOf(a), y = keyOf(b); return (typeof x === 'string' ? x.localeCompare(y, sv ? 'sv' : 'en') : x - y) * dir || a.name.localeCompare(b.name); };
+    v.roster = v.roster.filter(r => !r.isSub).sort(cmp);
+    const so = (k, label, tip, d0) => { const act = srt === k; return { label: label + (act && k !== 'az' ? (dir > 0 ? ' ↑' : ' ↓') : act && dir < 0 ? ' ↓' : ''), tip, bg: act ? '#1F2D3A' : '#fff', fg: act ? '#fff' : '#1F2D3A', pick: () => this.setState(st => st.sort === k ? { dir: -st.dir } : { sort: k, dir: d0 }) }; };
+    const sorts = [so('az', sv ? 'A–Ö' : 'A–Z', sv ? 'Sortera i bokstavsordning' : 'Sort alphabetically', 1), so('filled', sv ? 'Fyllt' : 'Filled', sv ? 'Sortera efter hur fyllda timmarna är' : 'Sort by how full their hours are', 1), so('contract', sv ? 'Avtal' : 'Contract', sv ? 'Sortera efter avtalade timmar' : 'Sort by contract hours', -1)];
+    const q = this.state.q.trim().toLowerCase(), match = r => !q || r.name.toLowerCase().includes(q);
+    v.roster = v.roster.filter(match); v.rows = v.rows.filter(match);
+    const unit = this.state.unit, U = this.U, gi = v.groups.findIndex(g => g.id === unit), ug = v.groups[gi];
+    if (ug) { v.roster = v.roster.filter(r => r.groupId === unit); v.rows = v.rows.filter(r => r.groupId === unit || (r.isSub && r.shifts.some(sh => sh.groupName === ug.name))); }
+    const noMatch = !!q && v.roster.length === 0;
+    const uf = r => { const u = U[r.groupId]; return u ? { hasUnit: true, uLetter: u.letter, ub: u.ub, uf: u.uf, unitName: r.groupName } : { hasUnit: false }; };
+    const ST = { under: ['#FFDAD8', '#8E2A27'], ok: ['#E2F6D4', '#2D6A1F'], over: ['#FFF1CF', '#6B5214'] };
+    const unitTabs = [{ id: 'all', name: sv ? 'Alla' : 'All', hasLetter: false }, ...v.groups.map(g => ({ id: g.id, name: g.name, hasLetter: true, letter: U[g.id].letter, ub: U[g.id].ub, uf: U[g.id].uf }))]
+      .map(t => { const a = t.id === unit; return { ...t, noLetter: !t.hasLetter, tick: a ? '✓' : '', optBg: a ? '#EAF6F8' : 'transparent', pick: () => this.setState({ unit: t.id, dd: null }) }; });
+    const curUnit = unitTabs.find(t => t.id === unit) || unitTabs[0];
+    const perAdult = n => sv ? '1 vuxen per ' + n + ' barn' : '1 adult per ' + n + ' children';
+    const unitInfo = ug ? ug.ages + ' ' + (sv ? 'år' : 'yrs') + ' · ' + perAdult(ug.ratio) + ' · ' + (sv ? 'max ' + ug.max + ' barn' : 'up to ' + ug.max + ' children')
+      : (sv ? 'Barn per vuxen: ' : 'Children per adult: ') + v.groups.map(g => g.name + ' ' + g.ratio).join(' · ');
+    let firstSub = true;
+    const mb = []; v.cov.forEach(c => { if (!c.merged) return; const l = mb[mb.length - 1]; if (l && Math.abs(l.left + l.width - c.left) < 0.01) { l.width += c.width; l.to = c.t + v.slot; } else mb.push({ left: c.left, width: c.width, from: c.t, to: c.t + v.slot }); });
+    const room = (v.groups.find(g => g.id === v.merge.room) || {}).name || '', fm = this.mod.fmt;
+    const RU = U[v.merge.room] || U.g3, tint = 'color-mix(in srgb, ' + RU.ub + ' 32%, transparent)';
+    const mergeBands = mb.map(b => ({ ...b, ub: RU.ub, uf: RU.uf, tint, down: e => { e.stopPropagation(); e.preventDefault();
+        const tr = e.currentTarget.parentElement.getBoundingClientRect(), x0 = e.clientX, isAm = b.from <= 360, st0 = ctl.store; let moved = false;
+        const M0 = st0.get().merge || this.mod.MERGE0, start = isAm ? M0.am : M0.pm;
+        const mv = ev => { if (!moved && Math.abs(ev.clientX - x0) < 4) return; if (!moved) { moved = true; st0.begin(); this.setState({ dd: null }); }
+          const m = start + Math.round((ev.clientX - x0) / tr.width * 750 / 15) * 15; st0.live(st => { const M = st.merge = { ...(st.merge || this.mod.MERGE0) }; if (isAm) M.am = Math.max(375, Math.min(M.pm - 60, m)); else M.pm = Math.max(M.am + 60, Math.min(1095, m)); }); };
+        const upH = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', upH);
+          if (moved) st0.commit(); else this.setState(st => ({ dd: st.dd === 'merge' && st.mergeAt === b.left ? null : 'merge', mergeAt: b.left })); };
+        window.addEventListener('pointermove', mv); window.addEventListener('pointerup', upH); }, label: (b.from <= 360 ? (sv ? 'Öppningsavdelning' : 'Opening unit') : (sv ? 'Stängningsavdelning' : 'Closing unit')) + ' · ' + room, tip: (sv ? 'Alla avdelningar är tillsammans i ' : 'All units are together in ') + room + ' ' + fm(b.from) + '–' + fm(b.to) + (sv ? '. 1 vuxen per ' + v.merge.ratio + ' barn. Dra för att ändra tiden, tryck för att byta avdelning.' : '. 1 adult per ' + v.merge.ratio + ' children. Drag to change the time, tap to change the unit.') }));
+    return {
+      ...v, ...base, lang, setLangFn: setLang, mergeBands, ...(() => {
+        const RQ = (ctl.store.get().requests || []).slice().sort((a, b) => b.at - a.at), open = RQ.filter(r => r.status === 'pending' || r.status === 'new' || r.status === 'matched');
+        const ST = { open: [sv ? 'Väntar på kollega' : 'Waiting for a colleague', '#8A5F0C'], matched: [sv ? 'Kollega har tackat ja' : 'A colleague said yes', '#1F7D97'], nobody: [sv ? 'Ingen kan' : 'Nobody can', '#8E2A27'], pending: [sv ? 'Väntar på svar' : 'Waiting', '#8A5F0C'], new: [sv ? 'Ny' : 'New', '#C2413D'], approved: [sv ? 'Godkänd' : 'Approved', '#2D6A1F'], declined: [sv ? 'Inte godkänd' : 'Declined', '#8E2A27'], seen: [sv ? 'Sedd' : 'Seen', '#5A6B7A'] };
+        return { reqOpen: !!this.state.reqOpen, toggleReq: () => this.setState(st => ({ reqOpen: !st.reqOpen, settings: false, coverOpen: false })), reqCount: open.length, hasReqBadge: open.length > 0,
+          reqTxt: sv ? 'Notiser' : 'Notifications', reqBtnBg: this.state.reqOpen ? '#1F2D3A' : '#fff', reqBtnFg: this.state.reqOpen ? '#fff' : '#1F2D3A',
+          reqTitle: sv ? 'Notiser' : 'Notifications', noReq: !RQ.length, noReqTxt: sv ? 'Inga notiser.' : 'No notifications.',
+          yesTxt: sv ? 'Godkänn' : 'Approve', noTxt: sv ? 'Neka' : 'Decline', seenTxt: sv ? 'Okej' : 'OK', showDayTxt: sv ? 'Visa dagen' : 'Show the day',
+          reqList: RQ.map(r => { const p = this.mod.person(r.staff) || {}, S = ST[r.status] || ['', '#000'];
+            const nm = id => (this.mod.person(id) || {}).name || '', first = ids => (ids || []).map(id => nm(id).split(' ')[0]).join(', ');
+            const lines = r.type !== 'cover' ? [] : [
+              ...(r.reason ? [{ t: (sv ? 'Orsak (syns bara för dig): ' : 'Reason (only you see this): ') + r.reason, fg: '#1F2D3A' }] : []),
+              ...(r.status === 'open' ? [{ t: (sv ? 'Skickad till ' : 'Sent to ') + first((r.offered || []).filter(x => !(r.declined || []).includes(x))), fg: '#5A6B7A' }] : []),
+              ...(r.by ? [{ t: nm(r.by) + (sv ? ' tar tiden. Timmarna räknas om när du godkänner.' : ' takes the time. Hours are recounted when you approve.'), fg: '#1F7D97' }] : []),
+              ...(r.status === 'nobody' ? [{ t: sv ? 'Ingen kollega kan ta tiden utan att bryta mot en regel.' : 'No colleague can take the time without breaking a rule.', fg: '#8E2A27' }] : [])];
+            return { name: p.name, label: this.mod.reqLabel(r, lang), status: S[0], sFg: S[1], bg: r.status === 'pending' || r.status === 'new' || r.status === 'matched' ? '#fff' : '#FAFBFC', lines,
+              canDecide: r.status === 'pending' || r.status === 'matched', canSee: r.status === 'new',
+              yes: () => ctl.touch(st => this.mod.decideRequest(st, r.id, true)), no: () => ctl.touch(st => this.mod.decideRequest(st, r.id, false)),
+              show: () => { this.setState({ reqOpen: false }); ctl.store.live(st => { st.week = r.week; }); ctl.up({ day: r.day }); } }; }) };
+      })(),
+      phoneOpen: !!this.state.phone, togglePhone: () => this.setState(st => ({ phone: !st.phone, reqOpen: false, settings: false, coverOpen: false })),
+      phoneTxt: sv ? 'Personalens telefon' : "Staff's phone", phoneBtnBg: this.state.phone ? '#1F2D3A' : '#fff', phoneBtnFg: this.state.phone ? '#fff' : '#1F2D3A',
+      phoneOf: sv ? 'Telefon för' : 'Phone of', phoneClose: sv ? 'Stäng' : 'Close', phoneMe: this.state.phoneMe || 'p1', pickPhoneMe: e => this.setState({ phoneMe: e.target.value }),
+      phoneOpts: [...this.mod.STAFF.slice().sort((x, y) => x.name.localeCompare(y.name, 'sv')).map(p => ({ v: p.id, name: p.name })), ...this.mod.SUBS.map(p => ({ v: p.id, name: p.name + (sv ? ' (vikarie)' : ' (substitute)') }))].map(o => ({ ...o, sel: o.v === (this.state.phoneMe || 'p1') })).sort((a, b) => b.sel - a.sel),
+      phoneCmd: this.state.phoneCmd || null, barLegA: sv ? 'Med barn' : 'Children', barLegB: sv ? 'Utan barn' : 'No children', barLegS: sv ? 'Sjuk' : 'Sick', subTag: sv ? 'Vikarie' : 'Substitute',
+      demoTxt: sv ? 'Demo: vikarie' : 'Demo: substitute', demoBtnBg: this.state.demo ? '#1F7D97' : '#fff', demoBtnFg: this.state.demo ? '#fff' : '#1F7D97',
+      startDemo: () => this.runDemo(sv), stopDemo: () => { this._demoRun = (this._demoRun || 0) + 1; this.setState({ demo: null, phone: false }); },
+      demoOn: !!this.state.demo, demo: this.state.demo || {}, demoStep: this.state.demo ? this.state.demo.n + ' / 6' : '', demoLabel: sv ? 'Demo · sjukanmälan och vikarie' : 'Demo · sick report and substitute',
+      demoEndTxt: this.state.demo && this.state.demo.done ? (sv ? 'Klar' : 'Done') : (sv ? 'Stoppa' : 'Stop'), demoEndBg: this.state.demo && this.state.demo.done ? '#2B91AD' : 'rgba(255,255,255,.14)',
+      ddMerge: this.state.dd === 'merge',
+      mergeDd: { head: sv ? 'Vilken avdelning är de i?' : 'Which unit are they in?', left: 'calc(150px + (100% - 162px) * ' + Math.min(0.8, (this.state.mergeAt || 0) / 100) + ')' },
+      mergeRooms: v.groups.map(g => { const a = v.merge.room === g.id; return { name: g.name, ...U[g.id], optBg: a ? '#EAF6F8' : 'transparent', tick: a ? '✓' : '', pick: () => { this.setState({ dd: null }); ctl.touch(st => { st.merge = { ...(st.merge || this.mod.MERGE0), room: g.id }; }); } }; }),
+      mergeLegend: sv ? 'Öppnings- och stängningsavdelning' : 'Opening and closing unit', mergeSw: (U[v.merge.room] || U.g3).ub, sorts, noMatch, unitTabs, curUnit, ...this.extra(v, sv, U, ST),
+      ratioOpen: !!this.state.ratioOpen, toggleRatio: () => this.setState(st => ({ ratioOpen: !st.ratioOpen })),
+      ratioBg: this.state.ratioOpen ? '#1F2D3A' : '#fff', ratioFg: this.state.ratioOpen ? '#fff' : '#1F7D97', ratioBd: this.state.ratioOpen ? '#1F2D3A' : '#9FCFDB',
+      ratioTitle: sv ? 'Ändra antal barn per vuxen' : 'Change children per adult',
+      ratioHead: sv ? 'Barn per vuxen' : 'Children per adult',
+      ratioSub: sv ? 'Bestämmer hur många vuxna som behövs i varje avdelning.' : 'Sets how many adults each unit needs.',
+      ratioRows: v.groups.map(g => ({ id: g.id, name: g.name, ages: g.ages + ' ' + (sv ? 'år' : 'yrs'), ratio: g.ratio, letter: U[g.id].letter, ub: U[g.id].ub, uf: U[g.id].uf,
+        dec: () => { const G = this.mod.GROUPS.find(x => x.id === g.id); if (G.ratio > 1) this.ctl.touch(() => { G.ratio--; }); },
+        inc: () => { const G = this.mod.GROUPS.find(x => x.id === g.id); if (G.ratio < 20) this.ctl.touch(() => { G.ratio++; }); } })),
+      unitLabel: sv ? 'Avdelning' : 'Unit', unitQ: sv ? 'Vilken avdelning?' : 'Which unit?',
+      needSub: ug ? '1:' + ug.ratio : '', needTip: ug ? perAdult(ug.ratio) : (sv ? 'Summa för alla avdelningar' : 'Total for all units'),
+      statusLegend: [['under', L_(sv, 'För få', 'Too few')], ['ok', L_(sv, 'Tillräckligt', 'Enough')], ['over', L_(sv, 'Fler än behövs', 'More than needed')]].map(([k, n]) => ({ name: n, bg: ST[k][0] })),
+      personMeta: v.person ? (v.person.isStaff ? v.person.meta + ' · ' + v.person.groupName : v.person.meta) : '',
+      themeTxt: DARK ? (sv ? '☀ Ljust läge' : '☀ Light mode') : (sv ? '☾ Mörkt läge' : '☾ Dark mode'),
+      toggleTheme: () => this.props.onTheme ? this.props.onTheme(DARK ? 'light' : 'dark') : (window.location.href = DARK ? 'Schedule-M-Units.dc.html' : 'Schedule-M-Units-Dark.dc.html'),
+      q: this.state.q, hasQ: !!this.state.q, onQ: e => this.setState({ q: e.target.value }), clearQ: () => this.setState({ q: '' }),
+      searchPh: sv ? 'Sök på namn' : 'Search by name', clearTxt: sv ? 'Rensa' : 'Clear', noMatchTxt: sv ? 'Ingen matchar sökningen.' : 'Nobody matches the search.',
+      staffCount: v.roster.filter(r => !r.isSub).length,
+      showHelp: false, startTour: e => this.goTour(0, e.currentTarget.closest('[data-root]')), helpTxt: sv ? 'Visa guiden' : 'Show the guide',
+      helpBg: '#fff', helpFg: '#1F2D3A', ...this.tourVals(sv),
+      toLight: () => { if (DARK) this.props.onTheme ? this.props.onTheme('light') : (window.location.href = 'Schedule-M-Units.dc.html'); },
+      toDark: () => { if (!DARK) this.props.onTheme ? this.props.onTheme('dark') : (window.location.href = 'Schedule-M-Units-Dark.dc.html'); },
+      thLBg: DARK ? '#fff' : '#1F2D3A', thLFg: DARK ? '#1F2D3A' : '#fff', thDBg: DARK ? '#1F2D3A' : '#fff', thDFg: DARK ? '#fff' : '#1F2D3A',
+      openTag: sv ? 'Ö' : 'O', closeTag: sv ? 'S' : 'C',
+      undoOp: v.canUndo ? 1 : .4, redoOp: v.canRedo ? 1 : .4,
+      s15bg: on(v.is15)[0], s15fg: on(v.is15)[1], s30bg: on(v.is30)[0], s30fg: on(v.is30)[1],
+      gridBg: 'linear-gradient(90deg,#B4C3D0 1px,transparent 1px),linear-gradient(90deg,#D3DDEA 1px,transparent 1px)' + (v.is15 ? ',linear-gradient(90deg,#EEF2F5 1px,transparent 1px)' : ''),
+      gridSize: '8% 100%,4% 100%' + (v.is15 ? ',2% 100%' : ''),
+      days: v.days.map(d => ({ ...d, line: d.active ? '#2B91AD' : 'transparent', fg: d.active ? '#1F7D97' : '#1F2D3A' })),
+      checkTitle: sv ? 'Att kontrollera' : 'Things to check',
+      dragHint: sv ? 'Dra ett namn till schemat för att lägga till ett pass på 1 timme. Klicka på ett namn för mer.' : 'Drag a name onto the schedule to add a 1-hour shift. Click a name for more.',
+      dayWarns: dayWarns.map(w => ({ ...w, tip: (w.code ? w.code + ' · ' + w.ruleName + '\n' : '') + w.text, go: (w.staff && w.day == null) ? () => this.setState({ focus: w.staff }) : w.go, bg: { rule: '#FFE7E5', cover: '#FFDAD8', staffing: '#FFF1CF', role: '#E3EAF2' }[w.kind], edge: { rule: '#C2413D', cover: '#C2413D', staffing: '#D9A23A', role: '#1F7D97' }[w.kind] })),
+      dayWarnCount: dayWarns.length, dayClear: dayWarns.length === 0, countBg: dayWarns.length ? '#C2413D' : '#1F7D97',
+      rosterF: v.roster.map(r => { const sh = r.isSub && firstSub; if (r.isSub) firstSub = false;
+        const dn = r.dragName, locked = !!fid && r.id !== fid;
+        return { ...r, ...bar(r), ...uf(r), subHead: sh, dragName: e => { const root = e.currentTarget.closest('[data-root]'), x0 = e.clientX, y0 = e.clientY;
+          if (locked) { e.preventDefault(); const upL = ev => { window.removeEventListener('pointerup', upL); if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < 4) ctl.up({ person: r.id, sel: null }); else this.flash(sv ? 'Du ser bara ' + (this.mod.person(fid) || {}).name + '. Tryck på Visa alla för att lägga till någon annan.' : 'You are only seeing ' + (this.mod.person(fid) || {}).name + '. Tap Show everyone to add someone else.'); }; window.addEventListener('pointerup', upL); return; }
+          const upH = ev => { window.removeEventListener('pointerup', upH); if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < 4) setTimeout(() => this.scrollTo(root, r.id), 60); };
+          window.addEventListener('pointerup', upH); dn(e); }, bg: (r.selected || r.id === fid) ? '#FFEFC2' : 'transparent', selRing: (r.selected || r.id === fid) ? 'inset 3px 0 #E09A1F' : 'none', focusMe: () => this.setState({ focus: r.id }), strike: r.sick ? 'line-through' : 'none', hCol: r.isSub ? '#5A6B7A' : hc[r.h.flag], hTxt: r.isSub ? r.h.total : r.h.text }; }),
+      cov: v.cov.map(c => { const g = ug && !c.merged ? c.groups[gi] : null, kids = g ? g.children : c.children, need = g ? g.need : c.need, have = g ? g.have : c.have;
+        const st = g ? g.st : c.status, empty = !need && !have, col = ST[st] || ST.ok;
+        return { ...c, kl: kids || '', nl: need || '', wl: empty ? '' : have, wb: empty ? 'transparent' : col[0], wf: col[1] }; }),
+      rowsF: fid ? v.focusWeek.map(r => ({ ...r, name: r.dayName, hasUnit: false, pick: r.select, strike: r.sick ? 'line-through' : 'none',
+        rowBg: r.active ? '#F3F9FB' : r.off ? '#F7F9FA' : '#fff', rowRing: r.active ? 'inset 4px 0 #2B91AD' : 'none' })) : v.rows.map(r => ({ ...r, ...uf(r), dbl: () => this.setState({ focus: r.id }), dblTip: sv ? 'Dubbelklicka för att se bara den här personens vecka' : 'Double-click to see only this person\'s week', rowBg: r.selected ? '#FFF4D6' : r.preview ? '#EAF6F8' : r.isSub ? '#EEF4F7' : '#fff', rowRing: r.selected ? 'inset 4px 0 #E09A1F, inset 0 1px #F2C877, inset 0 -1px #F2C877' : 'none', strike: r.sick ? 'line-through' : 'none' })),
+      ...(() => {
+        const S = ctl.store.get(), mod = this.mod, fm = mod.fmt, nm = id => (mod.person(id) || {}).name || '', names = ids => (ids || []).map(nm).join(', ');
+        const FA = S.free || [], FR = FA.filter(f => f.week === v.weekNo && f.day === v.day), act = f => f.status !== 'confirmed', tab = this.state.freeTab || 'active';
+        const MON = sv ? ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'] : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const DN = sv ? ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], dLab = (w, d) => { const x = new Date(2026, 9, 5 + (w - 41) * 7 + d); return DN[d] + ' ' + x.getDate() + ' ' + MON[x.getMonth()]; };
+        const PILL = { offered: [sv ? 'Erbjudet' : 'Offered', '#FFF1CF', '#6B5214'], nobody: [sv ? 'Ingen vikarie' : 'No substitute', '#FFDAD8', '#8E2A27'], accepted: [sv ? 'Accepterat' : 'Accepted', '#DDF1F5', '#16627A'], confirmed: [sv ? 'Bekräftat' : 'Confirmed', '#E2F6D4', '#2D6A1F'] };
+        const opened = this.state.freeOpen || {}, list = FA.filter(f => tab === 'active' ? act(f) : !act(f)).sort((a, b) => (b.week * 10 + b.day) - (a.week * 10 + a.day) || b.clock - a.clock);
+        const freeCards = list.map((f, i) => { const g = v.groups.find(x => x.id === f.group) || {}, u = U[f.group] || { letter: '', ub: 'transparent', uf: '#000' }, idx = { offered: 0, nobody: 0, accepted: 1, confirmed: 2 }[f.status] ?? 0;
+          const LOG = l => ({ sick: nm(f.staff) + (sv ? ' sjukanmälde sig' : ' reported sick'), offerPref: (sv ? 'Erbjudet ' : 'Offered to ') + names(l.ids) + (sv ? ', föredragen för ' : ', preferred for ') + g.name,
+            noAnswer: sv ? 'Inget svar på 15 minuter' : 'No answer in 15 minutes', offerAll: (sv ? 'Skickat till ' : 'Sent to ') + names(l.ids), accepted: nm(l.by) + (sv ? ' tog passet' : ' took the shift'),
+            declined: nm(l.by) + (sv ? ' tackade nej' : ' declined'), confirmed: sv ? 'Bekräftat av dig' : 'Confirmed by you', wait: sv ? '15 minuter till utan svar' : '15 more minutes without an answer', nobody: sv ? 'Ingen vikarie kan ta passet' : 'No substitute can take the shift' })[l.k] || '';
+          const statusLine = f.status === 'accepted' ? (sv ? 'Accepterat · ' : 'Accepted · ') + nm(f.by) : f.status === 'confirmed' ? (sv ? 'Bekräftat · ' : 'Confirmed · ') + nm(f.by) : f.status === 'nobody' ? (sv ? 'Ingen vikarie kan ta passet. Välj personal nedan.' : 'No substitute can take the shift. Choose staff below.')
+            : f.stage === 'preferred' ? (sv ? 'Erbjudet ' : 'Offered to ') + names(f.offered) + (sv ? '. Går till alla om 15 min utan svar.' : '. Goes to everyone after 15 min without an answer.') : (sv ? 'Erbjudet ' + f.offered.length + ' vikarier. Den som svarar först får passet.' : 'Offered to ' + f.offered.length + ' substitutes. The first to answer gets it.');
+          const ex = f.status === 'offered' || f.status === 'nobody' ? mod.subCands(S, f, lang).filter(x => !x.ok) : [];
+          return { title: sv ? 'Ledigt pass' : 'Free shift', unit: g.name, ...u, time: fm(f.from) + '–' + fm(f.to), replaces: (sv ? 'Ersätter ' : 'Replaces ') + nm(f.staff) + (sv ? ' (sjuk). Vikarier ser bara ”ledigt pass”.' : ' (sick). Substitutes only see “free shift”.'),
+            tags: [...(f.needs.open ? [{ t: sv ? 'Öppnar' : 'Opens' }] : []), ...(f.needs.close ? [{ t: sv ? 'Stänger' : 'Closes' }] : []), ...(f.needs.sn ? [{ t: sv ? 'Utbildad för särskilt stöd' : 'Special needs trained' }] : [])],
+            steps: [sv ? 'Erbjudet' : 'Offered', sv ? 'Accepterat' : 'Accepted', sv ? 'Bekräftat' : 'Confirmed'].map((n, k) => ({ name: n, bar: k <= idx ? (f.status === 'nobody' ? '#E5534B' : '#1F7D97') : '#E3EAF0', fw: k === idx ? 700 : 500, fg: k === idx ? '#1F2D3A' : '#8796A5' })),
+            statusLine, log: f.log.map(l => ({ t: fm(l.t), text: LOG(l) })), ex, hasEx: ex.length > 0, exTitle: sv ? 'Kan inte ta passet' : 'Cannot take the shift',
+            canSkip: f.status === 'offered', skipTxt: sv ? '⏩ Hoppa fram 15 minuter (demo)' : '⏩ Skip ahead 15 minutes (demo)', skip: () => ctl.touch(st => mod.skipFree(st, f.id)),
+            canConfirm: f.status === 'accepted', confirmTxt: sv ? 'Bekräfta ' + nm(f.by) : 'Confirm ' + nm(f.by), confirm: () => { ctl.touch(st => mod.confirmFree(st, f.id)); this.setState(st => ({ freeTab: 'done', freeOpen: { ...(st.freeOpen || {}), [f.id]: true } })); },
+            open: opened[f.id] ?? i === 0, chev: (opened[f.id] ?? i === 0) ? '▴' : '▾', toggle: () => this.setState(st => ({ freeOpen: { ...(st.freeOpen || {}), [f.id]: !((st.freeOpen || {})[f.id] ?? i === 0) } })),
+            when: dLab(f.week, f.day), short: nm(f.staff) + (sv ? ' sjuk' : ' sick') + (f.by ? ' → ' + nm(f.by) : ''), pill: (PILL[f.status] || PILL.offered)[0], pillBg: (PILL[f.status] || PILL.offered)[1], pillFg: (PILL[f.status] || PILL.offered)[2],
+            headBg: (opened[f.id] ?? i === 0) ? '#F7FAFB' : '#fff', bd: f.status === 'nobody' ? '#F5B9B5' : '#D3DDEA', showTxt: sv ? 'Visa i schemat' : 'Show in schedule',
+            show: () => { ctl.store.live(st => { st.week = f.week; }); ctl.up({ day: f.day, person: null, sel: null }); this.setState({ unit: f.group, focus: null }); },
+            topBd: i === 0 && !v.hasSel && !v.hasPerson ? '0' : '1px dashed #D3DDEA', topPad: i === 0 && !v.hasSel && !v.hasPerson ? '0' : '12px', hasTags: !!(f.needs.open || f.needs.close || f.needs.sn) }; });
+        const freeKeys = new Set(FR.filter(f => f.status !== 'nobody').map(f => f.staff + '-' + f.day));
+        const coverF = v.cover.filter(u => u.onDay && !freeKeys.has(u.key)).map(u => ({ ...u, cands: u.cands.filter(c => !c.sub).slice(0, 5).map(c => ({ ...c, op: c.ok ? 1 : .5, line: c.ok ? c.info : c.reason, col: c.ok ? '#5A6B7A' : '#C2413D' })) }));
+        const nAct = FA.filter(act).length, nDone = FA.length - nAct, need = FA.filter(f => f.status === 'accepted' || f.status === 'nobody').length;
+        const tabOpt = (k, name) => { const a = tab === k; return { name, pick: () => this.setState({ freeTab: k }), bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#3C4B5A', fw: a ? 600 : 500, sh: a ? '0 1px 2px rgba(15,30,45,.12)' : 'none' }; };
+        return { freeCards, coverF, showFloat: v.hasSel || v.hasPerson || coverF.length > 0, noFree: !freeCards.length,
+          noFreeTxt: tab === 'active' ? (sv ? 'Ingen är sjuk just nu. När någon sjukanmäler sig blir passet ett ledigt pass som syns här.' : 'Nobody is sick right now. When someone reports sick, the shift becomes a free shift and shows up here.') : (sv ? 'Inga avslutade ännu.' : 'Nothing finished yet.'),
+          coverOpen: !!this.state.coverOpen, toggleCover: () => this.setState(st => ({ coverOpen: !st.coverOpen, reqOpen: false, settings: false })),
+          covTxt: sv ? 'Sjuk och vikarier' : 'Sick cover', covCount: nAct, hasCovBadge: nAct > 0, covBtnBg: this.state.coverOpen ? '#1F2D3A' : '#fff', covBtnFg: this.state.coverOpen ? '#fff' : '#1F2D3A',
+          covTitle: sv ? 'Sjuk och vikarier' : 'Sick cover', covSub: sv ? 'Varje sjukanmälan blir ett ledigt pass som erbjuds vikarier. Följ dem här tills de är bekräftade.' : 'Every sick report becomes a free shift offered to substitutes. Follow them here until they are confirmed.',
+          covTabs: [tabOpt('active', (sv ? 'Pågående' : 'In progress') + ' (' + nAct + ')'), tabOpt('done', (sv ? 'Bekräftade' : 'Confirmed') + ' (' + nDone + ')')] };
+      })(),
+      ddShift: this.state.dd === 'shift', ddShiftToggle: () => this.setState(st => ({ dd: st.dd === 'shift' ? null : 'shift' })),
+      sCur: (() => { const g = v.sel && v.sel.groups.find(x => x.active); return g && U[g.id] ? { ...U[g.id], name: g.name } : { letter: '', ub: 'transparent', uf: '#000', name: '—' }; })(),
+      sel: v.sel && { ...v.sel, groups: v.sel.groups.map(g => ({ ...g, letter: U[g.id].letter, ub: U[g.id].ub, uf: U[g.id].uf, optBg: g.active ? '#EAF6F8' : 'transparent', tick: g.active ? '✓' : '', pickDd: () => { this.setState({ dd: null }); if (!g.active) g.pick(); }, bg: g.active ? '#1F2D3A' : '#fff', fg: g.active ? '#fff' : '#1F2D3A', bd: g.active ? '#1F2D3A' : '#C9D5E0' })), breakLens: v.sel.breakLens.map(x => ({ ...x, bg: x.active ? '#1F2D3A' : '#fff', fg: x.active ? '#fff' : '#1F2D3A', bd: x.active ? '#1F2D3A' : '#C9D5E0' })) },
+      person: v.person && { ...v.person, avail: v.person.avail.map(a => ({ ...a, bg: a.ok ? '#E2F6D4' : '#EEF3F6', fg: a.ok ? '#3B7A22' : '#9AA8B5' })) },
+      pOpenBg: v.person?.isOpener ? '#1F2D3A' : '#fff', pOpenFg: v.person?.isOpener ? '#fff' : '#1F2D3A',
+      pCloseBg: v.person?.isCloser ? '#1F2D3A' : '#fff', pCloseFg: v.person?.isCloser ? '#fff' : '#1F2D3A',
+    };
+  }
+}
+</script>
+</body>
+</html>

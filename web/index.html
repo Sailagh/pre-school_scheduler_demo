@@ -1,0 +1,121 @@
+<title>Förskolans schema</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one calm column — name, two doors (planner / phone), a short how-to-demo list. */
+:root {
+  --bg: #EEF4F7; --surface: #FFFFFF; --ink: #1F2D3A; --muted: #5A6B7A; --line: #D3DDEA;
+  --accent: #1F7D97; --accent-hover: #16627A; --accent-soft: #EAF6F8;
+  --contact: #CDECEF; --break: #FFDAD8; --planning: #D8F4C0; --meeting: #D3DDEA; --track: #EEF3F6;
+  --dark-card: #1F2D3A; --dark-card-fg: #FFFFFF;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121B23; --surface: #1A2530; --ink: #E6EDF2; --muted: #9AAAB8; --line: #2C3B48;
+  --accent: #5DB8D1; --accent-hover: #86CDE0; --accent-soft: #17323C;
+  --contact: #2A5C66; --break: #6E3431; --planning: #3E5E2A; --meeting: #3A4A60; --track: #22303C;
+  --dark-card: #0D141A; --dark-card-fg: #E6EDF2; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121B23; --surface: #1A2530; --ink: #E6EDF2; --muted: #9AAAB8; --line: #2C3B48;
+  --accent: #5DB8D1; --accent-hover: #86CDE0; --accent-soft: #17323C;
+  --contact: #2A5C66; --break: #6E3431; --planning: #3E5E2A; --meeting: #3A4A60; --track: #22303C;
+  --dark-card: #0D141A; --dark-card-fg: #E6EDF2; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 40px 56px }
+main { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px }
+header { display: flex; flex-direction: column; gap: 6px }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted) }
+h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -.02em; text-wrap: balance }
+.lede { margin: 0; color: var(--muted); max-width: 62ch }
+.doors { display: grid; grid-template-columns: 1fr 1fr; gap: 16px }
+@media (max-width: 720px) { .doors { grid-template-columns: 1fr } }
+.door { display: flex; flex-direction: column; gap: 14px; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; color: inherit; text-decoration: none; min-width: 0 }
+.door:hover { border-color: var(--accent) }
+.door:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.door h2 { margin: 0; font-size: 18px; font-weight: 600 }
+.door p { margin: 0; color: var(--muted); font-size: 14px }
+.who { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent) }
+.go { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--accent); font-size: 14px }
+.door:hover .go { color: var(--accent-hover) }
+/* miniature of the planner grid: real shift-type colours on a 06:00–18:30 track */
+.mini { display: flex; flex-direction: column; gap: 5px; padding: 12px; border-radius: 8px; background: var(--bg) }
+.mini .row { position: relative; height: 12px; border-radius: 3px; background: var(--track) }
+.mini .row span { position: absolute; top: 0; bottom: 0; border-radius: 3px }
+.mini .axis { display: flex; justify-content: space-between; font: 500 10px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums }
+.c { background: var(--contact) } .b { background: var(--break) } .p { background: var(--planning) } .m { background: var(--meeting) }
+.phone-mini { display: flex; gap: 10px; padding: 12px; border-radius: 8px; background: var(--dark-card); color: var(--dark-card-fg) }
+.phone-mini .day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; font: 600 10px var(--sans); letter-spacing: .04em }
+.phone-mini .bar { width: 8px; height: 36px; border-radius: 3px; background: rgba(255,255,255,.12); position: relative; overflow: hidden }
+.phone-mini .bar i { position: absolute; left: 0; right: 0; background: #9FD8DE; border-radius: 3px }
+.chips { display: flex; flex-wrap: wrap; gap: 8px }
+.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); text-decoration: none; font-size: 13px }
+.chip:hover { border-color: var(--accent); color: var(--accent) }
+.chip small { color: var(--muted); margin-left: 6px }
+section h3 { margin: 0 0 10px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted) }
+ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 68ch }
+ol b { font-weight: 600 }
+.note { font-size: 13px; color: var(--muted); max-width: 68ch; margin: 0 }
+kbd { font: 500 12px var(--mono); padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface) }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">Förskolan Solrosen · demo</div>
+    <h1>Förskolans schema</h1>
+    <p class="lede">Shift planning for a preschool: the principal plans staff per unit and sees whether every 15 minutes has enough adults for the children. Staff and substitutes use the phone app to see their week, report sick and pick up shifts.</p>
+  </header>
+
+  <div class="doors">
+    <a class="door" href="Schedule%20Demo.dc.html">
+      <div class="who">Rektor · iPad or computer</div>
+      <h2>Planner</h2>
+      <div class="mini" aria-hidden="true">
+        <div class="row"><span class="c" style="left:24%;width:22%"></span><span class="b" style="left:47%;width:4%"></span><span class="c" style="left:52%;width:30%"></span></div>
+        <div class="row"><span class="p" style="left:8%;width:8%"></span><span class="c" style="left:17%;width:26%"></span><span class="b" style="left:44%;width:4%"></span><span class="c" style="left:49%;width:16%"></span></div>
+        <div class="row"><span class="c" style="left:40%;width:18%"></span><span class="m" style="left:60%;width:10%"></span><span class="c" style="left:71%;width:22%"></span></div>
+        <div class="axis"><span>06:00</span><span>12:00</span><span>18:30</span></div>
+      </div>
+      <p>Weekly timeline, staffing need per slot, rule warnings (R1–R10), sick cover and substitutes, settings.</p>
+      <span class="go">Open planner ›</span>
+    </a>
+    <a class="door" href="Phone.dc.html">
+      <div class="who">Personal och vikarier · phone</div>
+      <h2>Phone app</h2>
+      <div class="phone-mini" aria-hidden="true">
+        <div class="day">MÅN<span class="bar"><i style="top:30%;height:55%"></i></span></div>
+        <div class="day">TIS<span class="bar"><i style="top:10%;height:60%"></i></span></div>
+        <div class="day">ONS<span class="bar"><i style="top:30%;height:55%"></i></span></div>
+        <div class="day">TOR<span class="bar"><i style="top:20%;height:65%"></i></span></div>
+        <div class="day">FRE<span class="bar"><i style="top:5%;height:50%"></i></span></div>
+      </div>
+      <p>My week, who works today, report sick, swap, ask a colleague to cover part of a shift. Substitutes see offered shifts.</p>
+      <span class="go">Open phone app ›</span>
+    </a>
+  </div>
+
+  <section>
+    <h3>Open the phone as</h3>
+    <div class="chips">
+      <a class="chip" href="Phone.dc.html?me=p1">Anna Lindqvist <small>Hjortron</small></a>
+      <a class="chip" href="Phone.dc.html?me=p2">Erik Johansson <small>Lingon</small></a>
+      <a class="chip" href="Phone.dc.html?me=p3">Fatima Hassan <small>Blåbär</small></a>
+      <a class="chip" href="Phone.dc.html?me=s1">Sara Ek <small>vikarie</small></a>
+      <a class="chip" href="Phone.dc.html?me=s2">Karin Öberg <small>vikarie</small></a>
+    </div>
+  </section>
+
+  <section>
+    <h3>Showing it</h3>
+    <ol>
+      <li>In the planner, press <b>▶ Demo</b> for the six-step sick-report story: Anna reports sick, the shift goes to substitutes, Sara takes it, the principal confirms.</li>
+      <li>Open the planner and the phone app in two tabs of the same browser. A sick report or swap sent from the phone shows up in the planner's <b>Notifications</b> and <b>Sick cover</b> right away.</li>
+      <li>On a phone, open the phone app and add it to the home screen for a full-screen app feel.</li>
+      <li>To start over, go to <b>Settings › General › Start over</b> in the planner.</li>
+    </ol>
+  </section>
+
+  <p class="note">This is a click-through demo with made-up people. Changes are saved only in the browser you use, so each viewer gets their own copy. The schedule solver (OR-Tools) and shared data between devices come in the next step.</p>
+</main>

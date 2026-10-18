@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#134e5e}</style></helmet>
+<div style="position:relative;height:100%;display:flex;flex-direction:column;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#F4F7F9;overflow:hidden;font-variant-numeric:tabular-nums">
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+
+<sc-if value="{{ isA }}">
+  <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none">
+    <sc-if value="{{ tabSched }}">
+      <div style="display:flex;align-items:flex-end;gap:12px;padding:64px 20px 16px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;color:#5A6B7A">{{ meName }}</div>
+          <div style="font-size:28px;font-weight:600;letter-spacing:-.02em;margin-top:2px">{{ weekTitle }}</div>
+          <div style="font-size:14px;color:#5A6B7A;margin-top:1px">{{ weekRange }}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onClick="{{ prevW }}" style="width:44px;height:44px;border:1px solid #D3DDEA;border-radius:10px;background:#fff;color:{{ prevFg }};font-size:18px;cursor:pointer;padding:0">‹</button>
+          <button onClick="{{ nextW }}" style="width:44px;height:44px;border:1px solid #D3DDEA;border-radius:10px;background:#fff;color:{{ nextFg }};font-size:18px;cursor:pointer;padding:0">›</button>
+        </div>
+      </div>
+      <div style="padding:0 16px 14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;background:#E3EAF0;border-radius:10px">
+          <sc-for list="{{ viewOpts }}" as="x"><button onClick="{{ x.pick }}" style="height:36px;border:0;border-radius:8px;font:inherit;font-size:14px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer">{{ x.name }}</button></sc-for>
+        </div>
+      </div>
+      <sc-if value="{{ viewMine }}">
+        <div style="margin:0 16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+          <sc-for list="{{ week }}" as="x" hint-placeholder-count="5">
+            <button onClick="{{ x.openDay }}" style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;column-gap:14px;padding:14px 16px;border:0;background:{{ x.rowBg }};box-shadow:0 -1px 0 #E3EAF0;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%">
+              <div style="display:flex;flex-direction:column;align-items:flex-start">
+                <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:{{ x.dayFg }}">{{ x.short }}</div>
+                <div style="font-size:21px;font-weight:600;line-height:1.1;color:{{ x.dayFg }}">{{ x.dnum }}</div>
+              </div>
+              <div style="min-width:0">
+                <div style="font-size:16px;font-weight:600;color:{{ x.rangeFg }};text-decoration:{{ x.struck }}">{{ x.range }}</div>
+                <sc-if value="{{ x.hasUnit }}"><div style="display:flex;align-items:center;gap:6px;margin-top:3px;font-size:13px;color:#5A6B7A"><span style="width:16px;height:16px;border-radius:4px;background:{{ x.ub }};color:{{ x.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ x.letter }}</span>{{ x.unit }}</div></sc-if>
+                <sc-if value="{{ x.has }}"><div style="position:relative;height:6px;border-radius:3px;background:#EEF3F6;margin-top:8px;overflow:hidden"><sc-for list="{{ x.segs }}" as="g"><div style="position:absolute;top:0;bottom:0;left:{{ g.left }};width:{{ g.width }};background:{{ g.bg }}"></div></sc-for></div></sc-if>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <sc-if value="{{ x.hasStatus }}"><span style="font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:{{ x.sBg }};color:{{ x.sFg }};white-space:nowrap">{{ x.status }}</span></sc-if>
+                <span style="font-size:18px;color:#A9B6C2">›</span>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+        <div style="font-size:13px;line-height:1.5;color:#5A6B7A;padding:12px 20px 24px;text-wrap:pretty">{{ tx.hintA }}</div>
+      </sc-if>
+      <sc-if value="{{ viewAll }}">
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:0 16px 6px">
+          <sc-for list="{{ dayChips }}" as="c"><button onClick="{{ c.pick }}" style="height:54px;border:1px solid {{ c.bd }};border-radius:10px;background:{{ c.bg }};color:{{ c.fg }};font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0"><span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase">{{ c.short }}</span><span style="font-size:17px;font-weight:600">{{ c.num }}</span></button></sc-for>
+        </div>
+        <sc-for list="{{ everyone }}" as="u" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:8px;padding:16px 20px 6px">
+            <span style="width:18px;height:18px;border-radius:4px;background:{{ u.ub }};color:{{ u.uf }};font:700 10px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ u.letter }}</span>
+            <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;flex:1">{{ u.name }}</div>
+            <div style="font-size:12px;color:#5A6B7A">{{ u.count }}</div>
+          </div>
+          <div style="margin:0 16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+            <sc-for list="{{ u.rows }}" as="r">
+              <div style="display:flex;flex-direction:column;gap:6px;padding:10px 14px;background:{{ r.rowBg }};box-shadow:0 -1px 0 #E3EAF0">
+                <div style="display:flex;align-items:baseline;gap:10px"><div style="flex:1;min-width:0;font-size:14px;font-weight:{{ r.fw }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div><div style="font-size:13px;color:{{ r.rFg }};white-space:nowrap">{{ r.range }}</div></div>
+                <sc-if value="{{ r.has }}"><div style="position:relative;height:4px;border-radius:2px;background:#EEF3F6;overflow:hidden"><sc-for list="{{ r.segs }}" as="g"><div style="position:absolute;top:0;bottom:0;left:{{ g.left }};width:{{ g.width }};background:{{ g.bg }}"></div></sc-for></div></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+        <div style="height:24px"></div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ tabReq }}">
+      <div style="padding:64px 20px 16px"><div style="font-size:28px;font-weight:600;letter-spacing:-.02em">{{ tx.requests }}</div><div style="font-size:14px;color:#5A6B7A;margin-top:2px;line-height:1.45">{{ tx.reqSub }}</div></div>
+      <div style="padding:0 16px 16px"><button onClick="{{ newReq }}" style="width:100%;height:48px;border:0;border-radius:10px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.newReq }}</button></div>
+      <sc-if value="{{ noReqs }}"><div style="margin:0 16px;padding:18px 16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;font-size:14px;color:#5A6B7A">{{ tx.noReqs }}</div></sc-if>
+      <sc-if value="{{ hasReqs }}">
+        <div style="margin:0 16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+          <sc-for list="{{ myReqs }}" as="r">
+            <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;box-shadow:0 -1px 0 #E3EAF0">
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;line-height:1.4">{{ r.label }}</div><sc-if value="{{ r.canCancel }}"><button onClick="{{ r.cancel }}" style="margin-top:4px;padding:0;border:0;background:transparent;color:#C2413D;font:inherit;font-size:13px;font-weight:500;cursor:pointer">{{ tx.withdraw }}</button></sc-if></div>
+              <span style="font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:{{ r.sBg }};color:{{ r.sFg }};white-space:nowrap">{{ r.status }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ tabNotes }}">
+      <div style="padding:64px 20px 16px"><div style="font-size:28px;font-weight:600;letter-spacing:-.02em">{{ tx.notes }}</div></div>
+      <sc-if value="{{ noNotes }}"><div style="margin:0 16px;padding:18px 16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;font-size:14px;color:#5A6B7A">{{ tx.noNotes }}</div></sc-if>
+      <sc-if value="{{ hasNotes }}">
+        <div style="margin:0 16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+          <sc-for list="{{ myNotes }}" as="n">
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;box-shadow:0 -1px 0 #E3EAF0">
+              <span style="flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px;background:{{ n.dot }}"></span>
+              <div style="flex:1;font-size:14px;line-height:1.45;font-weight:{{ n.fw }}">{{ n.text }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </sc-if>
+  </div>
+  <div style="flex:none;display:grid;grid-template-columns:repeat(3,1fr);background:#fff;border-top:1px solid #E3EAF0;padding:4px 8px 28px">
+    <sc-for list="{{ tabs }}" as="tb">
+      <button onClick="{{ tb.pick }}" style="position:relative;height:52px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:{{ tb.fw }};color:{{ tb.fg }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px">
+        <span style="width:20px;height:3px;border-radius:2px;background:{{ tb.bar }}"></span>
+        <span style="display:flex;align-items:center;gap:5px">{{ tb.name }}<sc-if value="{{ tb.hasBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#C2413D;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ tb.badge }}</span></sc-if></span>
+      </button>
+    </sc-for>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isB }}">
+  <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;background:#fff">
+    <div style="background:#1F2D3A;color:#fff;padding:62px 16px 16px;display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;color:#A9B9C8">{{ meName }}</div>
+          <div style="font-size:20px;font-weight:600;letter-spacing:-.01em;margin-top:2px">{{ weekTitle }} <span style="font-weight:400;color:#A9B9C8">· {{ weekRange }}</span></div>
+        </div>
+        <button onClick="{{ openInbox }}" style="flex:none;display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid #4A5B6C;border-radius:18px;background:transparent;color:#fff;font:inherit;font-size:13px;font-weight:500;cursor:pointer">{{ tx.inbox }}<sc-if value="{{ hasUnread }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#E5534B;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ unread }}</span></sc-if></button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:3px;background:#2C3B4A;border-radius:8px">
+        <sc-for list="{{ weeks }}" as="x"><button onClick="{{ x.pick }}" style="height:32px;border:0;border-radius:6px;background:{{ x.bg }};color:{{ x.fg }};font:inherit;font-size:13px;font-weight:{{ x.fw }};cursor:pointer">{{ x.label }}</button></sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+        <sc-for list="{{ strip }}" as="c">
+          <button onClick="{{ c.pick }}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0 10px;border:0;border-radius:10px;background:{{ c.colBg }};color:{{ c.colFg }};font:inherit;cursor:pointer">
+            <span style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.85">{{ c.short }}</span>
+            <span style="font-size:18px;font-weight:600;line-height:1">{{ c.dnum }}</span>
+            <span style="position:relative;width:12px;height:52px;border-radius:3px;background:{{ c.trackBg }};overflow:hidden"><span style="position:absolute;left:0;right:0;top:{{ c.top }};height:{{ c.h }};background:{{ c.barBg }}"></span></span>
+            <span style="width:6px;height:6px;border-radius:50%;background:{{ c.dot }}"></span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    <sc-if value="{{ hasOfferBanner }}"><button onClick="{{ openInbox }}" style="display:flex;align-items:center;gap:10px;margin:14px 16px 0;padding:12px 14px;border:1px solid #9FCFDB;border-radius:10px;background:#EAF6F8;font:inherit;color:#1F2D3A;text-align:left;cursor:pointer;width:calc(100% - 32px);box-sizing:border-box"><span style="flex:1;font-size:14px;font-weight:600">{{ offerBanner }}</span><span style="font-size:13px;font-weight:600;color:#1F7D97">{{ tx.show }} ›</span></button></sc-if>
+    <sc-if value="{{ showMe }}">
+    <div style="padding:20px 16px 8px;display:flex;flex-direction:column;gap:4px">
+      <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-size:13px;color:#5A6B7A">{{ sel.long }} {{ sel.date }}</div><sc-if value="{{ sel.hasStatus }}"><span style="font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:{{ sel.sBg }};color:{{ sel.sFg }};white-space:nowrap">{{ sel.status }}</span></sc-if></div>
+      <div style="font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1.15;color:{{ sel.rangeFg }};text-decoration:{{ sel.struck }}">{{ sel.range }}</div>
+      <sc-if value="{{ sel.hasUnit }}"><div style="display:flex;align-items:center;gap:6px;font-size:14px;color:#3C4B5A"><span style="width:18px;height:18px;border-radius:4px;background:{{ sel.ub }};color:{{ sel.uf }};font:700 10px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ sel.letter }}</span>{{ sel.unit }}</div></sc-if>
+    </div>
+    <sc-if value="{{ sel.has }}">
+      <div style="margin:8px 16px 0;border-top:1px solid #E3EAF0">
+        <sc-for list="{{ sel.list }}" as="g">
+          <div style="display:grid;grid-template-columns:96px 10px minmax(0,1fr) auto;align-items:center;column-gap:10px;padding:9px 0;border-bottom:1px solid #EEF3F6">
+            <div style="font:500 13px 'IBM Plex Mono',monospace;color:#3C4B5A">{{ g.time }}</div>
+            <span style="width:10px;height:10px;border-radius:2px;background:{{ g.sw }}"></span>
+            <div style="font-size:14px">{{ g.type }}</div>
+            <div style="font-size:13px;color:#5A6B7A">{{ g.unit }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ sel.canAct }}">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:16px">
+        <button onClick="{{ selSick }}" style="height:44px;border:1px solid #E8B4B1;border-radius:8px;background:#fff;color:#C2413D;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ tx.bSick }}</button>
+        <button onClick="{{ selSwap }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ tx.bSwap }}</button>
+        <button onClick="{{ selCover }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ tx.bCover }}</button>
+        <button onClick="{{ selUn }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ tx.bUn }}</button>
+      </div>
+    </sc-if>
+    </sc-if>
+    <sc-if value="{{ showDivider }}"><div style="height:8px;background:#F4F7F9;border-top:1px solid #E3EAF0;border-bottom:1px solid #E3EAF0;margin-top:8px"></div></sc-if>
+    <sc-if value="{{ showAll }}">
+    <div style="padding:18px 16px 8px;display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:16px;font-weight:600">{{ workingTitle }}</div><div style="font-size:13px;color:#5A6B7A">{{ workingCount }}</div></div>
+    <sc-if value="{{ oTimeline }}">
+    <div style="display:grid;grid-template-columns:104px minmax(0,1fr);column-gap:10px;padding:0 16px 4px">
+      <div></div>
+      <div style="position:relative;height:14px"><sc-for list="{{ axis }}" as="a"><span style="position:absolute;left:{{ a.left }};transform:translateX(-50%);font:500 10px 'IBM Plex Mono',monospace;color:#8796A5">{{ a.label }}</span></sc-for></div>
+    </div>
+    <sc-for list="{{ everyone }}" as="u" hint-placeholder-count="3">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 16px 4px">
+        <span style="width:16px;height:16px;border-radius:4px;background:{{ u.ub }};color:{{ u.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ u.letter }}</span>
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ u.name }}</div>
+      </div>
+      <sc-for list="{{ u.rows }}" as="r">
+        <div style="display:grid;grid-template-columns:104px minmax(0,1fr);column-gap:10px;align-items:center;padding:3px 16px;background:{{ r.rowBg }}">
+          <div style="font-size:13px;font-weight:{{ r.fw }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.short }}</div>
+          <div style="position:relative;height:20px;border-radius:3px;background:#F4F7F9;overflow:hidden">
+            <sc-for list="{{ r.segs }}" as="g"><div style="position:absolute;top:0;bottom:0;left:{{ g.left }};width:{{ g.width }};background:{{ g.bg }}"></div></sc-for>
+            <sc-if value="{{ r.noShift }}"><div style="position:absolute;inset:0;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:500;color:{{ r.rFg }}">{{ r.range }}</div></sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </sc-for>
+    </sc-if>
+    <sc-if value="{{ oTime }}">
+      <div style="margin:0 16px;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+        <sc-for list="{{ byTime }}" as="p" hint-placeholder-count="8">
+          <div style="display:grid;grid-template-columns:62px minmax(0,1fr) auto;align-items:center;column-gap:12px;padding:10px 14px;background:{{ p.rowBg }};box-shadow:0 -1px 0 #E3EAF0">
+            <div style="display:flex;flex-direction:column;font:500 13px/1.35 'IBM Plex Mono',monospace"><span style="color:#1F2D3A">{{ p.from }}</span><span style="color:#8796A5">{{ p.to }}</span></div>
+            <div style="min-width:0;display:flex;flex-direction:column;gap:3px">
+              <div style="font-size:15px;font-weight:{{ p.fw }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5A6B7A"><span style="flex:none;width:16px;height:16px;border-radius:4px;background:{{ p.ub }};color:{{ p.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ p.letter }}</span>{{ p.unit }}<sc-for list="{{ p.tags }}" as="tg"><span style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:#EEF3F6;color:#3C4B5A">{{ tg.t }}</span></sc-for></div>
+            </div>
+            <div style="font-size:12px;color:#5A6B7A;white-space:nowrap">{{ p.hours }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ hasOff }}">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;padding:22px 20px 8px">{{ offTitle }}</div>
+        <div style="margin:0 16px;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+          <sc-for list="{{ offList }}" as="p"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px;box-shadow:0 -1px 0 #E3EAF0"><span style="flex:none;width:16px;height:16px;border-radius:4px;background:{{ p.ub }};color:{{ p.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ p.letter }}</span><div style="flex:1;min-width:0;font-size:14px;color:#3C4B5A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</div><div style="font-size:12px;font-weight:600;color:{{ p.rFg }}">{{ p.why }}</div></div></sc-for>
+        </div>
+      </sc-if>
+    </sc-if>
+    <sc-if value="{{ oUnit }}">
+      <div style="display:flex;flex-direction:column;gap:12px;padding:0 16px">
+        <sc-for list="{{ unitCards }}" as="u" hint-placeholder-count="3">
+          <div style="border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#F7FAFB;border-bottom:1px solid #E3EAF0">
+              <span style="flex:none;width:20px;height:20px;border-radius:4px;background:{{ u.ub }};color:{{ u.uf }};font:700 10px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ u.letter }}</span>
+              <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">{{ u.name }}<span style="font-weight:500;color:#1F7D97">{{ u.mine }}</span></div><div style="font-size:12px;color:#5A6B7A">{{ u.meta }}</div></div>
+            </div>
+            <sc-for list="{{ u.rows }}" as="p">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:{{ p.rowBg }};box-shadow:0 -1px 0 #EEF3F6">
+                <div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px"><span style="font-size:14px;font-weight:{{ p.fw }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span><sc-for list="{{ p.tags }}" as="tg"><span style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:#EEF3F6;color:#3C4B5A">{{ tg.t }}</span></sc-for></div>
+                <div style="font:500 13px 'IBM Plex Mono',monospace;color:#1F2D3A;white-space:nowrap">{{ p.range }}</div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ u.hasOff }}"><div style="padding:10px 14px;font-size:13px;line-height:1.45;color:#5A6B7A;border-top:1px solid #EEF3F6">{{ u.offTxt }}</div></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    </sc-if>
+    <div style="height:40px"></div>
+  </div>
+  <sc-if value="{{ isSplit }}">
+    <div style="flex:none;display:grid;grid-template-columns:repeat(2,1fr);background:#fff;border-top:1px solid #E3EAF0;padding:4px 8px 28px">
+      <sc-for list="{{ bTabs }}" as="tb">
+        <button onClick="{{ tb.pick }}" style="height:52px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:{{ tb.fw }};color:{{ tb.fg }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px"><span style="width:20px;height:3px;border-radius:2px;background:{{ tb.bar }}"></span>{{ tb.name }}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ inbox }}">
+    <div style="position:absolute;inset:0;z-index:20;background:#F4F7F9;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:12px;padding:62px 16px 14px;background:#1F2D3A;color:#fff">
+        <div style="flex:1;font-size:20px;font-weight:600">{{ tx.inbox }}</div>
+        <button onClick="{{ closeInbox }}" style="height:36px;padding:0 14px;border:1px solid #4A5B6C;border-radius:18px;background:transparent;color:#fff;font:inherit;font-size:13px;font-weight:500;cursor:pointer">{{ tx.close }}</button>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding-bottom:30px">
+        <sc-if value="{{ hasOffers }}">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;padding:20px 20px 8px">{{ tx.offersTitle }}</div>
+          <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px">
+            <sc-for list="{{ offers }}" as="o">
+              <div style="background:#fff;border:1px solid #E3EAF0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px">
+                <div style="font-size:13px;color:#5A6B7A">{{ o.who }}</div>
+                <div style="font-size:17px;font-weight:600">{{ o.when }}</div>
+                <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#3C4B5A"><span style="width:16px;height:16px;border-radius:4px;background:{{ o.ub }};color:{{ o.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ o.letter }}</span>{{ o.unit }}</div>
+                <sc-if value="{{ o.canAnswer }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px"><button onClick="{{ o.yes }}" style="height:44px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ tx.take }}</button><button onClick="{{ o.no }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ tx.decline }}</button></div></sc-if>
+                <sc-if value="{{ o.hasNote }}"><div style="font-size:13px;font-weight:600;color:{{ o.noteFg }}">{{ o.note }}</div></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;padding:20px 20px 8px">{{ tx.notes }}</div>
+        <sc-if value="{{ noNotes }}"><div style="margin:0 16px;padding:16px;background:#fff;border:1px solid #E3EAF0;border-radius:10px;font-size:14px;color:#5A6B7A">{{ tx.noNotes }}</div></sc-if>
+        <sc-if value="{{ hasNotes }}">
+          <div style="margin:0 16px;background:#fff;border:1px solid #E3EAF0;border-radius:10px;overflow:hidden;display:flex;flex-direction:column">
+            <sc-for list="{{ myNotes }}" as="n"><div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;box-shadow:0 -1px 0 #E3EAF0"><span style="flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px;background:{{ n.dot }}"></span><div style="flex:1;font-size:14px;line-height:1.45;font-weight:{{ n.fw }}">{{ n.text }}</div></div></sc-for>
+          </div>
+        </sc-if>
+        <div style="display:flex;align-items:center;padding:24px 20px 8px"><div style="flex:1;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.myReqs }}</div></div>
+        <sc-if value="{{ noReqs }}"><div style="margin:0 16px;padding:16px;background:#fff;border:1px solid #E3EAF0;border-radius:10px;font-size:14px;color:#5A6B7A">{{ tx.noReqsB }}</div></sc-if>
+        <sc-if value="{{ hasReqs }}">
+          <div style="margin:0 16px;background:#fff;border:1px solid #E3EAF0;border-radius:10px;overflow:hidden;display:flex;flex-direction:column">
+            <sc-for list="{{ myReqs }}" as="r">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;box-shadow:0 -1px 0 #E3EAF0">
+                <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;line-height:1.4">{{ r.label }}</div><sc-if value="{{ r.canCancel }}"><button onClick="{{ r.cancel }}" style="margin-top:4px;padding:0;border:0;background:transparent;color:#C2413D;font:inherit;font-size:13px;font-weight:500;cursor:pointer">{{ tx.withdraw }}</button></sc-if></div>
+                <span style="font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:{{ r.sBg }};color:{{ r.sFg }};white-space:nowrap">{{ r.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</sc-if>
+
+<sc-if value="{{ isSubV }}">
+  <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;background:#F4F7F9;padding-bottom:40px">
+    <div style="background:#1F2D3A;color:#fff;padding:62px 16px 18px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:13px;color:#A9B9C8">{{ subMeta }}</div>
+      <div style="font-size:22px;font-weight:600;letter-spacing:-.01em">{{ meName }}</div>
+    </div>
+    <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;padding:20px 20px 8px">{{ tx.subOffers }}</div>
+    <sc-if value="{{ noSubOffers }}"><div style="margin:0 16px;padding:16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;font-size:14px;line-height:1.45;color:#5A6B7A">{{ tx.noSubOffers }}</div></sc-if>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px">
+      <sc-for list="{{ subOffers }}" as="o">
+        <div style="background:#fff;border:1px solid #E3EAF0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;opacity:{{ o.op }}">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:#FFF1CF;color:#6B5214">{{ tx.freeShift }}</span><div style="flex:1"></div><div style="font-size:12px;color:#5A6B7A">{{ o.sent }}</div></div>
+          <div style="font-size:15px;font-weight:600">{{ o.when }}</div>
+          <div style="font:600 28px 'IBM Plex Mono',monospace;letter-spacing:-.02em">{{ o.time }}</div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;color:#3C4B5A"><span style="flex:none;width:16px;height:16px;border-radius:4px;background:{{ o.ub }};color:{{ o.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ o.letter }}</span>{{ o.unit }}<sc-for list="{{ o.tags }}" as="tg"><span style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:#EEF3F6;color:#3C4B5A">{{ tg.t }}</span></sc-for></div>
+          <sc-if value="{{ o.canTake }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px"><button onClick="{{ o.take }}" style="height:48px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.takeShift }}</button><button onClick="{{ o.decline }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;height:48px;font-size:15px">{{ tx.decline }}</button></div></sc-if>
+          <sc-if value="{{ o.taken }}"><div style="font-size:13px;font-weight:600;color:#5A6B7A">{{ tx.taken }}</div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;padding:24px 20px 8px">{{ tx.myShifts }}</div>
+    <sc-if value="{{ noSubDays }}"><div style="margin:0 16px;padding:16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;font-size:14px;color:#5A6B7A">{{ tx.noSubDays }}</div></sc-if>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:0 16px">
+      <sc-for list="{{ subDays }}" as="x">
+        <div style="background:#fff;border:1px solid #E3EAF0;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-size:15px;font-weight:600">{{ x.when }}</div><span style="font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:{{ x.sBg }};color:{{ x.sFg }}">{{ x.status }}</span></div>
+          <div style="font:600 28px 'IBM Plex Mono',monospace;letter-spacing:-.02em">{{ x.range }}</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:14px;color:#3C4B5A"><span style="flex:none;width:18px;height:18px;border-radius:4px;background:{{ x.ub }};color:{{ x.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ x.letter }}</span>{{ x.unit }}</div>
+          <div style="border-top:1px solid #E3EAF0;margin-top:4px">
+            <sc-for list="{{ x.list }}" as="g">
+              <div style="display:grid;grid-template-columns:96px 10px minmax(0,1fr);align-items:center;column-gap:10px;padding:8px 0;border-bottom:1px solid #EEF3F6">
+                <div style="font:500 13px 'IBM Plex Mono',monospace;color:#3C4B5A">{{ g.time }}</div>
+                <span style="width:10px;height:10px;border-radius:2px;background:{{ g.sw }}"></span>
+                <div style="font-size:14px">{{ g.type }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ x.hasMates }}">
+            <div style="font-size:13px;font-weight:600;margin-top:4px">{{ tx.mates }}</div>
+            <sc-for list="{{ x.mates }}" as="m"><div style="display:flex;align-items:baseline;gap:10px;font-size:14px"><div style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.name }}</div><div style="font:500 13px 'IBM Plex Mono',monospace;color:#3C4B5A">{{ m.range }}</div></div></sc-for>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ hasNotes }}">
+      <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;padding:24px 20px 8px">{{ tx.notes }}</div>
+      <div style="margin:0 16px;background:#fff;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+        <sc-for list="{{ myNotes }}" as="n"><div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;box-shadow:0 -1px 0 #E3EAF0"><span style="flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px;background:{{ n.dot }}"></span><div style="flex:1;font-size:14px;line-height:1.45;font-weight:{{ n.fw }}">{{ n.text }}</div></div></sc-for>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<sc-if value="{{ hasSheet }}">
+  <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:30;background:rgba(15,30,45,.42);display:flex;align-items:flex-end">
+    <div onClick="{{ stop }}" style="width:100%;max-height:86%;overflow-y:auto;scrollbar-width:none;background:#fff;border-radius:16px 16px 0 0;padding:8px 20px 34px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px">
+      <div style="align-self:center;width:36px;height:5px;border-radius:3px;background:#D3DDEA"></div>
+      <div><div style="font-size:19px;font-weight:600;letter-spacing:-.01em">{{ sh.title }}</div><div style="font-size:14px;line-height:1.45;color:#5A6B7A;margin-top:3px;text-wrap:pretty">{{ sh.sub }}</div></div>
+
+      <sc-if value="{{ sh.isDay }}">
+        <sc-if value="{{ sh.day.has }}">
+          <div style="border-top:1px solid #E3EAF0">
+            <sc-for list="{{ sh.day.list }}" as="g">
+              <div style="display:grid;grid-template-columns:96px 10px minmax(0,1fr) auto;align-items:center;column-gap:10px;padding:9px 0;border-bottom:1px solid #EEF3F6">
+                <div style="font:500 13px 'IBM Plex Mono',monospace;color:#3C4B5A">{{ g.time }}</div>
+                <span style="width:10px;height:10px;border-radius:2px;background:{{ g.sw }}"></span>
+                <div style="font-size:14px">{{ g.type }}</div>
+                <div style="font-size:13px;color:#5A6B7A">{{ g.unit }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ sh.day.canAct }}">
+          <div style="display:flex;flex-direction:column;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+            <button onClick="{{ sh.goSick }}" style="display:flex;align-items:center;height:52px;padding:0 16px;border:0;background:#fff;font:inherit;font-size:15px;font-weight:600;color:#C2413D;cursor:pointer;text-align:left">{{ tx.aSick }}</button>
+            <button onClick="{{ sh.goSwap }}" style="display:flex;align-items:center;height:52px;padding:0 16px;border:0;border-top:1px solid #E3EAF0;background:#fff;font:inherit;font-size:15px;font-weight:500;color:#1F2D3A;cursor:pointer;text-align:left">{{ tx.aSwap }}</button>
+            <button onClick="{{ sh.goCover }}" style="display:flex;align-items:center;height:52px;padding:0 16px;border:0;border-top:1px solid #E3EAF0;background:#fff;font:inherit;font-size:15px;font-weight:500;color:#1F2D3A;cursor:pointer;text-align:left">{{ tx.aCover }}</button>
+            <button onClick="{{ sh.goUn }}" style="display:flex;align-items:center;height:52px;padding:0 16px;border:0;border-top:1px solid #E3EAF0;background:#fff;font:inherit;font-size:15px;font-weight:500;color:#1F2D3A;cursor:pointer;text-align:left">{{ tx.aUn }}</button>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ sh.isPick }}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onClick="{{ prevW }}" style="width:40px;height:40px;border:1px solid #D3DDEA;border-radius:10px;background:#fff;color:{{ prevFg }};font-size:17px;cursor:pointer;padding:0">‹</button>
+          <div style="flex:1;text-align:center;font-size:15px;font-weight:600">{{ weekTitle }} · {{ weekRange }}</div>
+          <button onClick="{{ nextW }}" style="width:40px;height:40px;border:1px solid #D3DDEA;border-radius:10px;background:#fff;color:{{ nextFg }};font-size:17px;cursor:pointer;padding:0">›</button>
+        </div>
+        <div style="display:flex;flex-direction:column;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+          <sc-for list="{{ week }}" as="x">
+            <button onClick="{{ x.openDay }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;border:0;background:#fff;box-shadow:0 -1px 0 #E3EAF0;font:inherit;color:inherit;cursor:pointer;text-align:left">
+              <div style="width:110px;font-size:14px;font-weight:600;color:{{ x.dayFg }}">{{ x.short }} {{ x.date }}</div>
+              <div style="flex:1;font-size:14px;color:{{ x.rangeFg }};text-decoration:{{ x.struck }}">{{ x.range }}</div>
+              <span style="font-size:18px;color:#A9B6C2">›</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ sh.isSick }}">
+        <button onClick="{{ sendSick }}" style="height:50px;border:0;border-radius:10px;background:#C2413D;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.sendSick }}</button>
+        <button onClick="{{ closeSheet }}" style="height:44px;border:0;background:transparent;color:#1F2D3A;font:inherit;font-size:15px;font-weight:500;cursor:pointer">{{ tx.cancel }}</button>
+      </sc-if>
+
+      <sc-if value="{{ sh.isSwap }}">
+        <div style="display:flex;flex-direction:column;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden;max-height:360px;overflow-y:auto">
+          <sc-for list="{{ swapList }}" as="p">
+            <button onClick="{{ p.pick }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 16px;border:0;background:{{ p.bg }};box-shadow:0 -1px 0 #E3EAF0;font:inherit;color:inherit;cursor:pointer;text-align:left">
+              <span style="flex:none;width:20px;height:20px;border-radius:50%;box-sizing:border-box;border:{{ p.ring }};background:#fff"></span>
+              <div style="flex:1;min-width:0;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</div>
+              <div style="font-size:13px;color:#5A6B7A;white-space:nowrap">{{ p.range }}</div>
+            </button>
+          </sc-for>
+        </div>
+        <button onClick="{{ sendSwap }}" style="height:50px;border:0;border-radius:10px;background:{{ swapBg }};color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.sendReq }}</button>
+      </sc-if>
+
+      <sc-if value="{{ sh.isCover }}">
+        <div style="display:flex;flex-direction:column;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+          <sc-for list="{{ coverSteps }}" as="r">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;box-shadow:0 -1px 0 #E3EAF0">
+              <div style="flex:1;font-size:15px">{{ r.label }}</div>
+              <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:8px;overflow:hidden">
+                <button onClick="{{ r.dec }}" style="width:44px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">−</button>
+                <div style="min-width:70px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div>
+                <button onClick="{{ r.inc }}" style="width:44px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">+</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:baseline;gap:8px"><div style="flex:1;font-size:14px;font-weight:600">{{ tx.reason }}</div><div style="font-size:12px;color:#5A6B7A">{{ tx.reasonPriv }}</div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ reasonChips }}" as="x"><button onClick="{{ x.pick }}" style="height:36px;padding:0 12px;border:1px solid {{ x.bd }};border-radius:18px;background:{{ x.bg }};color:{{ x.fg }};font:inherit;font-size:13px;font-weight:500;cursor:pointer">{{ x.name }}</button></sc-for></div>
+          <input value="{{ reason }}" onInput="{{ onReason }}" placeholder="{{ tx.reasonPh }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;padding:0 12px;font:inherit;font-size:15px;color:#1F2D3A;outline-color:#1F7D97;box-sizing:border-box;width:100%">
+        </div>
+        <div style="background:#F4F7F9;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+          <div style="font-size:14px;font-weight:600">{{ coverWho }}</div>
+          <div style="font-size:13px;line-height:1.45;color:#5A6B7A;text-wrap:pretty">{{ coverWhoSub }}</div>
+        </div>
+        <button onClick="{{ sendCover }}" style="height:50px;border:0;border-radius:10px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.sendReq }}</button>
+      </sc-if>
+
+      <sc-if value="{{ sh.isUn }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;background:#E3EAF0;border-radius:10px">
+          <sc-for list="{{ partOpts }}" as="x"><button onClick="{{ x.pick }}" style="height:38px;border:0;border-radius:8px;font:inherit;font-size:14px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer">{{ x.name }}</button></sc-for>
+        </div>
+        <sc-if value="{{ isPart }}">
+          <div style="display:flex;flex-direction:column;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+            <sc-for list="{{ partSteps }}" as="r">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;box-shadow:0 -1px 0 #E3EAF0">
+                <div style="flex:1;font-size:15px">{{ r.label }}</div>
+                <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:8px;overflow:hidden">
+                  <button onClick="{{ r.dec }}" style="width:44px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">−</button>
+                  <div style="min-width:70px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div>
+                  <button onClick="{{ r.inc }}" style="width:44px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">+</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <button onClick="{{ sendUn }}" style="height:50px;border:0;border-radius:10px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.sendReq }}</button>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ hasToast }}"><div style="position:absolute;left:50%;bottom:104px;transform:translateX(-50%);z-index:40;background:#1F2D3A;color:#fff;font-size:13px;font-weight:500;padding:10px 16px;border-radius:20px;white-space:nowrap;box-shadow:0 6px 20px rgba(15,30,45,.25)">{{ toast }}</div></sc-if>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:402,&quot;height&quot;:874},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;a&quot;,&quot;b&quot;],&quot;default&quot;:&quot;a&quot;,&quot;tsType&quot;:&quot;'a'|'b'&quot;},&quot;others&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;timeline&quot;,&quot;time&quot;,&quot;unit&quot;],&quot;default&quot;:&quot;timeline&quot;,&quot;tsType&quot;:&quot;'timeline'|'time'|'unit'&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;me&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;p1&quot;,&quot;p2&quot;,&quot;p5&quot;,&quot;p9&quot;],&quot;default&quot;:&quot;p1&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const UC = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
+const PAL = { contact: '#9FD8DE', break: '#F6B7B3', planning: '#B9E59A', meeting: '#AFC0D6' };
+const TODAY = (() => { const n = new Date(), base = new Date(2026, 9, 12); let diff = Math.floor((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - base) / 864e5), w = 42 + Math.floor(diff / 7), d = ((diff % 7) + 7) % 7; if (d > 4) { w++; d = 0; } if (w < 41 || w > 52) { w = 42; d = 1; } return { w, d }; })();
+const TW = TODAY.w, TD = TODAY.d;
+class Component extends DCLogic {
+  state = { reason: '', bTab: 'me', tab: 'sched', view: 'mine', week: TW, day: TD, sheet: null, swapWith: null, part: false, from: 780, to: 1110, inbox: false, toast: null };
+  applyCmd() { const c = this.props.cmd; if (!c || c.n === this._cmdN) return; this._cmdN = c.n; const p = {}; ['week', 'day', 'bTab', 'sheet', 'inbox'].forEach(k => { if (k in c) p[k] = c[k]; }); this.setState(p); }
+  componentDidUpdate() { this.applyCmd(); }
+  async componentDidMount() {
+    this.applyCmd();
+    if (this.props.ctl) return;
+    const m = await import(window.__resources && window.__resources.core ? window.__resources.core : new URL('schedule-core-demo.js', document.baseURI).href);
+    this.mod = m; this.ctl = m.controller(this); this.forceUpdate();
+  }
+  flash(msg) { clearTimeout(this._tt); this.setState({ toast: msg }); this._tt = setTimeout(() => this.setState({ toast: null }), 2400); }
+  renderVals() {
+    const ctl = this.props.ctl || this.ctl, mod = this.props.mod || this.mod; if (!ctl || !mod) return { ready: false };
+    const lang = this.props.lang === 'sv' ? 'sv' : 'en', sv = lang === 'sv', t = (a, b) => sv ? a : b, V = this.props.variant === 'b' ? 'b' : 'a';
+    const s = ctl.store.get(), me = this.props.me || 'p1', P = mod.person(me) || mod.STAFF[0], st = this.state, W = st.week, D = st.day;
+    const b0 = mod.blockOf(TW), weeksArr = [b0, b0 + 1, b0 + 2, b0 + 3];
+    const MON = sv ? ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'] : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dt = (w, d) => new Date(2026, 9, 12 + (w - 42) * 7 + d);
+    const dLab = (w, d) => { const x = dt(w, d); return x.getDate() + ' ' + MON[x.getMonth()]; };
+    const wkRange = w => { const a = dt(w, 0), b = dt(w, 4); return a.getMonth() === b.getMonth() ? a.getDate() + '–' + b.getDate() + ' ' + MON[b.getMonth()] : dLab(w, 0) + ' – ' + dLab(w, 4); };
+    const SD = sv ? ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    const lc = x => sv ? x.toLowerCase() : x;
+    const LD = d => { const n = mod.dayName(d, lang); return n[0].toUpperCase() + n.slice(1); };
+    const TL = { contact: t('Med barnen', 'With children'), break: t('Rast', 'Break'), planning: t('Planering', 'Planning'), meeting: t('Möte', 'Meeting') };
+    const WHY = { sick: t('Sjuk', 'Sick'), vacation: t('Semester', 'Holiday'), leave: t('Ledig', 'Away'), parental: t('Föräldraledig', 'Parental leave'), course: t('Kurs', 'Course') };
+    const TYPE = { swap: t('byte', 'swap'), unavail: t('kan inte', "can't work"), sick: t('sjuk', 'sick') };
+    const pc = m => (m - mod.DS) / mod.SPAN * 100, G = id => mod.GROUPS.find(g => g.id === id);
+    const shifts = (pid, w, d) => s.shifts.filter(x => x.staff === pid && x.week === w && x.day === d).sort((a, b) => a.start - b.start);
+    const absOf = (pid, w, d) => s.absences.find(z => z.staff === pid && z.week === w && z.day === d) || (() => { const p = mod.person(pid), l = p && mod.onLeave(p, w, d); return l ? { reason: l.kind } : null; })();
+    const reqs = s.requests || [];
+    const segsOf = list => list.map(x => ({ left: pc(x.start) + '%', width: (pc(x.end) - pc(x.start)) + '%', bg: PAL[x.type] }));
+    const rangeOf = list => list.length ? mod.fmt(list[0].start) + '–' + mod.fmt(list[list.length - 1].end) : '';
+    const unitOf = list => { const c = list.find(x => x.type === 'contact') || list[0]; return c ? G(c.group) : null; };
+    const past = (w, d) => w < TW || (w === TW && d < TD);
+    const open = (kind, w, d) => this.setState({ sheet: { kind, w, d }, swapWith: null, part: false, from: 780, to: 1110 });
+    const dayVM = (w, d) => {
+      const sh = shifts(me, w, d), ab = absOf(me, w, d), pend = reqs.find(r => r.staff === me && r.week === w && r.day === d && r.status === 'pending'), u = unitOf(sh), today = w === TW && d === TD;
+      let status = '', sBg = 'transparent', sFg = '#5A6B7A', dot = 'transparent';
+      if (ab) { status = WHY[ab.reason] || WHY.leave; sBg = ab.reason === 'sick' ? '#FFDAD8' : '#E6EEF4'; sFg = ab.reason === 'sick' ? '#8E2A27' : '#3C4B5A'; dot = ab.reason === 'sick' ? '#E5534B' : '#8796A5'; }
+      else if (pend) { status = t('Väntar', 'Waiting') + ': ' + TYPE[pend.type]; sBg = '#FFF1CF'; sFg = '#6B5214'; dot = '#E0A93B'; }
+      else if (!sh.length) { status = t('Ledig', 'Day off'); sBg = '#EEF3F6'; }
+      return { d, w, short: SD[d], long: LD(d), date: dLab(w, d), dnum: dt(w, d).getDate(), today, isPast: past(w, d),
+        range: rangeOf(sh) || t('Ledig', 'Day off'), has: sh.length > 0, struck: ab && sh.length ? 'line-through' : 'none', rangeFg: ab || !sh.length ? '#8796A5' : '#1F2D3A',
+        unit: u ? u.name : '', ...(u ? UC[u.id] : { letter: '', ub: 'transparent', uf: '#000' }), hasUnit: !!u && !ab, segs: segsOf(sh), status, hasStatus: !!status, sBg, sFg, dot,
+        dayFg: today ? '#1F7D97' : '#1F2D3A', rowBg: today ? '#F3F9FB' : '#fff',
+        top: sh.length ? pc(sh[0].start) + '%' : '0', h: sh.length ? (pc(sh[sh.length - 1].end) - pc(sh[0].start)) + '%' : '0',
+        list: sh.map(x => ({ time: mod.fmt(x.start) + '–' + mod.fmt(x.end), type: TL[x.type], sw: PAL[x.type], unit: (G(x.group) || {}).name || '' })),
+        canAct: !past(w, d) && !ab && !pend && sh.length > 0, openDay: () => open('day', w, d) };
+    };
+    const week = [0, 1, 2, 3, 4].map(d => dayVM(W, d)), sel = dayVM(W, D);
+    let working = 0;
+    const isSubMe = !!P.sub, offFor = (pid, ab) => pid === me ? (WHY[ab.reason] || WHY.leave) : t('Frånvarande', 'Away');
+    const everyone = mod.GROUPS.map(g => {
+      const rows = mod.STAFF.filter(p => p.group === g.id).sort((a, b) => a.name.localeCompare(b.name, 'sv')).map(p => {
+        const sh = shifts(p.id, W, D), ab = absOf(p.id, W, D), isMe = p.id === me, nm = p.name.split(' ');
+        if (sh.length && !ab) working++;
+        return { name: p.name, short: nm[0] + (nm[1] ? ' ' + nm[1][0] + '.' : ''), fw: isMe ? 600 : 400, rowBg: isMe ? '#EAF6F8' : 'transparent',
+          range: ab ? offFor(p.id, ab) : sh.length ? rangeOf(sh) : t('Ledig', 'Off'), rFg: ab && isMe ? '#8E2A27' : sh.length && !ab ? '#1F2D3A' : '#8796A5',
+          has: sh.length > 0 && !ab, noShift: !(sh.length > 0 && !ab), segs: ab ? [] : segsOf(sh) };
+      });
+      return { name: g.name, ...UC[g.id], rows, count: rows.filter(r => r.has).length + ' ' + t('arbetar', 'working') };
+    });
+    const O = this.props.others || 'timeline', R = s.roles[W + '-' + D] || {};
+    const tagsOf = pid => [...(R.open === pid ? [{ t: t('Öppnar', 'Opens') }] : []), ...(R.close === pid ? [{ t: t('Stänger', 'Closes') }] : [])];
+    const hm = m => { const h = Math.floor(m / 60), mm = m % 60; return h + (mm ? (sv ? ',' : '.') + String(Math.round(mm / 6)) : '') + ' h'; };
+    const dayRows = mod.STAFF.map(p => { const sh = shifts(p.id, W, D), ab = absOf(p.id, W, D), u = G(p.group); const nm = p.name.split(' ');
+      return { p, gid: p.group, sh, ab, on: sh.length > 0 && !ab, isMe: p.id === me, name: p.name, ...UC[p.group], unit: u ? u.name : '',
+        start: sh.length ? sh[0].start : 9999, from: sh.length ? mod.fmt(sh[0].start) : '', to: sh.length ? mod.fmt(sh[sh.length - 1].end) : '', range: rangeOf(sh),
+        hours: hm(sh.filter(x => x.type !== 'break').reduce((a, x) => a + x.end - x.start, 0)), tags: tagsOf(p.id),
+        fw: p.id === me ? 600 : 500, rowBg: p.id === me ? '#EAF6F8' : '#fff', why: ab ? offFor(p.id, ab) : t('Ledig', 'Off'), rFg: ab && p.id === me && ab.reason === 'sick' ? '#C2413D' : '#5A6B7A' }; });
+    mod.SUBS.forEach(p => { const sh = shifts(p.id, W, D); if (!sh.length) return; const gid = (sh.find(x => x.type === 'contact') || sh[0]).group, u = G(gid);
+      dayRows.push({ p, gid, sh, ab: null, on: true, isMe: p.id === me, name: p.name, ...UC[gid], unit: u ? u.name : '', start: sh[0].start, from: mod.fmt(sh[0].start), to: mod.fmt(sh[sh.length - 1].end), range: rangeOf(sh),
+        hours: hm(sh.filter(x => x.type !== 'break').reduce((a, x) => a + x.end - x.start, 0)), tags: [{ t: t('Vikarie', 'Substitute') }, ...tagsOf(p.id)], fw: p.id === me ? 600 : 500, rowBg: p.id === me ? '#EAF6F8' : '#fff', why: '', rFg: '#5A6B7A' }); });
+    const byTime = dayRows.filter(r => r.on).sort((a, b) => a.start - b.start || a.name.localeCompare(b.name, 'sv'));
+    const offList = dayRows.filter(r => !r.on).sort((a, b) => (a.ab ? 0 : 1) - (b.ab ? 0 : 1) || a.name.localeCompare(b.name, 'sv'));
+    const myG = P.group, unitCards = mod.GROUPS.slice().sort((a, b) => (a.id === myG ? -1 : b.id === myG ? 1 : 0)).map(g => {
+      const rows = dayRows.filter(r => r.gid === g.id && r.on).sort((a, b) => a.start - b.start), off = dayRows.filter(r => r.gid === g.id && !r.on);
+      return { name: g.name, ...UC[g.id], mine: g.id === myG ? t(' · din avdelning', ' · your unit') : '', meta: rows.length + ' ' + t('arbetar', 'working') + ' · ' + t('öppet ', 'open ') + mod.fmt(g.open) + '–' + mod.fmt(g.close),
+        rows, hasOff: off.length > 0, offTxt: off.map(r => r.name.split(' ')[0] + ' (' + r.why.toLowerCase() + ')').join(', ') };
+    });
+    const segOpt = (a, name, pick) => ({ name, pick, bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#3C4B5A', fw: a ? 600 : 500, sh: a ? '0 1px 2px rgba(15,30,45,.12)' : 'none' });
+    const myReqs = reqs.filter(r => r.staff === me).sort((a, b) => b.at - a.at).map(r => {
+      const S = { pending: [t('Väntar', 'Waiting'), '#FFF1CF', '#6B5214'], approved: [t('Godkänd', 'Approved'), '#E2F6D4', '#2D6A1F'], declined: [t('Inte godkänd', 'Declined'), '#FFDAD8', '#8E2A27'], new: [t('Skickad', 'Sent'), '#E6EEF4', '#3C4B5A'], seen: [t('Sedd', 'Seen'), '#E6EEF4', '#3C4B5A'] }[r.status] || ['', '#fff', '#000'];
+      return { label: mod.reqLabel(r, lang), status: S[0], sBg: S[1], sFg: S[2], canCancel: r.status === 'pending', cancel: () => ctl.touch(x => { x.requests = x.requests.filter(q => q.id !== r.id); }) };
+    });
+    const notes = (s.notes || []).filter(n => n.to === me).sort((a, b) => b.at - a.at), unread = notes.filter(n => !n.read).length;
+    const markRead = () => { if (unread) ctl.touch(x => { (x.notes || []).forEach(n => { if (n.to === me) n.read = true; }); }); };
+    const myNotes = notes.map(n => ({ text: mod.noteLabel(n, lang), dot: n.read ? '#D3DDEA' : '#1F7D97', fw: n.read ? 400 : 500 }));
+    const pendingCount = myReqs.filter(r => r.canCancel).length;
+    const SH = st.sheet, sd = SH && dayVM(SH.w, SH.d);
+    const shVM = SH ? {
+      isDay: SH.kind === 'day', isPick: SH.kind === 'pick', isCover: SH.kind === 'cover', isSick: SH.kind === 'sick', isSwap: SH.kind === 'swap', isUn: SH.kind === 'un', day: sd,
+      title: SH.kind === 'pick' ? t('Ny förfrågan', 'New request') : SH.kind === 'cover' ? t('Täck del av pass ', 'Cover part of your shift on ') + lc(sd.long) + ' ' + sd.date : SH.kind === 'sick' ? t('Sjukanmäl dig ', 'Report sick on ') + lc(sd.long) + ' ' + sd.date : SH.kind === 'swap' ? t('Byt pass ', 'Swap your shift on ') + lc(sd.long) + ' ' + sd.date : SH.kind === 'un' ? t('Kan inte arbeta ', "Can't work on ") + lc(sd.long) + ' ' + sd.date : sd.long + ' ' + sd.date,
+      sub: SH.kind === 'pick' ? t('Välj dag.', 'Choose a day.') : SH.kind === 'cover' ? t('Välj tiden du behöver vara borta. Kollegor som kan ta den får en förfrågan.', 'Choose the time you need to be away. Colleagues who can take it get a request.') : SH.kind === 'sick' ? t('Dina pass den dagen markeras som att de behöver ersättare. Den som planerar får ett meddelande.', 'Your shifts that day are marked as needing cover. The planner gets a message.')
+        : SH.kind === 'swap' ? t('Välj vem du vill byta med. Ni byter pass med varandra den dagen när den som planerar har godkänt.', 'Choose who to swap with. You swap shifts that day once the planner approves.')
+        : SH.kind === 'un' ? t('Den som planerar ser förfrågan och godkänner den.', 'The planner sees the request and approves it.')
+        : (sd.has ? sd.range + (sd.unit ? ' · ' + sd.unit : '') : sd.range) + (sd.hasStatus && sd.has ? ' · ' + sd.status : ''),
+      goCover: () => openCover(SH.w, SH.d), goSick: () => open('sick', SH.w, SH.d), goSwap: () => open('swap', SH.w, SH.d), goUn: () => open('un', SH.w, SH.d),
+    } : {};
+    const openCover = (w, d) => { const l = shifts(me, w, d); if (!l.length) return; const e = l[l.length - 1].end; this.setState({ sheet: { kind: 'cover', w, d }, from: Math.max(l[0].start, e - 60), to: e, reason: '' }); };
+    const cvL = SH && SH.kind === 'cover' ? shifts(me, SH.w, SH.d) : [], cvA = cvL.length ? cvL[0].start : 360, cvB = cvL.length ? cvL[cvL.length - 1].end : 1110;
+    const stepC = (k, d) => this.setState(x => { const v = Math.max(cvA, Math.min(cvB, x[k] + d)); return k === 'from' ? { from: Math.min(v, x.to - 15) } : { to: Math.max(v, x.from + 15) }; });
+    const cc = cvL.length ? mod.coverCands(s, { staff: me, week: SH.w, day: SH.d, from: st.from, to: st.to }, lang).filter(x => x.ok) : [];
+    const RS = sv ? ['Läkarbesök', 'Tandläkare', 'Hämta barn', 'Annat'] : ['Doctor', 'Dentist', 'Picking up a child', 'Other'];
+    const offersAll = reqs.filter(r => r.type === 'cover' && (r.offered || []).includes(me) && ((r.status === 'open' && !(r.declined || []).includes(me)) || r.by === me)).sort((a, b) => b.at - a.at);
+    const offers = offersAll.map(r => { const rq = mod.person(r.staff) || {}, gs = shifts(r.staff, r.week, r.day).find(x => x.start < r.to && x.end > r.from) || s.shifts.find(x => x.cover === r.staff && x.week === r.week && x.day === r.day && x.staff === r.by), g = G((gs || {}).group || rq.group);
+      const canAnswer = r.status === 'open', NT = { matched: [t('Du har tackat ja. Väntar på rektor.', 'You said yes. Waiting for the principal.'), '#8A5F0C'], approved: [t('Godkänt. Tiden ligger i ditt schema.', 'Approved. The time is in your schedule.'), '#2D6A1F'], declined: [t('Rektor godkände inte bytet.', 'The principal did not approve it.'), '#8E2A27'] }[r.status] || ['', '#5A6B7A'];
+      return { who: t(rq.name + ' frågar om du kan ta över', rq.name + ' asks if you can take over'), when: LD(r.day) + ' ' + dLab(r.week, r.day) + ' · ' + mod.fmt(r.from) + '–' + mod.fmt(r.to), unit: g ? g.name : '', ...(g ? UC[g.id] : { letter: '', ub: 'transparent', uf: '#000' }),
+        canAnswer, hasNote: !canAnswer && !!NT[0], note: NT[0], noteFg: NT[1],
+        yes: () => { ctl.touch(x => mod.coverRespond(x, r.id, me, true)); this.flash(t('Du har tackat ja', 'You said yes')); }, no: () => ctl.touch(x => mod.coverRespond(x, r.id, me, false)) }; });
+    const openOffers = offers.filter(o => o.canAnswer).length;
+    const FR = s.free || [], lastOffer = f => { const l = (f.log || []).filter(x => x.k === 'offerPref' || x.k === 'offerAll'); return l.length ? l[l.length - 1].t : f.clock; };
+    const needTags = f => [...(f.needs.open ? [{ t: t('Öppnar', 'Opens') }] : []), ...(f.needs.close ? [{ t: t('Stänger', 'Closes') }] : []), ...(f.needs.sn ? [{ t: t('Särskilt stöd', 'Special needs') }] : [])];
+    const subOffers = isSubMe ? FR.filter(f => (f.offered || []).includes(me) && !(f.declined || []).includes(me) && f.by !== me && f.status !== 'nobody').sort((a, b) => b.clock - a.clock).map(f => { const g = G(f.group);
+      return { when: LD(f.day) + ' ' + dLab(f.week, f.day), time: mod.fmt(f.from) + '–' + mod.fmt(f.to), unit: g ? g.name : '', ...(g ? UC[g.id] : {}), tags: needTags(f), sent: t('Skickat ', 'Sent ') + mod.fmt(lastOffer(f)),
+        canTake: f.status === 'offered', taken: f.status !== 'offered', op: f.status === 'offered' ? 1 : .6,
+        take: () => { ctl.touch(x => mod.acceptFree(x, f.id, me)); this.flash(t('Passet är ditt', 'The shift is yours')); }, decline: () => ctl.touch(x => mod.declineFree(x, f.id, me)) }; }) : [];
+    const subDays = isSubMe ? [...new Set(s.shifts.filter(x => x.staff === me).map(x => x.week * 10 + x.day))].sort((a, b) => a - b).map(k => { const w = Math.floor(k / 10), d = k % 10, sh = shifts(me, w, d), u = unitOf(sh), f = FR.find(z => z.by === me && z.week === w && z.day === d);
+      const mates = [...mod.STAFF, ...mod.SUBS].filter(p => p.id !== me && !absOf(p.id, w, d)).map(p => { const ps = shifts(p.id, w, d).filter(x => u && x.group === u.id); return ps.length ? { name: p.name, range: rangeOf(ps), start: ps[0].start } : null; }).filter(Boolean).sort((a, b) => a.start - b.start);
+      const cf = f && f.status === 'confirmed';
+      return { when: LD(d) + ' ' + dLab(w, d), range: rangeOf(sh), unit: u ? u.name : '', ...(u ? UC[u.id] : {}), status: !f || cf ? t('Bekräftat', 'Confirmed') : t('Väntar på bekräftelse', 'Waiting for confirmation'), sBg: !f || cf ? '#E2F6D4' : '#FFF1CF', sFg: !f || cf ? '#2D6A1F' : '#6B5214',
+        list: sh.map(x => ({ time: mod.fmt(x.start) + '–' + mod.fmt(x.end), type: TL[x.type], sw: PAL[x.type] })), mates, hasMates: mates.length > 0 }; }) : [];
+    const send = r => { ctl.touch(x => mod.submitRequest(x, { staff: me, week: SH.w, day: SH.d, ...r })); this.setState({ sheet: null }); };
+    const swapList = SH && SH.kind === 'swap' ? mod.STAFF.filter(p => p.id !== me).sort((a, b) => a.name.localeCompare(b.name, 'sv')).map(p => {
+      const sh = shifts(p.id, SH.w, SH.d), ab = absOf(p.id, SH.w, SH.d), on = st.swapWith === p.id;
+      return { name: p.name, range: ab ? offFor(p.id, ab) : sh.length ? rangeOf(sh) : t('Ledig', 'Off'), bg: on ? '#EAF6F8' : '#fff', ring: on ? '6px solid #1F7D97' : '1.5px solid #C9D5E0', pick: () => this.setState({ swapWith: p.id }) };
+    }) : [];
+    const stepT = (k, d) => this.setState(x => { const v = Math.max(360, Math.min(1110, x[k] + d)); return k === 'from' ? { from: Math.min(v, x.to - 15) } : { to: Math.max(v, x.from + 15) }; });
+    const tabs = [['sched', t('Schema', 'Schedule'), 0], ['req', t('Förfrågningar', 'Requests'), pendingCount], ['notes', t('Meddelanden', 'Messages'), unread]].map(([k, name, b]) => {
+      const a = st.tab === k; return { name, fw: a ? 600 : 500, fg: a ? '#1F7D97' : '#5A6B7A', bar: a ? '#1F7D97' : 'transparent', hasBadge: k === 'notes' && b > 0, badge: b, pick: () => { this.setState({ tab: k }); if (k === 'notes') markRead(); } };
+    });
+    return {
+      ready: true, isA: V === 'a' && !isSubMe, isB: V === 'b' && !isSubMe, isSubV: isSubMe, subMeta: t('Vikarie · ', 'Substitute · ') + ((s.prefs || {}).school || 'Förskolan Solrosen'),
+      subOffers, noSubOffers: !subOffers.length, subDays, noSubDays: !subDays.length, offers, hasOffers: offers.length > 0, hasOfferBanner: openOffers > 0 && !st.inbox,
+      offerBanner: openOffers === 1 ? t('En kollega frågar om hjälp', 'A colleague is asking for help') : t(openOffers + ' kollegor frågar om hjälp', openOffers + ' colleagues are asking for help'),
+      selCover: () => openCover(W, D), coverSteps: [{ label: t('Från', 'From'), val: mod.fmt(st.from), dec: () => stepC('from', -15), inc: () => stepC('from', 15) }, { label: t('Till', 'To'), val: mod.fmt(st.to), dec: () => stepC('to', -15), inc: () => stepC('to', 15) }],
+      reason: st.reason, onReason: e => this.setState({ reason: e.target.value }), reasonChips: RS.map(n => { const a = st.reason === n; return { name: n, bg: a ? '#1F2D3A' : '#fff', fg: a ? '#fff' : '#1F2D3A', bd: a ? '#1F2D3A' : '#C9D5E0', pick: () => this.setState({ reason: n }) }; }),
+      coverWho: cc.length ? t('Skickas till ' + cc.length + (cc.length === 1 ? ' kollega' : ' kollegor'), 'Goes to ' + cc.length + (cc.length === 1 ? ' colleague' : ' colleagues')) : t('Ingen kollega kan ta tiden', 'No colleague can take this time'),
+      coverWhoSub: cc.length ? cc.map(x => x.name.split(' ')[0]).join(', ') + '. ' + t('De är lediga då och bryter inte mot reglerna för vila, arbetstid eller rast (R1–R4). Den som svarar först får tiden när rektor har godkänt.', 'They are free then and would not break the rest, working hours or break rules (R1–R4). The first to say yes gets it once the principal approves.') : t('Alla som är lediga då skulle bryta mot en regel för vila, arbetstid eller rast. Rektor ser förfrågan ändå.', 'Everyone free then would break a rest, hours or break rule. The principal still sees the request.'),
+      sendCover: () => { send({ type: 'cover', from: st.from, to: st.to, reason: st.reason.trim() }); this.flash(t('Förfrågan skickad', 'Request sent')); }, meName: P.name, weekTitle: t('Vecka ', 'Week ') + W, weekRange: wkRange(W),
+      prevW: () => this.setState({ week: Math.max(b0, W - 1) }), nextW: () => this.setState({ week: Math.min(b0 + 3, W + 1) }),
+      prevFg: W > b0 ? '#1F2D3A' : '#C9D5E0', nextFg: W < b0 + 3 ? '#1F2D3A' : '#C9D5E0',
+      tabSched: st.tab === 'sched', tabReq: st.tab === 'req', tabNotes: st.tab === 'notes', tabs,
+      viewOpts: [segOpt(st.view === 'mine', t('Min vecka', 'My week'), () => this.setState({ view: 'mine' })), segOpt(st.view === 'all', t('Alla', 'Everyone'), () => this.setState({ view: 'all' }))],
+      viewMine: st.view === 'mine', viewAll: st.view === 'all', week, sel, everyone,
+      dayChips: [0, 1, 2, 3, 4].map(d => { const a = d === D; return { short: SD[d], num: dt(W, d).getDate(), bg: a ? '#1F2D3A' : '#fff', fg: a ? '#fff' : '#1F2D3A', bd: a ? '#1F2D3A' : '#E3EAF0', pick: () => this.setState({ day: d }) }; }),
+      weeks: weeksArr.map(w => { const a = w === W; return { label: t('v.', 'w.') + w, bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#C5D2DE', fw: a ? 600 : 500, pick: () => this.setState({ week: w }) }; }),
+      strip: week.map(x => { const a = x.d === D; return { ...x, colBg: a ? '#fff' : 'transparent', colFg: a ? '#1F2D3A' : '#fff', trackBg: a ? '#EEF3F6' : '#2C3B4A', barBg: x.has ? (a ? '#1F7D97' : '#9FD8DE') : 'transparent', dot: x.dot, pick: () => this.setState({ day: x.d }) }; }),
+      axis: [360, 540, 720, 900, 1080].map(m => ({ left: pc(m) + '%', label: String(m / 60).padStart(2, '0') })),
+      workingTitle: t('Arbetar ', 'Working on ') + lc(sel.long), workingCount: working + ' ' + t('av ', 'of ') + mod.STAFF.length,
+      isSplit: !!this.props.split, showMe: !this.props.split || st.bTab === 'me', showAll: !this.props.split || st.bTab === 'all', showDivider: !this.props.split,
+      bTabs: [['me', t('Mitt schema', 'My schedule')], ['all', t('Vem arbetar', "Who's working")]].map(([k, name]) => { const a = st.bTab === k; return { name, fw: a ? 600 : 500, fg: a ? '#1F7D97' : '#5A6B7A', bar: a ? '#1F7D97' : 'transparent', pick: () => this.setState({ bTab: k }) }; }),
+      oTimeline: O === 'timeline', oTime: O === 'time', oUnit: O === 'unit', byTime, offList, hasOff: offList.length > 0, offTitle: t('Arbetar inte', 'Not working'), unitCards,
+      selSick: () => open('sick', W, D), selSwap: () => open('swap', W, D), selUn: () => open('un', W, D),
+      myReqs, hasReqs: myReqs.length > 0, noReqs: !myReqs.length, myNotes, hasNotes: myNotes.length > 0, noNotes: !myNotes.length,
+      unread: unread + openOffers, hasUnread: unread + openOffers > 0, inbox: st.inbox, openInbox: () => { this.setState({ inbox: true }); markRead(); }, closeInbox: () => this.setState({ inbox: false }),
+      newReq: () => open('pick', W, D),
+      hasSheet: !!SH, sh: shVM, closeSheet: () => this.setState({ sheet: null }), stop: e => e.stopPropagation(),
+      swapList, swapBg: st.swapWith ? '#1F7D97' : '#A9C9D2',
+      sendSick: () => { send({ type: 'sick' }); this.flash(t('Sjukanmälan skickad', 'Sick report sent')); },
+      sendSwap: () => { if (!st.swapWith) return; send({ type: 'swap', with: st.swapWith }); this.flash(t('Förfrågan skickad', 'Request sent')); },
+      sendUn: () => { send({ type: 'unavail', from: st.part ? st.from : 0, to: st.part ? st.to : 1440 }); this.flash(t('Förfrågan skickad', 'Request sent')); },
+      partOpts: [segOpt(!st.part, t('Hela dagen', 'Whole day'), () => this.setState({ part: false })), segOpt(st.part, t('Del av dagen', 'Part of the day'), () => this.setState({ part: true }))], isPart: st.part,
+      partSteps: [{ label: t('Från', 'From'), val: mod.fmt(st.from), dec: () => stepT('from', -15), inc: () => stepT('from', 15) }, { label: t('Till', 'To'), val: mod.fmt(st.to), dec: () => stepT('to', -15), inc: () => stepT('to', 15) }],
+      hasToast: !!st.toast, toast: st.toast,
+      tx: { hintA: t('Tryck på en dag för att sjukanmäla dig, byta pass eller säga att du inte kan arbeta.', "Tap a day to report sick, swap a shift or say you can't work."),
+        requests: t('Förfrågningar', 'Requests'), reqSub: t('Byten och dagar du inte kan arbeta godkänns av den som planerar.', "Swaps and days you can't work are approved by the planner."), newReq: t('Ny förfrågan', 'New request'),
+        noReqs: t('Du har inga förfrågningar.', 'You have no requests.'), noReqsB: t('Inga förfrågningar. Välj en dag för att skicka en.', 'No requests. Choose a day to send one.'), withdraw: t('Dra tillbaka', 'Withdraw'),
+        notes: t('Meddelanden', 'Messages'), noNotes: t('Inga meddelanden.', 'No messages.'), inbox: t('Inkorg', 'Inbox'), close: t('Stäng', 'Close'), myReqs: t('Mina förfrågningar', 'My requests'),
+        bSick: t('Sjuk', 'Sick'), bSwap: t('Byt pass', 'Swap'), bCover: t('Täck del av pass', 'Cover part of shift'), aCover: t('Be någon täcka en del av passet', 'Ask someone to cover part of it'),
+        reason: t('Orsak', 'Reason'), reasonPriv: t('Syns bara för rektor', 'Only the principal sees this'), reasonPh: t('Skriv själv (frivilligt)', 'Write your own (optional)'), show: t('Visa', 'Show'),
+        offersTitle: t('Kan du ta över?', 'Can you take over?'), take: t('Ta passet', 'Take it'), takeShift: t('Ta passet', 'Take the shift'), decline: t('Avböj', 'Decline'),
+        subOffers: t('Erbjudanden', 'Offers'), noSubOffers: t('Inga lediga pass just nu. Du får ett meddelande när ett pass erbjuds dig.', 'No free shifts right now. You get a message when one is offered to you.'), freeShift: t('Ledigt pass', 'Free shift'),
+        taken: t('Passet är tillsatt.', 'The shift has been taken.'), myShifts: t('Mina pass', 'My shifts'), noSubDays: t('Du har inga bokade pass.', 'You have no booked shifts.'), mates: t('Du arbetar med', 'You work with'), bUn: t('Kan inte', "Can't work"),
+        aSick: t('Sjukanmäl dig', 'Report sick'), aSwap: t('Be om att byta pass', 'Ask to swap'), aUn: t('Säg att du inte kan arbeta', "Say you can't work"),
+        sendSick: t('Sjukanmäl', 'Report sick'), sendReq: t('Skicka förfrågan', 'Send request'), cancel: t('Avbryt', 'Cancel') },
+    };
+  }
+}
+</script>
+</body>
+</html>

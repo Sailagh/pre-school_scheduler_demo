@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex;width:100%;height:100%;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#fff">
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+  <div style="width:280px;flex:none;border-right:1px solid #D3DDEA;display:flex;flex-direction:column;min-height:0">
+    <div style="padding:36px 16px 12px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:baseline;gap:8px"><div style="font-size:22px;font-weight:600;letter-spacing:-.01em">{{ tx.title }}</div><div style="font-size:14px;color:#5A6B7A">{{ count }}</div></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:#5A6B7A;white-space:nowrap">{{ tx.sortBy }}</span><div style="flex:1;display:flex;gap:2px;padding:2px;background:#EEF3F6;border-radius:7px"><sc-for list="{{ sorts }}" as="x"><button onClick="{{ x.pick }}" style="flex:1;height:30px;padding:0 6px;border:0;border-radius:5px;font:inherit;font-size:12px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer;white-space:nowrap">{{ x.name }}</button></sc-for></div></div>
+      <input value="{{ q }}" onInput="{{ onQ }}" placeholder="{{ tx.search }}" style="height:40px;box-sizing:border-box;border:1px solid #C9D5E0;border-radius:6px;padding:0 12px;font:inherit;font-size:14px;color:#1F2D3A;outline-color:#1F7D97">
+    </div>
+    <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;border-top:1px solid #E3EAF0">
+      <sc-for list="{{ list }}" as="r" hint-placeholder-count="10">
+        <button onClick="{{ r.pick }}" style="display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 16px;border:0;border-bottom:1px solid #E3EAF0;background:{{ r.bg }};font:inherit;color:#1F2D3A;cursor:pointer;text-align:left">
+          <span style="flex:none;width:20px;height:20px;border-radius:4px;background:{{ r.ub }};color:{{ r.uf }};font:700 10px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ r.letter }}</span>
+          <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:{{ r.fw }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div><div style="font-size:12px;color:#5A6B7A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px">{{ r.meta }}</div></div>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="flex:1;min-width:0;overflow-y:auto;scrollbar-width:thin">
+    <sc-if value="{{ hasP }}">
+    <div style="display:flex;flex-direction:column;gap:32px;padding:36px 48px 64px;max-width:760px">
+      <div style="display:flex;align-items:flex-start;gap:16px">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+          <input value="{{ p.name }}" onInput="{{ onName }}" style="width:100%;height:36px;box-sizing:border-box;border:1px solid transparent;border-radius:6px;padding:0 8px;margin-left:-9px;font:inherit;font-size:22px;font-weight:600;letter-spacing:-.01em;color:#1F2D3A;background:transparent;outline-color:#1F7D97" style-focus="border-color:#C9D5E0">
+          <div style="font-size:14px;color:#5A6B7A">{{ p.meta }}</div>
+        </div>
+        <button onClick="{{ show }}" style="flex:none;height:40px;padding:0 16px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.show }}</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:12px"><div style="flex:1;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.secTime }}</div><div style="display:inline-flex;gap:2px;padding:2px;background:#EEF3F6;border-radius:7px"><sc-for list="{{ tView }}" as="x"><button onClick="{{ x.pick }}" style="height:30px;padding:0 12px;border:0;border-radius:5px;font:inherit;font-size:13px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer;white-space:nowrap">{{ x.name }}</button></sc-for></div></div>
+        <div style="border:1px solid #D3DDEA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 16px 4px">
+            <button onClick="{{ calPrev }}" title="{{ tx.prev }}" style="width:36px;height:36px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font-size:18px;cursor:pointer;padding:0;flex:none;color:{{ prevFg }}">‹</button>
+            <div style="flex:1;text-align:center;font-size:14px;font-weight:600">{{ calRange }}</div>
+            <button onClick="{{ calNext }}" title="{{ tx.next }}" style="width:36px;height:36px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font-size:18px;cursor:pointer;padding:0;flex:none;color:{{ nextFg }}">›</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:8px 16px 10px">
+            <sc-for list="{{ cal }}" as="b" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="display:grid;grid-template-columns:44px repeat(5,minmax(0,1fr));gap:3px;padding:0 2px 2px;font-size:11px;color:#5A6B7A"><span style="font-weight:600;color:#1F2D3A;white-space:nowrap">{{ b.label }}</span><sc-for list="{{ dayHead }}" as="h"><span style="text-align:center">{{ h.n }}</span></sc-for></div>
+                <sc-for list="{{ b.weeks }}" as="w">
+                  <button onClick="{{ w.pick }}" style="display:grid;grid-template-columns:44px repeat(5,minmax(0,1fr));gap:3px;align-items:center;padding:2px;border:0;border-radius:4px;background:{{ w.bg }};box-shadow:{{ w.ring }};cursor:pointer;font:inherit;text-align:left">
+                    <span style="font:{{ w.fw }} 11px 'IBM Plex Mono',monospace;color:{{ w.fg }}">{{ w.label }}</span>
+                    <sc-for list="{{ w.days }}" as="c"><span title="{{ c.tip }}" style="height:20px;border-radius:3px;background:{{ c.bg }};box-shadow:{{ c.ring }}"></span></sc-for>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;padding:0 16px 12px;font-size:12px;color:#3C4B5A"><sc-for list="{{ calLegend }}" as="lg"><span style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="flex:none;width:12px;height:12px;border-radius:3px;background:{{ lg.bg }};box-shadow:{{ lg.ring }}"></span>{{ lg.name }}</span></sc-for></div>
+          <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 20px;padding:12px 16px;border-top:1px solid #E3EAF0;background:#F7FAFB">
+            <div style="font-size:14px;font-weight:600;min-width:84px">{{ wkSel.label }}</div>
+            <sc-if value="{{ wkSel.none }}"><div style="font-size:13px;color:#5A6B7A">{{ tx.noData }}</div></sc-if>
+            <sc-for list="{{ wkSel.stats }}" as="x"><div style="font-size:13px;color:#5A6B7A;white-space:nowrap">{{ x.k }} <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:{{ x.fg }}">{{ x.v }}</span></div></sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid #E3EAF0">
+            <sc-for list="{{ sums }}" as="cd" hint-placeholder-count="2">
+              <div style="min-width:0;padding:12px 16px;box-shadow:inset 1px 0 #E3EAF0,inset 0 -1px #E3EAF0;display:flex;flex-direction:column;gap:6px">
+                <div style="font-size:13px;font-weight:600">{{ cd.label }}</div>
+                <sc-if value="{{ cd.none }}"><div style="font-size:13px;color:#8796A5">{{ tx.noData }}</div></sc-if>
+                <sc-for list="{{ cd.rows }}" as="x"><div style="display:flex;justify-content:space-between;gap:8px;font-size:13px"><span style="color:#5A6B7A;white-space:nowrap">{{ x.k }}</span><span style="font-family:'IBM Plex Mono',monospace;color:{{ x.fg }};white-space:nowrap">{{ x.v }}</span></div></sc-for>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:10px 16px 12px;border-top:1px solid #E3EAF0;font-size:13px;line-height:1.5;color:#5A6B7A;text-wrap:pretty">{{ tx.sickNote }}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.secJob }}</div>
+        <div style="border:1px solid #D3DDEA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+            <div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:500">{{ tx.phone }}</span><span style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:{{ phSrcBg }};color:{{ phSrcFg }}">{{ phSrc }}</span></div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ tx.phoneSub }}</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><a href="{{ telHref }}" style="font-size:14px;font-weight:600;color:#1F7D97;text-decoration:none;white-space:nowrap">{{ tx.call }}</a><input value="{{ phoneVal }}" onInput="{{ onPhone }}" inputmode="tel" style="width:180px;height:40px;box-sizing:border-box;border:1px solid #C9D5E0;border-radius:6px;padding:0 12px;font:500 14px 'IBM Plex Mono',monospace;color:#1F2D3A;outline-color:#1F7D97"></div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+            <div style="font-size:14px;font-weight:500">{{ tx.unit }}</div>
+            <div style="position:relative;display:inline-flex">
+              <select value="{{ p.group }}" onChange="{{ pickUnit }}" style="appearance:none;-webkit-appearance:none;height:40px;min-width:180px;padding:0 34px 0 12px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;font:inherit;font-size:14px;color:#1F2D3A;cursor:pointer">
+                <sc-for list="{{ unitOpts }}" as="o"><option value="{{ o.v }}">{{ o.name }}</option></sc-for>
+              </select>
+              <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:#5A6B7A">▾</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+            <div><div style="font-size:14px;font-weight:500">{{ tx.pct }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ hoursTxt }}</div></div>
+            <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+              <button onClick="{{ pctDec }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0" style-active="background:#EEF3F6">−</button>
+              <div style="min-width:76px;padding:0 6px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0;white-space:nowrap">{{ pctTxt }}</div>
+              <button onClick="{{ pctInc }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0" style-active="background:#EEF3F6">+</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+            <div><div style="font-size:14px;font-weight:500">{{ tx.nonChild }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ ncSub }}</div></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <sc-if value="{{ ncCustom }}"><button onClick="{{ ncReset }}" style="height:36px;padding:0 8px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.ncReset }}</button></sc-if>
+              <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                <button onClick="{{ ncDec }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">−</button>
+                <div style="min-width:76px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ ncTxt }}</div>
+                <button onClick="{{ ncInc }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">+</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+            <div><div style="font-size:14px;font-weight:500">{{ tx.end }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ endSub }}</div></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <sc-if value="{{ noEnd }}"><button onClick="{{ setEnd }}" style="height:40px;padding:0 16px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.setEnd }}</button></sc-if>
+              <sc-if value="{{ hasEnd }}">
+                <button onClick="{{ clearEnd }}" style="height:36px;padding:0 8px;border:0;background:transparent;color:#C2413D;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.clear }}</button>
+                <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                  <button onClick="{{ endDec }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0" style-active="background:#EEF3F6">−</button>
+                  <div style="min-width:76px;padding:0 6px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0;white-space:nowrap">{{ endW }}</div>
+                  <button onClick="{{ endInc }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0" style-active="background:#EEF3F6">+</button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.secAhead }}</div>
+        <div style="border:1px solid #D3DDEA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+          <sc-if value="{{ noChanges }}"><div style="display:flex;align-items:center;padding:12px 16px;min-height:52px;box-sizing:border-box;font-size:14px;color:#5A6B7A">{{ tx.noChanges }}</div></sc-if>
+          <sc-for list="{{ changes }}" as="c">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+              <div><div style="font-size:14px;font-weight:500">{{ c.title }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ c.sub }}</div></div>
+              <button onClick="{{ c.remove }}" style="height:36px;padding:0 8px;border:0;background:transparent;color:#C2413D;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.remove }}</button>
+            </div>
+          </sc-for>
+          <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px;padding:14px 16px;background:#F7FAFB;box-shadow:0 -1px 0 #E3EAF0">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:500;color:#5A6B7A">{{ tx.fromWeek }}</div>
+              <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                <button onClick="{{ cwDec }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">−</button>
+                <div style="min-width:52px;padding:0 4px;display:flex;align-items:center;justify-content:center;font:500 13px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ cw }}</div>
+                <button onClick="{{ cwInc }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">+</button>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:500;color:#5A6B7A">{{ tx.pct }}</div>
+              <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                <button onClick="{{ cpDec }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">−</button>
+                <div style="min-width:60px;padding:0 4px;display:flex;align-items:center;justify-content:center;font:500 13px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ cp }} %</div>
+                <button onClick="{{ cpInc }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">+</button>
+              </div>
+            </div>
+            <button onClick="{{ addChange }}" style="margin-left:auto;height:36px;padding:0 16px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.addChange }}</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.secWhen }}</div>
+        <div style="border:1px solid #D3DDEA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+            <div><div style="font-size:14px;font-weight:500">{{ tx.daysOff }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ tx.daysHint }}</div></div>
+            <div style="display:flex;gap:4px"><sc-for list="{{ days }}" as="x"><button onClick="{{ x.flip }}" style="width:48px;height:36px;border:1px solid {{ x.bd }};border-radius:6px;background:{{ x.bg }};color:{{ x.fg }};font:inherit;font-size:13px;font-weight:500;cursor:pointer;padding:0">{{ x.name }}</button></sc-for></div>
+          </div>
+          <sc-for list="{{ limits }}" as="l">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+              <div><div style="font-size:14px;font-weight:500">{{ l.label }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ l.sub }}</div></div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <sc-if value="{{ l.none }}"><button onClick="{{ l.set }}" style="height:40px;padding:0 16px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.setTime }}</button></sc-if>
+                <sc-if value="{{ l.has }}">
+                  <button onClick="{{ l.clear }}" style="height:36px;padding:0 8px;border:0;background:transparent;color:#C2413D;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.clear }}</button>
+                  <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                    <button onClick="{{ l.dec }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0" style-active="background:#EEF3F6">−</button>
+                    <div style="min-width:76px;padding:0 6px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ l.val }}</div>
+                    <button onClick="{{ l.inc }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0" style-active="background:#EEF3F6">+</button>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.secLeave }}</div>
+        <div style="border:1px solid #D3DDEA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+          <sc-if value="{{ noLeave }}"><div style="display:flex;align-items:center;padding:12px 16px;min-height:52px;box-sizing:border-box;font-size:14px;color:#5A6B7A">{{ tx.noLeave }}</div></sc-if>
+          <sc-for list="{{ leave }}" as="c">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+              <div><div style="font-size:14px;font-weight:500">{{ c.kind }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ c.span }}</div></div>
+              <button onClick="{{ c.remove }}" style="height:36px;padding:0 8px;border:0;background:transparent;color:#C2413D;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.remove }}</button>
+            </div>
+          </sc-for>
+          <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px;padding:14px 16px;background:#F7FAFB;box-shadow:0 -1px 0 #E3EAF0">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:12px;font-weight:500;color:#5A6B7A">{{ tx.kind }}</div>
+              <div style="position:relative;display:inline-flex">
+                <select value="{{ kind }}" onChange="{{ pickKind }}" style="appearance:none;-webkit-appearance:none;height:36px;min-width:150px;padding:0 30px 0 10px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;font:inherit;font-size:14px;color:#1F2D3A;cursor:pointer">
+                  <sc-for list="{{ kinds }}" as="o"><option value="{{ o.v }}">{{ o.name }}</option></sc-for>
+                </select>
+                <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:#5A6B7A">▾</span>
+              </div>
+            </div>
+            <sc-for list="{{ lsteps }}" as="f">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:12px;font-weight:500;color:#5A6B7A">{{ f.label }}</div>
+                <div style="display:flex;gap:6px">
+                  <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                    <button onClick="{{ f.wDec }}" style="width:32px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">−</button>
+                    <div style="min-width:52px;padding:0 4px;display:flex;align-items:center;justify-content:center;font:500 13px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0;white-space:nowrap">{{ f.w }}</div>
+                    <button onClick="{{ f.wInc }}" style="width:32px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0" style-active="background:#EEF3F6">+</button>
+                  </div>
+                  <div style="position:relative;display:inline-flex">
+                    <select value="{{ f.d }}" onChange="{{ f.pickDay }}" style="appearance:none;-webkit-appearance:none;height:36px;min-width:76px;padding:0 26px 0 10px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;font:inherit;font-size:14px;color:#1F2D3A;cursor:pointer">
+                      <sc-for list="{{ dayOpts }}" as="o"><option value="{{ o.v }}">{{ o.name }}</option></sc-for>
+                    </select>
+                    <span style="position:absolute;right:9px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:#5A6B7A">▾</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+            <button onClick="{{ addLeave }}" style="margin-left:auto;height:36px;padding:0 16px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.addLeave }}</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ tx.secRoles }}</div>
+        <div style="border:1px solid #D3DDEA;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+          <sc-for list="{{ flags }}" as="x" hint-placeholder-count="3">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
+              <div><div style="font-size:14px;font-weight:500">{{ x.name }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px">{{ x.sub }}</div></div>
+              <button onClick="{{ x.flip }}" style="position:relative;width:44px;height:26px;border:0;border-radius:13px;background:{{ x.tb }};cursor:pointer;padding:0"><span style="position:absolute;top:3px;left:{{ x.kx }};width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)"></span></button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;ctl&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;mod&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;pid&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;rev&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onShow&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(pid:string)=&gt;void&quot;}}">
+const UC = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
+class Component extends DCLogic {
+  state = { sel: null, q: '', cw: null, cp: 75, kind: 'vacation', w1: null, d1: 0, w2: null, d2: 4 };
+  componentDidUpdate(pp) { if (pp.pid !== this.props.pid && this.props.pid) this.setState({ sel: null }); }
+  renderVals() {
+    const { ctl, mod } = this.props, sv = this.props.lang === 'sv', t = (a, b) => sv ? a : b;
+    if (!ctl || !mod) return { ready: false };
+    const s = ctl.store.get(), wk = s.week, W0 = mod.W0, W1 = mod.W1, fmt = mod.fmt, n = v => mod.fmtN(v, this.props.lang);
+    const DS = sv ? ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    const so = this.state.sort || 'name', gi = id => mod.GROUPS.findIndex(g => g.id === id);
+    const all = mod.STAFF.slice().sort((a, b) => (so === 'unit' ? gi(a.group) - gi(b.group) : so === 'pct' ? mod.contractPct(b, wk) - mod.contractPct(a, wk) : 0) || a.name.localeCompare(b.name, 'sv'));
+    const sorts = [['name', t('Namn', 'Name')], ['unit', t('Avdelning', 'Unit')], ['pct', t('Avtal %', 'Contract %')]].map(([k, name]) => { const a = so === k; return { name, pick: () => this.setState({ sort: k }), bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#3C4B5A', fw: a ? 600 : 500, sh: a ? '0 1px 2px rgba(15,30,45,.12)' : 'none' }; });
+    const pid = this.state.sel || this.props.pid || (all[0] && all[0].id), p = mod.STAFF.find(x => x.id === pid);
+    const q = this.state.q.trim().toLowerCase(), gName = id => (mod.GROUPS.find(g => g.id === id) || {}).name || '';
+    const metaOf = x => { const parts = [mod.contractPct(x, wk) + ' %']; const fc = (x.changes || []).filter(c => c.from > wk).sort((a, b) => a.from - b.from)[0]; if (fc) parts.push(t(fc.pct + ' % från v.' + fc.from, fc.pct + '% from w.' + fc.from)); const l = (x.leave || []).find(l => l.w2 >= wk); if (l) parts.push(t('Ledig v.' + l.w1, 'Away w.' + l.w1)); if (x.end) parts.push(t('Slutar v.' + x.end, 'Ends w.' + x.end)); return parts.join(' · '); };
+    const list = all.filter(x => !q || x.name.toLowerCase().includes(q)).map(x => ({ ...(UC[x.group] || UC.g1), name: x.name, meta: metaOf(x), bg: x.id === pid ? '#EEF4F7' : '#fff', fw: x.id === pid ? 600 : 500, pick: () => this.setState({ sel: x.id }) }));
+    const base = { ready: true, list, sorts, count: mod.STAFF.length, q: this.state.q, onQ: e => this.setState({ q: e.target.value }),
+      tx: { sortBy: t('Sortera', 'Sort'), title: t('Personal', 'Staff'), search: t('Sök på namn', 'Search by name'), show: t('Visa i schemat', 'Show in the schedule'),
+        secJob: t('Anställning', 'Employment'), unit: t('Avdelning', 'Unit'), pct: t('Sysselsättningsgrad', 'Working percentage'),
+        end: t('Anställningen slutar', 'Contract ends'), setEnd: t('Ange vecka', 'Set a week'), clear: t('Ta bort', 'Remove'),
+        secAhead: t('Ändringar framåt', 'Changes ahead'), noChanges: t('Inga ändringar inlagda.', 'No changes planned.'), fromWeek: t('Från vecka', 'From week'), addChange: t('Lägg till ändring', 'Add change'), remove: t('Ta bort', 'Remove'),
+        secWhen: t('Tillgänglighet', 'Availability'), daysOff: t('Fasta lediga dagar', 'Fixed days off'), daysHint: t('Markerade dagar är lediga varje vecka.', 'Marked days are off every week.'), setTime: t('Ange tid', 'Set a time'),
+        secLeave: t('Semester och ledighet', 'Holiday and leave'), noLeave: t('Ingen ledighet inlagd.', 'No leave planned.'), kind: t('Typ', 'Type'), addLeave: t('Lägg till ledighet', 'Add leave'),
+        secRoles: t('Roller', 'Roles'), secTime: t('Tid och frånvaro', 'Time and absence'), nonChild: t('Tid utan barn per vecka', 'Time without children a week'), ncReset: t('Använd standard', 'Use default'),
+        noData: t('Ingen data', 'No data'), call: t('Ring', 'Call'), prev: t('Tidigare', 'Earlier'), next: t('Senare', 'Later'), phone: t('Telefon', 'Phone'), fromApp: t('Från appen', 'From the app'), typed: t('Inskrivet här', 'Typed here'), phoneSub: t('Personen kan ändra numret i sin app.', 'The person can change the number in their app.'), sickNote: t('Sjukdagar räknas inte som arbetad tid. Lönen betalas som sjuklön (efter karensavdrag) och sjuktimmarna går med som frånvaro i lönefilen.', 'Sick days do not count as worked time. They are paid as sick pay (after the waiting-day deduction), and the sick hours go into the payroll file as absence.') } };
+    if (!p) return { ...base, hasP: false };
+    const up = fn => ctl.touch(() => fn(p));
+    const cw = this.state.cw ?? Math.min(W1, wk + 1), cp = this.state.cp;
+    const w1 = this.state.w1 ?? wk, w2 = this.state.w2 ?? wk;
+    const KN = { vacation: t('Semester', 'Holiday'), leave: t('Ledig', 'Leave'), parental: t('Föräldraledig', 'Parental leave'), course: t('Kurs', 'Course') };
+    const lim = (k, label, sub, def) => ({ label, sub, none: p[k] == null, has: p[k] != null, val: p[k] != null ? fmt(p[k]) : '',
+      set: () => up(x => { x[k] = def; }), clear: () => up(x => { x[k] = null; }),
+      dec: () => up(x => { x[k] = Math.max(360, x[k] - 15); }), inc: () => up(x => { x[k] = Math.min(1110, x[k] + 15); }) });
+    const tog = (k, name, sub) => ({ name, sub, tb: p[k] ? '#1F7D97' : '#C9D5E0', kx: p[k] ? '21px' : '3px', flip: () => up(x => { x[k] = !x[k]; }) });
+    const wkClamp = v => Math.max(W0, Math.min(W1, v));
+    const curPct = mod.contractPct(p, wk), H = m => n(Math.round(m / 6) / 10) + ' h';
+    const MON = sv ? ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'] : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dateOf = (w, d) => new Date(2026, 9, 5 + (w - 41) * 7 + d);
+    const PWs = {}; for (let w = W0; w <= W1; w++) PWs[w] = mod.personWeek(s, p.id, w);
+    const CC = { work: ['#9FD8DE', 'none', t('Arbetar', 'Working')], sick: ['#F28C84', 'none', t('Sjuk', 'Sick')], vacation: ['#9DB8E8', 'none', t('Semester', 'Holiday')], leave: ['#E3CFA4', 'none', t('Annan ledighet', 'Other leave')], off: ['#EEF3F6', 'none', t('Fast ledig dag', 'Fixed day off')], none: ['#fff', 'inset 0 0 0 1px #D3DDEA', t('Inget pass', 'No shift')], nodata: ['repeating-linear-gradient(45deg,#F4F7F9 0 3px,#fff 3px 6px)', 'inset 0 0 0 1px #E3EAF0', t('Ingen data', 'No data')] };
+    const BL = 7, firstB = W0 - 5 * BL, lastB = W0 + Math.floor((W1 - W0) / BL) * BL, cs = Math.max(firstB, Math.min(lastB, this.state.cs ?? (W0 + Math.floor((wk - W0) / BL) * BL))), selW = this.state.sw ?? wk;
+    const wl = w => w > 53 ? w - 53 : w, inData = w => w >= W0 && w <= W1;
+    const PW = w => inData(w) ? mod.personWeek(s, p.id, w) : null, cache = {}, Q = w => (w in cache ? cache[w] : (cache[w] = PW(w)));
+    const cal = [cs, cs + BL].map(b0 => ({ label: t('v.', 'w.') + wl(b0) + '–' + wl(b0 + BL - 1),
+      weeks: Array.from({ length: BL }, (_, i) => { const w = b0 + i, q = Q(w), sel = w === selW; return { label: 'v' + wl(w), fw: w === wk || sel ? 700 : 500, fg: w === wk ? '#1F7D97' : '#5A6B7A', bg: sel ? '#EAF6F8' : 'transparent', ring: sel ? 'inset 0 0 0 1px #9FCFDB' : 'none', pick: () => this.setState({ sw: w }),
+        days: [0, 1, 2, 3, 4].map(dd => { const x = q ? q.days[dd] : { st: 'nodata', child: 0, non: 0, sick: 0 }, k = CC[x.st], dt = dateOf(w, dd); return { bg: k[0], ring: k[1], tip: DS[dd] + ' ' + dt.getDate() + ' ' + MON[dt.getMonth()] + ' · ' + k[2] + (x.child + x.non ? ' · ' + H(x.child + x.non) : x.sick ? ' · ' + H(x.sick) : '') }; }) }; }) }));
+    const calLegend = ['work', 'sick', 'vacation', 'leave', 'off', 'none', 'nodata'].map(k => ({ name: CC[k][2], bg: CC[k][0], ring: CC[k][1] }));
+    const leaveTxt = q => [q.vac ? q.vac + ' ' + t('dgr semester', 'days holiday') : '', q.leave ? q.leave + ' ' + t('dgr ledig', 'days leave') : ''].filter(Boolean).join(', ') || '–';
+    const ok = (a, b) => Math.abs(a - b) <= 15;
+    const stats = q => [{ k: t('Med barn', 'With children'), v: H(q.child) + ' / ' + H(q.A), fg: ok(q.child, q.A) ? '#2D6A1F' : '#8A5F0C' }, { k: t('Utan barn', 'Without children'), v: H(q.non) + ' / ' + H(q.N), fg: ok(q.non, q.N) ? '#2D6A1F' : '#6E4FB5' },
+      { k: t('Totalt', 'Total'), v: H(q.worked) + ' / ' + H(q.C), fg: q.worked > q.C + 15 ? '#B33A35' : ok(q.worked, q.C) ? '#2D6A1F' : '#8A5F0C' }, { k: t('Sjuk', 'Sick'), v: q.sick ? H(q.sick) + ' · ' + q.sickDays + t(' dgr', ' d') : '–', fg: q.sick ? '#B33A35' : '#1F2D3A' }, { k: t('Ledig', 'Away'), v: leaveTxt(q), fg: '#1F2D3A' }];
+    const sum = list => list.reduce((a, q) => { ['child', 'non', 'worked', 'sick', 'sickDays', 'C', 'N', 'A', 'vac', 'leave'].forEach(k => { a[k] = (a[k] || 0) + (q[k] || 0); }); return a; }, {});
+    const qs = Q(selW), wkSel = { label: t('Vecka ', 'Week ') + wl(selW), none: !qs, stats: qs ? stats(qs) : [] };
+    const view = this.state.tv || 'period';
+    let sums;
+    if (view === 'period') sums = [cs, cs + BL].map(b0 => { const qq = Array.from({ length: BL }, (_, i) => Q(b0 + i)).filter(Boolean); return { label: t('Period v.', 'Period w.') + wl(b0) + '–' + wl(b0 + BL - 1), none: !qq.length, rows: qq.length ? stats(sum(qq)) : [] }; });
+    else {
+      const M = {}; for (let w = cs; w < cs + 2 * BL; w++) for (let dd = 0; dd < 5; dd++) { const dt = dateOf(w, dd), key = dt.getFullYear() * 12 + dt.getMonth(); M[key] = M[key] || { y: dt.getFullYear(), m: dt.getMonth(), days: [] }; const q = Q(w); if (q) M[key].days.push({ q, x: q.days[dd] }); }
+      const MN = sv ? ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni', 'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'] : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      sums = Object.keys(M).map(Number).sort((a, b) => a - b).map(k => { const o = M[k], a = { child: 0, non: 0, worked: 0, sick: 0, sickDays: 0, C: 0, N: 0, A: 0, vac: 0, leave: 0 };
+        o.days.forEach(({ q, x }) => { a.child += x.child; a.non += x.non; a.worked += x.child + x.non; a.sick += x.sick; if (x.st === 'sick') a.sickDays++; a.C += q.C / 5; a.N += q.N / 5; a.A += q.A / 5; if (x.st === 'vacation') a.vac++; if (x.st === 'leave') a.leave++; });
+        return { label: MN[o.m] + ' ' + o.y, none: !o.days.length, rows: o.days.length ? stats(a) : [] }; }).filter(x => !x.none);
+      if (!sums.length) sums = [{ label: t('Ingen data i de här veckorna', 'No data in these weeks'), none: true, rows: [] }];
+    }
+    const segV = (k, name) => { const a = view === k; return { name, pick: () => this.setState({ tv: k }), bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#3C4B5A', fw: a ? 600 : 500, sh: a ? '0 1px 2px rgba(15,30,45,.12)' : 'none' }; };
+    const calNav = { calRange: t('Vecka ', 'Weeks ') + wl(cs) + '–' + wl(cs + 2 * BL - 1) + ' · ' + t('perioder om 7 veckor', '7-week periods'), calPrev: () => cs > firstB && this.setState({ cs: cs - BL }), calNext: () => cs < lastB && this.setState({ cs: cs + BL }),
+      prevFg: cs > firstB ? '#1F2D3A' : '#C9D5E0', nextFg: cs < lastB ? '#1F2D3A' : '#C9D5E0', dayHead: DS.map(x => ({ n: x.slice(0, sv ? 1 : 2) })) };
+    const ncH = mod.nonChildTarget({ ...s, prefs: s.prefs }, { ...p, leave: [] }, wk) / 60, ncDef = Math.round(((s.prefs || {}).nonChild ?? 5) * curPct / 100 * 2) / 2;
+    return { ...base, hasP: true, cal, calLegend, wkSel, sums, ...calNav, tView: [segV('period', t('Per period', 'By period')), segV('month', t('Per månad', 'By month'))],
+      phoneVal: p.phone || '', onPhone: e => { const v = e.target.value; up(x => { x.phone = v; x.phoneSrc = 'manual'; }); }, telHref: 'tel:' + String(p.phone || '').replace(/[^0-9+]/g, ''),
+      phSrc: p.phoneSrc === 'manual' ? t('Inskrivet här', 'Typed here') : t('Från appen', 'From the app'), phSrcBg: p.phoneSrc === 'manual' ? '#EEF3F6' : '#DDF1F5', phSrcFg: p.phoneSrc === 'manual' ? '#3C4B5A' : '#16627A',
+      ncTxt: n(ncH) + ' h', ncCustom: p.nonChild != null, ncReset: () => up(x => { x.nonChild = null; }),
+      ncSub: t('Planering och möten. Resten av avtalet, ' + n(Math.round((mod.contractH(p, wk) - ncH) * 10) / 10) + ' h, är tid med barnen inklusive rast.' + (p.nonChild == null ? ' Standard för ' + curPct + ' %.' : ''), 'Planning and meetings. The rest of the contract, ' + n(Math.round((mod.contractH(p, wk) - ncH) * 10) / 10) + ' h, is time with children including breaks.' + (p.nonChild == null ? ' Default for ' + curPct + '%.' : '')),
+      ncDec: () => up(x => { x.nonChild = Math.max(0, (x.nonChild ?? ncDef) - 0.5); }), ncInc: () => up(x => { x.nonChild = Math.min(mod.contractH(x, wk), (x.nonChild ?? ncDef) + 0.5); }), p: { name: p.name, group: p.group, meta: gName(p.group) + ' · ' + curPct + ' %' + t(' vecka ' + wk, ' in week ' + wk) },
+      onName: e => { const v = e.target.value; up(x => { x.name = v; }); },
+      show: () => this.props.onShow && this.props.onShow(p.id),
+      unitOpts: mod.GROUPS.map(g => ({ v: g.id, name: g.name })), pickUnit: e => { const v = e.target.value; up(x => { x.group = v; }); },
+      pctTxt: p.pct + ' %', hoursTxt: n(p.pct * 0.4) + t(' timmar per vecka', ' hours a week'),
+      pctDec: () => up(x => { x.pct = Math.max(10, x.pct - 5); x.hours = x.pct * 0.4; }), pctInc: () => up(x => { x.pct = Math.min(100, x.pct + 5); x.hours = x.pct * 0.4; }),
+      noEnd: !p.end, hasEnd: !!p.end, endW: p.end ? t('v. ', 'w. ') + p.end : '', endSub: p.end ? t('Sista arbetsvecka', 'Last working week') : t('Tills vidare', 'Permanent'),
+      setEnd: () => up(x => { x.end = W1; }), clearEnd: () => up(x => { x.end = null; }),
+      endDec: () => up(x => { x.end = wkClamp(x.end - 1); }), endInc: () => up(x => { x.end = wkClamp(x.end + 1); }),
+      changes: (p.changes || []).slice().sort((a, b) => a.from - b.from).map(c => ({ title: t('Från vecka ', 'From week ') + c.from, sub: c.pct + ' % · ' + n(c.pct * 0.4) + t(' timmar per vecka', ' hours a week'), remove: () => up(x => { x.changes = x.changes.filter(y => !(y.from === c.from && y.pct === c.pct)); }) })),
+      noChanges: !(p.changes || []).length,
+      cw, cp, cwDec: () => this.setState({ cw: wkClamp(cw - 1) }), cwInc: () => this.setState({ cw: wkClamp(cw + 1) }),
+      cpDec: () => this.setState({ cp: Math.max(10, cp - 5) }), cpInc: () => this.setState({ cp: Math.min(100, cp + 5) }),
+      addChange: () => up(x => { x.changes = [...(x.changes || []).filter(y => y.from !== cw), { from: cw, pct: cp }]; }),
+      days: DS.map((name, d) => { const off = p.off.includes(d); return { name, bg: off ? '#1F2D3A' : '#fff', fg: off ? '#fff' : '#5A6B7A', bd: off ? '#1F2D3A' : '#C9D5E0', flip: () => up(x => { x.off = off ? x.off.filter(y => y !== d) : [...x.off, d]; }) }; }),
+      limits: [lim('earliest', t('Börjar tidigast', 'Starts no earlier than'), p.earliest == null ? t('När som helst', 'Any time') : t('Varje dag', 'Every day'), 480), lim('latest', t('Slutar senast', 'Finishes no later than'), p.latest == null ? t('När som helst', 'Any time') : t('Varje dag', 'Every day'), 1020)],
+      leave: (p.leave || []).map(l => ({ kind: KN[l.kind] || l.kind, span: l.w1 === l.w2 ? t('Vecka ', 'Week ') + l.w1 + ', ' + DS[l.d1] + '–' + DS[l.d2] : t('Vecka ', 'Week ') + l.w1 + ' ' + DS[l.d1] + ' – ' + t('vecka ', 'week ') + l.w2 + ' ' + DS[l.d2], remove: () => up(x => { x.leave = x.leave.filter(y => y.id !== l.id); }) })),
+      noLeave: !(p.leave || []).length,
+      kind: this.state.kind, pickKind: e => this.setState({ kind: e.target.value }), kinds: Object.entries(KN).map(([v, name]) => ({ v, name })),
+      dayOpts: DS.map((name, i) => ({ v: String(i), name })),
+      lsteps: [
+        { label: t('Från', 'From'), w: t('v. ', 'w. ') + w1, d: String(this.state.d1), wDec: () => this.setState({ w1: wkClamp(w1 - 1) }), wInc: () => { const v = wkClamp(w1 + 1); this.setState({ w1: v, w2: Math.max(v, w2) }); }, pickDay: e => this.setState({ d1: +e.target.value }) },
+        { label: t('Till och med', 'Until'), w: t('v. ', 'w. ') + w2, d: String(this.state.d2), wDec: () => this.setState({ w2: Math.max(w1, w2 - 1) }), wInc: () => this.setState({ w2: wkClamp(w2 + 1) }), pickDay: e => this.setState({ d2: +e.target.value }) }],
+      addLeave: () => { const d2 = w1 === w2 ? Math.max(this.state.d1, this.state.d2) : this.state.d2; up(x => { x.leave = [...(x.leave || []), { id: 'l' + Date.now(), kind: this.state.kind, w1, d1: this.state.d1, w2, d2 }]; }); },
+      flags: [tog('open', t('Får öppna', 'May open'), t('Kan sättas som den som öppnar förskolan', 'Can be set as the person who opens the preschool')),
+        tog('close', t('Får stänga', 'May close'), t('Kan sättas som den som stänger förskolan', 'Can be set as the person who closes the preschool')),
+        tog('sn', t('Utbildad för särskilt stöd', 'Trained in special needs'), t('Räknas för barn med särskilda behov', 'Counts for children with special needs'))],
+    };
+  }
+}
+</script>
+</body>
+</html>

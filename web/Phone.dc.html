@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F4F7F9">
+<title>Schema – Personalens telefon</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"><style>html,body{margin:0;height:100%;overscroll-behavior:none}a{color:#1F7D97}</style></helmet>
+<div style="position:relative;height:100dvh;display:flex;flex-direction:column;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:{{ pageBg }};overflow:hidden">
+<sc-if value="{{ ready }}">
+  <div style="position:relative;flex:none;display:flex;align-items:center;gap:8px;padding:{{ barPad }};background:{{ barBg }};border-bottom:{{ barBd }};z-index:5">
+    <a href="./" style="flex:none;height:32px;width:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;text-decoration:none;font-size:16px" title="{{ homeTitle }}">‹</a>
+    <div style="font-size:13px;color:{{ barFg }};white-space:nowrap">{{ phoneOf }}</div>
+    <div style="position:relative;display:inline-flex;flex:1;min-width:0;max-width:260px">
+      <select value="{{ me }}" onChange="{{ pickMe }}" style="appearance:none;-webkit-appearance:none;width:100%;height:32px;padding:0 28px 0 10px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;font:inherit;font-size:13px;color:#1F2D3A;cursor:pointer">
+        <sc-for list="{{ opts }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for>
+      </select>
+      <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:#5A6B7A">▾</span>
+    </div>
+    <div style="flex:none;display:flex;margin-left:auto;padding:2px;background:#E3EAF0;border-radius:6px">
+      <sc-for list="{{ langs }}" as="l"><button onClick="{{ l.pick }}" style="height:28px;min-width:34px;border:0;border-radius:4px;background:{{ l.bg }};color:{{ l.fg }};font:inherit;font-size:12px;font-weight:600;cursor:pointer">{{ l.name }}</button></sc-for>
+    </div>
+  </div>
+  <sc-if value="{{ framed }}">
+    <div style="flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center;padding-top:16px">
+      <div style="position:relative;width:{{ fw }};height:{{ fh }}">
+        <div style="position:absolute;top:0;left:0;width:402px;height:874px;transform:scale({{ scale }});transform-origin:top left">
+          <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+            <dc-import name="Staff App" variant="b" others="unit" split="{{ true }}" ctl="{{ ctl }}" mod="{{ mod }}" rev="{{ rev }}" lang="{{ lang }}" me="{{ me }}" hint-size="402px,874px" style="display:block;width:402px;height:874px"></dc-import>
+          </x-import>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ bare }}">
+    <div style="flex:1;min-height:0;position:relative">
+      <dc-import name="Staff App" variant="b" others="unit" split="{{ true }}" ctl="{{ ctl }}" mod="{{ mod }}" rev="{{ rev }}" lang="{{ lang }}" me="{{ me }}" hint-size="100%,100%" style="position:absolute;top:-40px;left:0;right:0;bottom:0;display:block;width:100%;height:calc(100% + 40px)"></dc-import>
+    </div>
+  </sc-if>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+// Standalone phone page: the same Staff App the planner embeds, but full screen on a real
+// phone and inside the iPhone bezel on a wide screen. ?me=<staffId|subId>&lang=sv|en
+const Q = new URLSearchParams(location.search);
+const LS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const LSset = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+class Component extends DCLogic {
+  state = { me: Q.get('me') || LS('schema-phone-me') || 'p1', lang: Q.get('lang') || LS('schema-lang') || 'sv' };
+  onResize = () => this.forceUpdate();
+  async componentDidMount() {
+    window.addEventListener('resize', this.onResize);
+    const m = await import(window.__resources && window.__resources.core ? window.__resources.core : new URL('schedule-core-demo.js', document.baseURI).href);
+    this.mod = m; this.ctl = m.controller(this); this.forceUpdate();
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); }
+  renderVals() {
+    if (!this.mod) return { ready: false };
+    const sv = this.state.lang === 'sv', me = this.state.me, mod = this.mod;
+    const W = window.innerWidth, H = window.innerHeight, framed = W >= 600;
+    const scale = Math.min(1, Math.max(0.5, (H - 57 - 32) / 874));
+    const opts = [...mod.STAFF.slice().sort((a, b) => a.name.localeCompare(b.name, 'sv')).map(p => ({ v: p.id, name: p.name })),
+      ...mod.SUBS.map(p => ({ v: p.id, name: p.name + (sv ? ' (vikarie)' : ' (substitute)') }))].map(o => ({ ...o, sel: o.v === me }));
+    const setLang = l => { LSset('schema-lang', l); this.setState({ lang: l }); };
+    return {
+      ready: true, ctl: this.ctl, mod, rev: (this._rev = (this._rev || 0) + 1), me, lang: this.state.lang, opts,
+      pickMe: e => { LSset('schema-phone-me', e.target.value); this.setState({ me: e.target.value }); },
+      langs: ['sv', 'en'].map(l => ({ name: l.toUpperCase(), pick: () => setLang(l), bg: this.state.lang === l ? '#fff' : 'transparent', fg: this.state.lang === l ? '#1F2D3A' : '#5A6B7A' })),
+      phoneOf: sv ? 'Telefon för' : 'Phone of', homeTitle: sv ? 'Till start' : 'Home',
+      framed, bare: !framed, scale, fw: Math.round(402 * scale) + 'px', fh: Math.round(874 * scale) + 'px',
+      pageBg: framed ? '#EEF4F7' : '#F4F7F9', barBg: framed ? '#fff' : '#1F2D3A', barFg: framed ? '#5A6B7A' : '#A9B6C2', barBd: framed ? '1px solid #D3DDEA' : '0',
+      barPad: framed ? '12px 24px' : 'calc(env(safe-area-inset-top) + 8px) 12px 8px'
+    };
+  }
+}
+</script>
+</body>
+</html>
