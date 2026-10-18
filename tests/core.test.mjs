@@ -75,3 +75,27 @@ test('the solver problem carries the rules from Settings', () => {
   assert.equal(r.maxRun, 16, '4 hours without a break');
   assert.equal(r.weekMax, 38 * 4);
 });
+
+test('the report is in Swedish, starts lines with a capital, and is honest about the saved schedule', () => {
+  const s = solvedState();
+  s.special = [{ id: 'a', week: 42, days: [1], kind: 'finishBy', time: 1020, note: '' }, { id: 'b', week: 42, days: [4], kind: 'closeEarly', time: 780, note: '' }];
+  const live = m.scheduleReport(s, [42], 'sv')[0].items.map(i => i.text), saved = m.scheduleReport(s, [42], 'sv', true)[0].items.map(i => i.text);
+  assert.ok(live.some(t => t.startsWith('Fredag: förskolan stänger 13:00 – med i schemat')), live.join('\n'));
+  assert.ok(live.some(t => t.startsWith('Tisdag: personalen vill sluta senast 17:00')), live.join('\n'));
+  assert.ok(saved.some(t => t === 'Fredag: förskolan stänger 13:00 – inte med, eftersom lösaren inte var igång.'), saved.join('\n'));
+  assert.ok(!saved.some(t => /med i schemat|slutar i tid/.test(t)), 'nothing claims special days were included');
+  for (const t of [...live, ...saved]) assert.doesNotMatch(t, /\b(the|week|staff|hours|children|included)\b/i, 'English in: ' + t);
+});
+
+test('the flexible week: 41 then 39 is fine, 41 then 40 and 43 are warned about, in both languages', () => {
+  const s = solvedState(), add = (staff, week, day, start, end) => s.shifts.push({ id: 'x' + s.shifts.length, staff, week, day, start, end, type: 'contact', group: 'g3' });
+  const codes = (w, lang = 'en') => m.checkWeek(s, w, lang).filter(x => x.code === 'R2').map(x => x.text);
+  add('p1', 42, 4, 1050, 1110);                                  // Anna: 41 h in week 42, 40 h in week 43
+  assert.match(codes(42).join(), /Anna L\. works 41 h this week, so week 43 can be at most 39 h/);
+  assert.match(codes(43, 'sv').join(), /Anna L\. arbetade 41 h vecka 42, så denna vecka får vara högst 39 h/);
+  const fri = s.shifts.filter(x => x.staff === 'p1' && x.week === 43 && x.day === 4).sort((a, b) => b.end - a.end)[0];
+  fri.end -= 60;                                                 // week 43 down to 39 h
+  assert.deepEqual(codes(42), []); assert.deepEqual(codes(43), []);
+  add('p5', 42, 4, 1000, 1180);                                  // Johan: 43 h, over 40 + 2
+  assert.match(codes(42).join(), /Johan N\. is scheduled 43 h this week\. The limit is 42 h/);
+});

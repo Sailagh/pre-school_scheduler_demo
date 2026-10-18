@@ -332,8 +332,9 @@ export function applySolution(st, sol) {
 export const seedState = () => seed();
 
 // Plain-language summary of how the made schedule turned out, per week: what worked and what did not, and why.
-export function scheduleReport(s, weeks, lang) {
-  const sv = lang === 'sv', L = T[lang] || T.en, h = m => hrs(m, lang);
+// `saved`: the schedule came from the saved file, so special days were not taken into account.
+export function scheduleReport(s, weeks, lang, saved = false) {
+  const sv = lang === 'sv', L = T[lang] || T.en, h = m => hrs(m, lang), cap = x => x.charAt(0).toUpperCase() + x.slice(1);
   return weeks.map(w => {
     const items = [], warns = checkWeek(s, w, lang);
     const staffing = warns.filter(x => x.kind === 'staffing'), other = warns.filter(x => x.kind !== 'staffing');
@@ -344,7 +345,8 @@ export function scheduleReport(s, weeks, lang) {
     for (const p of STAFF) {
       const q = personWeek(s, p.id, w);
       if (!q.C) continue;
-      if (q.worked > lim) { flexed.push(p.name.split(' ')[0] + ' ' + h(q.worked) + ' – ' + (sv ? 'vecka ' + (w + 1) + ' högst ' : 'week ' + (w + 1) + ' at most ') + h(Math.max(0, 2 * lim - q.worked))); continue; }
+      // Over the limit plus the flexible part is a broken rule, listed under Things to check.
+      if (q.worked > lim) { if (q.worked <= lim + (wv.p.flex || 0) * 60) flexed.push(p.name.split(' ')[0] + ' ' + h(q.worked) + ' – ' + (sv ? 'vecka ' + (w + 1) + ' högst ' : 'week ' + (w + 1) + ' at most ') + h(Math.max(0, 2 * lim - q.worked))); continue; }
       const line = p.name.split(' ')[0] + ' ' + h(q.worked) + (sv ? ' av ' : ' of ') + h(q.C);
       if (q.worked > q.C + 15) more.push(line); else if (q.worked < q.C - 15) less.push(line);
       if (q.non < q.N - 15) lessPlan.push(p.name.split(' ')[0] + ' ' + h(q.non) + (sv ? ' av ' : ' of ') + h(q.N));
@@ -355,13 +357,14 @@ export function scheduleReport(s, weeks, lang) {
     if (less.length) items.push({ ok: false, text: sv ? 'Får färre timmar än sitt avtal den här veckan. Du kan lägga till tid för hand:' : 'Get fewer hours than their contract this week. You can add time by hand:', more: less });
     if (lessPlan.length) items.push({ ok: false, text: sv ? 'Mindre planeringstid än vanligt, eftersom barnen behövde de vuxna:' : 'Less planning time than usual, because the children needed the adults:', more: lessPlan });
     for (const x of (s.special || []).filter(x => x.week === w)) {
-      if (x.kind !== 'finishBy') { items.push({ ok: true, text: daysLabel(x.days, lang) + ': ' + specialLabel(x, lang) + (sv ? ' – med i schemat.' : ' – included.') }); continue; }
+      if (saved) { items.push({ ok: false, text: cap(daysLabel(x.days, lang)) + ': ' + specialLabel(x, lang) + (sv ? ' – inte med, eftersom lösaren inte var igång.' : ' – not included, because the solver was not running.') }); continue; }
+      if (x.kind !== 'finishBy') { items.push({ ok: true, text: cap(daysLabel(x.days, lang)) + ': ' + specialLabel(x, lang) + (sv ? ' – med i schemat.' : ' – included.') }); continue; }
       for (const d of x.days) {
         const late = STAFF.filter(p => s.shifts.some(z => z.staff === p.id && z.week === w && z.day === d && z.end > x.time));
         const role = s.roles[w + '-' + d] || {}, why = p => p.id === role.close ? (sv ? ' (stänger)' : ' (closes)') : '';
         const working = STAFF.filter(p => s.shifts.some(z => z.staff === p.id && z.week === w && z.day === d)).length;
-        items.push(late.length ? { ok: false, text: dayName(d, lang) + ': ' + specialLabel(x, lang) + '. ' + (sv ? (working - late.length) + ' av ' + working + ' slutar i tid. De här arbetar längre eftersom barn fortfarande är kvar:' : (working - late.length) + ' of ' + working + ' finish in time. These work later because children are still there:'), more: late.map(p => p.name + why(p)) }
-          : { ok: true, text: dayName(d, lang) + ': ' + specialLabel(x, lang) + (sv ? ' – alla slutar i tid.' : ' – everyone finishes in time.') });
+        items.push(late.length ? { ok: false, text: cap(dayName(d, lang)) + ': ' + specialLabel(x, lang) + '. ' + (sv ? (working - late.length) + ' av ' + working + ' slutar i tid. De här arbetar längre eftersom barn fortfarande är kvar:' : (working - late.length) + ' of ' + working + ' finish in time. These work later because children are still there:'), more: late.map(p => p.name + why(p)) }
+          : { ok: true, text: cap(dayName(d, lang)) + ': ' + specialLabel(x, lang) + (sv ? ' – alla slutar i tid.' : ' – everyone finishes in time.') });
       }
     }
     return { week: w, items };
