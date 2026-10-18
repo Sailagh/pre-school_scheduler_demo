@@ -6,36 +6,43 @@ may open/close, special-needs training) and, per day, the adults needed in every
 15-minute slot. Output is, per week, the shifts in the web app's format and the
 opener/closer for each day.
 
-Hard rules (as checked by the planner):
-  - one continuous shift a day, 4-9 hours, inside the person's availability, and at most 40 hours a week
-  - one 30-minute break, inside the shift, and nobody works more than 5 hours without one
+The rules come from Settings in the web app (`rules` in each week; defaults below). Hard rules:
+  - one continuous shift a day, 4-9 hours, inside the person's availability
+  - the weekly limit (40 h) plus the flexible part (up to 2 h more) when the week before was not over;
+    a week after one that went over is that much shorter (`maxSlots` per person)
+  - one break (more if the breaks rule asks), inside the shift, and no more than 5 hours without one
+  - an optional limit on hours a day, and rest between days
   - planning time comes in blocks of at least 30 minutes, at most one block a day
   - the opener works from opening time and the closer until closing time
 Special days: on an early closing nobody works after it and the closer works until it;
 a wish to finish by a time makes every slot worked after it cost a little.
 Soft goals, in order of weight: enough adults every slot, a special-needs trained adult
 in the unit while a child with special needs is there, contract hours, wishes to finish early, planning hours,
-time with children in blocks of at least 30 minutes, enough adults per unit, and not more
-adults than needed.
+time with children in blocks of at least 30 minutes, enough adults per unit, not more adults
+than needed, and not going over the weekly limit (people get tired, more so past one extra hour).
 """
 
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 from ortools.sat.python import cp_model
 
 MIN_SHIFT, MAX_SHIFT = 16, 36  # slots: 4 h and 9 h
-BREAK_LEN = 2  # slots: 30 min
-MAX_RUN = 20  # slots of work without a break: 5 h
+DEFAULT_RULES = {"maxRun": 20, "breakLen": 2, "weekMax": 160, "weekFlex": 8, "dayMax": None, "breaks": None,
+                 "rest": 660, "sn": True, "openClose": True}
 
 W_SHORT, W_SN, W_ROLE = 1000, 1000, 1000
 W_HOURS, W_PLAN, W_GROUP, W_OVER, W_LONE, W_FINISH = 60, 20, 30, 4, 40, 25
-WEEK_MAX = 160  # slots: the 40-hour week
+W_TIRED = 30  # per slot over the weekly limit, and again per slot more than an hour over it
 
 
 def _build(problem, wk, days, targets):
     """Model for `days` of a week; `targets[pid]` is (work slots, planning slots) over those days."""
     n, slot, day_start = problem["slots"], problem["slot"], problem["dayStart"]
+    R = {**DEFAULT_RULES, **wk.get("rules", {})}
+    blen, max_run = R["breakLen"], R["maxRun"]
+    n_breaks = max(1, R["breaks"]["n"]) if R["breaks"] else 1
     m = cp_model.CpModel()
     cost = []
     contact, brk, plan, work = {}, {}, {}, {}
@@ -65,11 +72,11 @@ def _build(problem, wk, days, targets):
             for t in range(n):
                 m.add(starts[t] >= wv[t] - (wv[t - 1] if t else 0))
             m.add(sum(starts) <= 1)
-            # Breaks: exactly BREAK_LEN slots each, strictly inside the shift.
+            # Breaks: exactly `blen` slots each, strictly inside the shift.
             bs = [m.new_bool_var("") for _ in range(n)]
             for t in range(n):
-                m.add(b[t] == sum(bs[max(0, t - BREAK_LEN + 1):t + 1]))
-                if t + BREAK_LEN > n:
+                m.add(b[t] == sum(bs[max(0, t - blen + 1):t + 1]))
+                if t + blen > n:
                     m.add(bs[t] == 0)
                 if t == 0 or t == n - 1:
                     m.add(b[t] == 0)
@@ -78,10 +85,17 @@ def _build(problem, wk, days, targets):
                     m.add_implication(b[t], wv[t + 1])
                     # Two breaks back to back would read as one long break.
                     m.add_implication(bs[t], b[t - 1].Not())
-            m.add(sum(bs) <= 1)
-            # No more than MAX_RUN slots of work without a break.
-            for t in range(n - MAX_RUN):
-                m.add(sum(c[t:t + MAX_RUN + 1]) + sum(pl[t:t + MAX_RUN + 1]) <= MAX_RUN)
+            m.add(sum(bs) <= n_breaks)
+            if R["breaks"]:
+                # Days longer than `over` need `n` breaks.
+                long_day = m.new_bool_var("")
+                m.add(sum(wv) <= R["breaks"]["over"] + MAX_SHIFT * long_day)
+                m.add(sum(bs) >= R["breaks"]["n"] * long_day)
+            # No more than `max_run` slots of work without a break.
+            for t in range(n - max_run):
+                m.add(sum(c[t:t + max_run + 1]) + sum(pl[t:t + max_run + 1]) <= max_run)
+            if R["dayMax"] is not None:
+                m.add(sum(c) + sum(pl) <= R["dayMax"])
             # Planning: one block a day, at least 30 minutes.
             ps = [m.new_bool_var("") for _ in range(n)]
             for t in range(n):
@@ -97,10 +111,10 @@ def _build(problem, wk, days, targets):
                 m.add(lone >= c[t] - (c[t - 1] if t else 0) - (c[t + 1] if t + 1 < n else 0))
                 cost.append(W_LONE * lone)
             contact[pid, d], brk[pid, d], plan[pid, d], work[pid, d] = c, b, pl, wv
-            if p["open"]:
+            if p["open"] and R["openClose"]:
                 opener[pid, d] = m.new_bool_var("")
                 m.add_implication(opener[pid, d], wv[0])
-            if p["close"]:
+            if p["close"] and R["openClose"]:
                 closer[pid, d] = m.new_bool_var("")
                 m.add_implication(closer[pid, d], wv[wk["days"][d].get("closeSlot", n - 1)])
             # A wish to finish early (e.g. a concert in the evening): every slot worked after it costs.
@@ -111,7 +125,20 @@ def _build(problem, wk, days, targets):
         mine = [d for d in days if (pid, d) in work]
         total = sum(sum(work[pid, d]) for d in mine)
         planned = sum(sum(plan[pid, d]) for d in mine)
-        m.add(total <= WEEK_MAX)
+        # The flexible week: `maxSlots` already allows the extra hours, but going over tires people.
+        m.add(total <= p.get("maxSlots", R["weekMax"]))
+        if len(mine) > 1:
+            for extra in (0, 4):
+                tired = m.new_int_var(0, 5 * n, "")
+                m.add(tired >= total - R["weekMax"] - extra)
+                cost.append(W_TIRED * tired)
+        # Rest between days, when the rule asks for more than a day's opening hours leave anyway.
+        for d1, d2 in zip(mine, mine[1:]):
+            if d2 == d1 + 1:
+                for t in range(n):
+                    for u in range(n):
+                        if 1440 - (t + 1 - u) * slot < R["rest"]:
+                            m.add(work[pid, d1][t] + work[pid, d2][u] <= 1)
         for value, target, weight in ((total, targets[pid][0], W_HOURS), (planned, targets[pid][1], W_PLAN)):
             dev = m.new_int_var(0, 5 * n, "")
             m.add(dev >= value - target)
@@ -121,7 +148,7 @@ def _build(problem, wk, days, targets):
     staff = {p["id"]: p for p in wk["staff"]}
     for d in days:
         day = wk["days"][d]
-        for role in (opener, closer):
+        for role in ((opener, closer) if R["openClose"] else ()):
             vars_ = [v for (pid, dd), v in role.items() if dd == d]
             missing = m.new_bool_var("")
             m.add(sum(vars_) + missing == 1)
@@ -189,18 +216,19 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
         hours = _split(p["target"] / slot, caps, 1)
         planning = _split(p["planning"] / slot, [max(0, h - MIN_SHIFT) for h in hours], 2)
         share[p["id"]] = {d: (hours[i], planning[i]) for i, d in enumerate(on)}
-    day_limit = time_limit * 0.4 / 5
-    hint = {}
+    # A day usually reaches its best answer in 2-3 s and then stops; the week gets the time that is left.
+    started, hint = time.monotonic(), {}
     for d in range(5):
         targets = {pid: s.get(d, (0, 0)) for pid, s in share.items()}
         m, *vars_ = _build(problem, wk, [d], targets)
-        solver, status = _solve(m, day_limit, workers)
+        solver, status = _solve(m, time_limit * 0.2, workers)
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
             hint.update({k: solver.value(v) for k, v in _all_vars(vars_).items()})
     targets = {p["id"]: (round(p["target"] / slot), round(p["planning"] / slot)) for p in wk["staff"]}
     m, contact, brk, plan, work, opener, closer = _build(problem, wk, range(5), targets)
     full = _all_vars((contact, brk, plan, work, opener, closer))
-    solver, status = _solve(m, time_limit * 0.6, workers, [(v, hint[k]) for k, v in full.items() if k in hint])
+    left = max(time_limit * 0.3, time_limit - (time.monotonic() - started))
+    solver, status = _solve(m, left, workers, [(v, hint[k]) for k, v in full.items() if k in hint])
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         raise RuntimeError(f"No schedule found for week {wk['week']} ({solver.status_name(status)})")
 

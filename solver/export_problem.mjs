@@ -1,7 +1,10 @@
-// Prints the solver problem for the demo's starting data, weeks 41-52, as JSON.
-// Used to build web/solved-schedule.json (see README).
-import { seedState, solverProblem, W0, W1 } from '../web/schedule-core-demo.js';
+// Prints the solver problem for one week of the demo's starting data, as JSON, after applying the
+// solutions of earlier weeks (so the flexible week can even out).
+//   node solver/export_problem.mjs <week> [solved.json ...]
+import { readFileSync } from 'node:fs';
+import { seedState, solverProblem, applySolution } from '../web/schedule-core-demo.js';
 
-const weeks = [];
-for (let w = W0; w <= W1; w++) weeks.push(w);
-process.stdout.write(JSON.stringify(solverProblem(seedState(), weeks)));
+const [week, ...files] = process.argv.slice(2);
+const s = seedState();
+for (const f of files) applySolution(s, JSON.parse(readFileSync(f, 'utf8')));
+process.stdout.write(JSON.stringify(solverProblem(s, [+week])));

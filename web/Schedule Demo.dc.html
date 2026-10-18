@@ -96,6 +96,7 @@
       <div style="flex:none;padding:10px 18px;font-size:12px;color:#5A6B7A;border-top:1px solid #D3DDEA;margin-top:8px;display:flex;justify-content:space-between;gap:8px"><span>{{ L.thisWeek }}</span><span style="font-family:'IBM Plex Mono',monospace;color:#1F2D3A">{{ totalWeek }}</span></div>
     </div>
     <div style="position:relative;flex:1;min-width:0;background:#fff;padding:0;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box">
+      <sc-if value="{{ gRunning }}"><div style="position:absolute;inset:0;z-index:9;background:rgba(247,250,251,.35);cursor:progress"></div></sc-if>
       <sc-if value="{{ showEmpty }}">
         <div style="position:absolute;inset:0;z-index:8;background:rgba(247,250,251,.78);display:flex;align-items:center;justify-content:center;padding:24px">
           <div style="width:520px;max-width:100%;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.05);padding:24px;display:flex;flex-direction:column;gap:14px">
@@ -369,6 +370,7 @@
         <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 24px 24px;display:flex;flex-direction:column;gap:16px">
           <div style="font-size:17px;font-weight:600">{{ gDoneHead }}</div>
           <sc-if value="{{ gFailed }}"><div style="font-size:15px;line-height:1.5;color:#8E2A27;background:#FFDAD8;border-radius:8px;padding:10px 14px">{{ gFailedTxt }}</div></sc-if>
+          <sc-if value="{{ gMissing }}"><div style="font-size:15px;line-height:1.5;color:#8E2A27;background:#FFDAD8;border-radius:8px;padding:10px 14px">{{ gMissingTxt }}</div></sc-if>
           <sc-if value="{{ gSaved }}"><div style="font-size:14px;line-height:1.5;color:#6B5214;background:#FFF1CF;border-radius:8px;padding:10px 14px">{{ gSavedTxt }}</div></sc-if>
           <sc-for list="{{ gReport }}" as="r"><div style="display:flex;flex-direction:column;gap:8px">
             <div style="font-size:14px;font-weight:600;color:#5A6B7A;text-transform:uppercase;letter-spacing:.06em">{{ r.head }}</div>
@@ -556,20 +558,33 @@ class Component extends DCLogic {
     const cap = (n, title, body, done) => alive() && this.setState({ demo: { n, title, body, done: !!done } });
     const cmd = c => this.setState(st => ({ phoneCmd: { n: ((st.phoneCmd || {}).n || 0) + 1, ...c } }));
     const fr = st => (st.free || []).find(x => x.staff === 'p1' && x.week === W && x.day === D);
+    // The demo needs Anna's Tuesday shift in week 42. An empty week gets the saved OR-Tools schedule first.
+    if (!ctl.store.get().shifts.some(x => x.week === W)) try {
+      const all = await (await fetch(new URL('solved-schedule.json', document.baseURI))).json();
+      if (!alive()) return;
+      ctl.store.set(st => mod.applySolution(st, { weeks: all.weeks.filter(x => x.week === W) }));
+    } catch (e) {}
+    const mine = ctl.store.get().shifts.filter(x => x.staff === 'p1' && x.week === W && x.day === D && !x.was);
+    if (!mine.length) { cap(1, t('Demon kan inte köras', 'The demo cannot run'), t('Anna Lindqvist har inget pass på tisdag vecka 42. Lägg ett pass åt henne och prova igen.', 'Anna Lindqvist has no shift on Tuesday in week 42. Give her a shift and try again.'), true); return; }
+    const from = Math.min(...mine.map(x => x.start)), to = Math.max(...mine.map(x => x.end)), unitOf = (mine.find(x => x.type === 'contact') || mine[0]).group;
+    const span = mod.fmt(from) + '–' + mod.fmt(to), unitName = (mod.GROUPS.find(g => g.id === unitOf) || {}).name || '';
+    const needsSn = mod.freeNeeds(ctl.store.get(), 'p1', W, D, from, to, unitOf).sn;
     ctl.store.set(st => { mod.removeFree(st, 'p1', W, D); st.absences = st.absences.filter(z => !(z.staff === 'p1' && z.week === W && z.day === D));
       st.requests = (st.requests || []).filter(r => !(r.staff === 'p1' && r.type === 'sick' && r.week === W && r.day === D)); st.notes = (st.notes || []).filter(n => !(n.key === 'subConfirmed' && n.p && n.p.week === W && n.p.day === D)); st.week = W; });
     ctl.up({ day: D, person: null, sel: null });
     this.setState({ coverOpen: false, focus: null, unit: 'all', settings: false, reqOpen: false, dd: null, tour: null, ratioOpen: false, phone: true, phoneMe: 'p1' });
     cmd({ week: W, day: D, bTab: 'me', inbox: false, sheet: { kind: 'sick', w: W, d: D } });
-    cap(1, t('06:40 · Anna Lindqvist är sjuk', '06:40 · Anna Lindqvist is sick'), t('Anna sjukanmäler sig i appen. Hennes pass i dag är 10:00–18:00 i Hjortron.', 'Anna reports sick in the app. Her shift today is 10:00–18:00 in Hjortron.'));
+    cap(1, t('06:40 · Anna Lindqvist är sjuk', '06:40 · Anna Lindqvist is sick'), t('Anna sjukanmäler sig i appen. Hennes pass i dag är ' + span + ' i ' + unitName + '.', 'Anna reports sick in the app. Her shift today is ' + span + ' in ' + unitName + '.'));
     await wait(3400); if (!alive()) return;
     ctl.touch(st => mod.submitRequest(st, { staff: 'p1', week: W, day: D, type: 'sick', clock: 400 })); cmd({ sheet: null });
     await wait(2000); if (!alive()) return;
     this.setState({ phone: false, unit: 'g3', coverOpen: true, freeTab: 'active', freeOpen: {} });
-    cap(2, t('06:41 · Ledigt pass', '06:41 · Free shift'), t('Passet blir ett ledigt pass. Det kräver en vuxen utbildad för särskilt stöd. Först erbjuds det Karin Öberg, föredragen vikarie för Hjortron.', 'The shift becomes a free shift. It needs an adult trained for special needs. It is first offered to Karin Öberg, the preferred substitute for Hjortron.'));
+    const f0 = fr(ctl.store.get()) || {}, firstOffer = (f0.offered || []).map(id => mod.person(id).name), pref = f0.stage === 'preferred';
+    const firstNames = firstOffer.map(x => x.split(' ')[0]).join(t(' och ', ' and '));
+    cap(2, t('06:41 · Ledigt pass', '06:41 · Free shift'), t('Passet blir ett ledigt pass.' + (needsSn ? ' Det kräver en vuxen utbildad för särskilt stöd.' : '') + (pref ? ' Först erbjuds det ' + firstOffer.join(' och ') + ', föredragen vikarie för ' + unitName + '.' : ' Det erbjuds alla vikarier som kan ta det.'), 'The shift becomes a free shift.' + (needsSn ? ' It needs an adult trained for special needs.' : '') + (pref ? ' It is first offered to ' + firstOffer.join(' and ') + ', the preferred substitute for ' + unitName + '.' : ' It is offered to every substitute who can take it.')));
     await wait(5500); if (!alive()) return;
     ctl.touch(st => { const f = fr(st); if (f) mod.skipFree(st, f.id); });
-    cap(3, t('06:56 · Inget svar', '06:56 · No answer'), t('Karin har inte svarat på 15 minuter. Passet går nu till alla vikarier som kan ta det. Kortet visar vilka som inte kan och varför.', 'Karin has not answered in 15 minutes. The shift now goes to every substitute who can take it. The card shows who cannot and why.'));
+    cap(3, t('06:56 · Inget svar', '06:56 · No answer'), t((pref ? firstNames + ' har inte svarat på 15 minuter. ' : '') + 'Passet går nu till alla vikarier som kan ta det. Kortet visar vilka som inte kan och varför.', (pref ? firstNames + ' has not answered in 15 minutes. ' : '') + 'The shift now goes to every substitute who can take it. The card shows who cannot and why.'));
     await wait(6000); if (!alive()) return;
     this.setState({ phone: true, phoneMe: 's1' });
     cap(4, t('07:02 · Sara Ek tar passet', '07:02 · Sara Ek takes the shift'), t('Sara ser ett ledigt pass med tid, avdelning och vad som krävs. Hon ser inte vem som är sjuk eller varför.', 'Sara sees a free shift with the time, unit and what it needs. She does not see who is sick or why.'));
@@ -697,6 +712,7 @@ class Component extends DCLogic {
     }
     out.gSpecs = [...specs, ...away]; out.gNoSpecs = !out.gSpecs.length; out.gNoSpecsTxt = t('Inget särskilt än. Då blir det en vanlig vecka.', 'Nothing yet, so these are ordinary weeks.');
     const D = G.add ? { week: w, days: [], time: G.add === 'closeEarly' ? 780 : 1020, pct: 50, staff: '', leave: 'vacation', note: '', ...(G.draft || {}) } : null;
+    if (D && !range.includes(D.week)) D.week = w;
     const setD = p => setG({ draft: { ...D, ...p } });
     out.gAdding = !!D;
     out.gAddBtns = D ? [] : [
@@ -747,8 +763,8 @@ class Component extends DCLogic {
     out.gFollow = [
       { head: t('Personal', 'Staff'), lines: [t(P.length + ' personer med sina avtalade timmar, hemavdelning och tider de kan arbeta.', P.length + ' people with their contract hours, home unit and the times they can work.'), ...(offs.length ? [t('Fasta lediga dagar: ', 'Fixed days off: ') + offs.map(p => firstName(p.id) + ' (' + p.off.map(d => v.L.short[d]).join(', ') + ')').join(', ')] : []), t('Får öppna: ', 'May open: ') + mod.STAFF.filter(p => p.open).map(p => firstName(p.id)).join(', '), t('Får stänga: ', 'May close: ') + mod.STAFF.filter(p => p.close).map(p => firstName(p.id)).join(', ')], link: t('Ändra personal', 'Change staff'), go: goSet('staff') },
       { head: t('Barn', 'Children'), lines: [...mod.GROUPS.map(g => g.name + ': ' + t(g.max + ' barn, 1 vuxen per ' + g.ratio + ' barn, öppet ' + mod.fmt(g.open) + '–' + mod.fmt(g.close), g.max + ' children, 1 adult per ' + g.ratio + ', open ' + mod.fmt(g.open) + '–' + mod.fmt(g.close))), ...((s.snKids || []).length ? [t((s.snKids || []).length + ' barn behöver en vuxen utbildad för särskilt stöd.', (s.snKids || []).length + ' children need an adult trained for special needs.')] : [])], link: t('Ändra barn och avdelningar', 'Change children and units'), go: goSet('kids') },
-      { head: t('Regler', 'Rules'), lines: [...rules, t('Raster är 30 minuter. Ett pass är 4–9 timmar.', 'Breaks are 30 minutes. A shift is 4–9 hours.')], link: t('Ändra regler', 'Change rules'), go: goSet('rules') },
-      { head: t('Om allt inte går ihop', 'If not everything fits'), lines: [t('1. Tillräckligt många vuxna med barnen, och en utbildad vuxen för barn i behov av särskilt stöd.', '1. Enough adults with the children, and a trained adult for children who need special support.'), t('2. Allas avtalade timmar.', "2. Everyone's contract hours."), t('3. Önskemål som att sluta tidigt.', '3. Wishes such as finishing early.'), t('4. Planeringstid.', '4. Planning time.'), t('Det som inte går visas efteråt, med förklaring.', 'Anything that does not fit is shown afterwards, with the reason.')], link: '', go: null },
+      { head: t('Regler', 'Rules'), lines: [...rules, t('Ett pass är 4–9 timmar, med rast mitt i.', 'A shift is 4–9 hours, with a break inside it.')], link: t('Ändra regler', 'Change rules'), go: goSet('rules') },
+      { head: t('Om allt inte går ihop', 'If not everything fits'), lines: [t('1. Tillräckligt många vuxna med barnen, och en utbildad vuxen för barn i behov av särskilt stöd.', '1. Enough adults with the children, and a trained adult for children who need special support.'), t('2. Allas avtalade timmar. Över veckogränsen bara om barnen behöver det, eftersom det tröttar.', "2. Everyone's contract hours. Over the weekly limit only if the children need it, because it is tiring."), t('3. Önskemål som att sluta tidigt.', '3. Wishes such as finishing early.'), t('4. Planeringstid.', '4. Planning time.'), t('Det som inte går visas efteråt, med förklaring.', 'Anything that does not fit is shown afterwards, with the reason.')], link: '', go: null },
     ].map(x => ({ ...x, lines: x.lines.map(t => ({ t })), hasLink: !!x.go }));
     const secs = n * 20;
     out.gRunTxt = t('Skapa schema för ', 'Make schedule for ') + rangeTxt; out.gRunNote = t('Tar ungefär ' + (secs < 60 ? secs + ' sekunder' : Math.round(secs / 60) + ' minuter') + '.', 'Takes about ' + (secs < 60 ? secs + ' seconds' : Math.round(secs / 60) + ' minutes') + '.');
@@ -756,12 +772,13 @@ class Component extends DCLogic {
       if (G.add) return;
       this.setState({ gen: { ...G, running: { i: 0, n, w } } });
       const res = await ctl.generate(range, (i, k, x) => setG({ running: { i, n: k, w: x } }));
-      setG({ running: null, done: res ? { weeks: range, saved: res.saved } : { weeks: [], failed: true } });
+      setG({ running: null, done: res ? { weeks: range.filter(x => !res.missing.includes(x)), saved: res.saved, missing: res.missing } : { weeks: [], failed: true } });
     };
     if (G.running) { const r = G.running; out.gProgTxt = t('Gör vecka ' + r.w + (r.n > 1 ? ' (' + (r.i + 1) + ' av ' + r.n + ')' : '') + '…', 'Making week ' + r.w + (r.n > 1 ? ' (' + (r.i + 1) + ' of ' + r.n + ')' : '') + '…'); out.gProgW = Math.round((r.i + .5) / r.n * 100); out.gProgSub = t('Datorn provar många sätt att lägga passen och väljer det som följer reglerna bäst.', 'The computer tries many ways to place the shifts and picks the one that follows the rules best.'); }
     if (G.done) {
       const R = G.done;
       out.gFailed = !!R.failed; out.gFailedTxt = t('Det gick inte att skapa ett schema: lösaren är inte igång och det finns inget sparat schema för de här veckorna.', 'No schedule could be made: the solver is not running and there is no saved schedule for these weeks.');
+      out.gMissing = !!(R.missing || []).length; out.gMissingTxt = t('Vecka ' + (R.missing || []).join(', ') + ' kunde inte göras. Försök igen, eller rita de veckorna själv.', ((R.missing || []).length > 1 ? 'Weeks ' : 'Week ') + (R.missing || []).join(', ') + ' could not be made. Try again, or draw those weeks yourself.');
       out.gSaved = !!R.saved; out.gSavedTxt = t('Lösaren var inte igång, så schemat hämtades från ett som gjorts tidigare för demodata. Det du lagt till under 2 är inte med.', 'The solver was not running, so the schedule was loaded from one made earlier for the demo data. What you added under 2 is not included.');
       out.gReport = R.failed ? [] : mod.scheduleReport(s, R.weeks, lang).map(r => ({ head: t('Vecka ', 'Week ') + r.week, items: r.items.map(i => ({ ...i, icon: i.ok ? '✓' : '!', ibg: i.ok ? '#E2F6D4' : '#FFF1CF', ifg: i.ok ? '#2D6A1F' : '#6B5214', more: (i.more || []).map(t => ({ t })) })) }));
       out.gDoneHead = R.failed ? t('Inget schema', 'No schedule') : t('Klart. Så här blev det:', 'Done. This is how it turned out:');
