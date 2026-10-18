@@ -11,7 +11,7 @@ Three surfaces:
 The UI is bilingual (Swedish and English, toggled with **SV / EN** in the top bar). All names and data are made up.
 
 ## About the design files
-The files in `prototype/` are **design references built in HTML**: working prototypes that show the intended look and behaviour. They are **not production code to copy directly**. Rebuild them in the target codebase's own environment (framework, state management, API layer) using its established patterns. If no codebase exists yet, pick a suitable stack. A sensible default is React + TypeScript for the planner and settings, and React Native or a responsive PWA for the phone app, with a server holding the real data and rule engine.
+The files in `web/` are **design references built in HTML**: working prototypes that show the intended look and behaviour. They are **not production code to copy directly**. Rebuild them in the target codebase's own environment (framework, state management, API layer) using its established patterns. If no codebase exists yet, pick a suitable stack. A sensible default is React + TypeScript for the planner and settings, and React Native or a responsive PWA for the phone app, with a server holding the real data and rule engine.
 
 `.dc.html` files are a proprietary "Design Component" format: an HTML template with `{{ }}` holes plus a `class Component extends DCLogic` logic block. They open in a browser (they load `support.js`). Read them as a declarative template plus a React-class-like `renderVals()`. **`schedule-core-demo.js` holds all the domain logic** (data model, rule checks, staffing need, cover candidates, substitute cascade, hours accounting). It is the most valuable file to port, ideally to a shared TypeScript module or the backend.
 
@@ -52,7 +52,7 @@ Note (inbox)    { id, to, key, p, at, read }
 | Code | type | Default | Check |
 |---|---|---|---|
 | R1 | rest | 11 h | rest between end of one day and start of next |
-| R2 | week | 40 h | max hours in a week |
+| R2 | week | 40 h, flex 2 h | max hours in a week; up to `flex` more if the next week is that much shorter (see *Schedule generation*) |
 | R3 | avg | 40 h | average over the period |
 | R4 | cont | 5 h | max continuous work without a break (gap ≥15 min resets) |
 | R5 | breakLen | 15–30 min | break length |
@@ -118,13 +118,13 @@ Fixed 1440 px wide canvas, scaled to fit the viewport with no page scroll. Font 
   - Expanded, the card shows the needs tags, a 3-step progress bar (6 px), the status line, a timed log (mono times), "Kan inte ta passet" (name + reason in `#8E2A27`), and the buttons Bekräfta / ⏩ Skip 15 min / Visa i schemat.
 - **▶ Demo autoplay**, six captioned steps in a dark caption card (`#1F2D3A`) at the bottom-left:
   1. Anna Lindqvist reports sick at 06:40.
-  2. The shift becomes a free shift and is offered to the preferred substitute (Karin).
+  2. The shift becomes a free shift and is offered to the unit's preferred substitute (Karin for Hjortron).
   3. No answer, so it goes to everyone eligible.
   4. Sara Ek takes the shift on her phone.
   5. Accepted: Sara is in the schedule.
   6. Confirmed.
 
-  Has a Stop / Klar button. Keep it as a sales/demo feature or drop it in production.
+  Has a Stop / Klar button. Keep it as a sales/demo feature or drop it in production. If week 42 is empty, the demo first loads the saved OR-Tools schedule, and its captions use Anna's actual shift.
 
 ### 2. Settings — `Demo Settings.dc.html` (+ `Demo Settings Staff`, `Demo Settings Rules`)
 A full-screen overlay with a **left side menu** (keep as designed) and a content column (max ~1000 px, padding 36/48 px). Section titles are 22 px/600, the subtitle 14 px `#5A6B7A`, and section labels 12 px uppercase `.06em` `#5A6B7A`. Content sits in bordered lists (1 px `#D3DDEA`, radius 8, rows 60 px min with 1 px `#E3EAF0` separators). The style is calm and consistent across sections.
@@ -192,7 +192,7 @@ Opened from **Personalens telefon** in the planner, with a person picker ("Telef
 **Touch:** the planner is used on an iPad, so hit targets are at least 32 px in the top bar and at least 44 px on the phone. Use pointer events, not mouse events.
 
 ## State / backend requirements (production)
-- Server-side persistence for units, staff, substitutes, shifts, absences, requests, free shifts, rules (versioned), and notes. The prototype stores everything in `localStorage` key `schema-demo-v4`.
+- Server-side persistence for units, staff, substitutes, shifts, absences, requests, free shifts, rules (versioned), and notes. The prototype stores everything in `localStorage` key `schema-demo-v5`.
 - Run the rule engine server-side and share it with the client, so warnings are computed in one place.
 - Real-time updates between the phone and planner (WebSocket or push). Push notifications to staff and substitutes. A real 15-minute timer for the cascade.
 - Roles and privacy: the reasons for sickness and cover are visible only to the principal. Store no child names.
@@ -202,7 +202,7 @@ Opened from **Personalens telefon** in the planner, with a person picker ("Telef
 ## Assets
 No images or icons. The only glyphs are text characters (‹ › × ▶ ⏩ ▾ ▴). The fonts are IBM Plex Sans and Mono from Google Fonts. The iPhone frame in `ios-frame.jsx` is a prototype-only bezel.
 
-## Files (`prototype/`)
+## Files (`web/`, `solver/`, `tests/`)
 - `Schedule Demo.dc.html` — planner, Notiser, Sjuk och vikarier drawer, demo autoplay; mounts settings and phone.
 - `Demo Settings.dc.html` — settings shell and menu; General, Import/Export, Children & units, Substitutes.
 - `Demo Settings Staff.dc.html` — staff list and person detail (calendar, hours, contract, availability, leave, roles, phone).
@@ -211,4 +211,75 @@ No images or icons. The only glyphs are text characters (‹ › × ▶ ⏩ ▾ 
 - `schedule-core-demo.js` — **domain model, seed data, rule engine, staffing need, cover/substitute logic, hours accounting, EN/SV strings, store with undo, drag controller.**
 - `support.js` — runtime for `.dc.html` files (prototype only).
 - `ios-frame.jsx` — phone bezel (prototype only).
-- `Schema Demo.html` — self-contained offline build of the whole prototype; open it in a browser to click through.
+- `Schema Demo.html` — self-contained offline build of the **original** prototype, before schedule generation was added; open it in a browser to click through.
+- `Phone.dc.html` — the phone app on its own page (`?me=p1`, `?me=s1`, `&lang=en`). `index.html` — landing page.
+- `solved-schedule.json` — weeks 41–52 solved ahead of time by OR-Tools for the demo data; used when the solver is not running.
+- `solver/` — the OR-Tools solver (`schedule_solver.py`), a small HTTP server (`server.py`), and scripts to rebuild and check the saved schedule.
+- `tests/` — tests for the shared logic, solver scenarios checked with the planner's own rules, and a browser walkthrough.
+
+---
+
+## Schedule generation with OR-Tools (added October 2026)
+
+*A Swedish version of this section is in `DESIGN_HANDOFF.sv.md`.*
+
+The demo starts with an empty schedule. Staff, units, substitutes and children data are made up and kept. The principal can have a schedule suggested, with the main design goal that **it must not feel like a black box**: the person scheduling (think of an experienced administrator, not a programmer) should see what the suggestion is based on, be able to say what is different this week, and get a plain explanation of the result.
+
+### Empty week
+When the week on screen has no shifts, the schedule is dimmed and a card in front of it offers:
+- **Make a suggestion for me**: opens the *Make schedule* form.
+- **Draw it myself**: removes the card for that week; shifts are drawn by hand as before.
+- **Copy week N−1**: only shown when the week before has a schedule.
+
+The **Make schedule** button in the top bar opens the same form at any time.
+
+### The Make schedule form (right drawer, 600 px)
+1. **Which weeks?** Only this week, or 2, 4 or 7 weeks (cut off at the last demo week). If a week already has a schedule, a note says it will be replaced and can be undone.
+2. **Is anything different from usual?** A list of special days and absences in the chosen weeks, each removable, and four buttons that open a short form (week, weekday buttons, time or percentage from a list, optional note):
+   - *Staff hope to finish early*, e.g. a concert. A **wish**: the solver tries, and the report says who could not and why.
+   - *The preschool closes early*, e.g. the day before a holiday. No children and no staff after that time; the closer works until then.
+   - *Fewer children than usual*, e.g. a school break: about 25–90 % of the children. Fewer adults are needed.
+   - *Someone is away*: holiday, or a course or other. Saved as leave on the person (Settings › Staff), one entry per run of days.
+   Special days are stored as `special: [{ id, kind: 'finishBy'|'closeEarly'|'fewer', week, days[], time?, pct?, note }]` and shown as a ★ note on the day in the planner.
+3. **What the schedule follows**, read from Settings with a link to change each part: staff (contract hours, fixed days off, who may open or close), children (per unit: number, ratio, opening hours, children who need a trained adult), the rules that are on, and the **order of priority** when not everything fits:
+   1. enough adults with the children, and a trained adult for children who need special support;
+   2. everyone's contract hours, going over the weekly limit only if the children need it;
+   3. wishes such as finishing early;
+   4. planning time.
+
+The footer button says what will happen (“Make schedule for weeks 42–43”) and roughly how long it takes (about 20 s per week). While it runs, a progress bar shows which week is being made and the schedule cannot be edited.
+
+### The report
+After solving, the drawer shows per week, with ✓ or !:
+- enough adults all day, or the times with too few (and a hint: a substitute, or adjust by hand);
+- other broken rules, as in *Things to check*;
+- contract hours: everyone on target, or who works more (because the children needed it) and who gets less;
+- the flexible week: who works a little over the limit and how short the next week must be;
+- less planning time than usual, and for whom;
+- each special day: included, or for *finish early* how many finish in time and who stays (e.g. “Ida Forsberg (closes)”).
+
+**Undo the schedule** removes everything that was made, in one step. If the solver could not be reached, the weeks are loaded from the saved schedule; a note says so, and special days are listed as *not included*.
+
+### The flexible week (rule R2)
+No more than 40 hours in a week, or up to `flex` hours more (default 2, settable 0–4 in Settings › Rules) if the **next** week is that much shorter: 41 then at most 39, 42 then at most 38.
+- The planner warns on both weeks if the next week is not shorter, and above 40 + `flex` as a plain rule break.
+- The solver only goes over when the children would otherwise have too few adults. Going over is tiring, so every quarter hour over costs, and doubly so past one extra hour.
+- Weeks are made in order, so a week after a long one gets a lower target and cap. An already scheduled next week also limits how far a week may go over.
+
+### How the solver works
+- `solverProblem(state, weeks)` in `schedule-core-demo.js` turns the app's data into one self-contained problem per week. Per person: home unit, may open/close, trained for special needs, contract and planning minutes, available days, earliest/latest time, the weekly cap. Per day and 15-minute slot: adults needed (from the same children forecast and ratios the planner shows, adjusted for special days and the *minimum adults* rule), the closing slot, the finish-by slot, and the slots where a trained adult must be in a unit. The rules from Settings that are on are passed along.
+- **No names, phone numbers, reasons for absence or notes are sent.** People are ids (`p1`); absences are only “not available that day”.
+- `solver/schedule_solver.py` (OR-Tools CP-SAT) models every person-day as 15-minute slots of time with children, break or planning. Hard: one continuous shift of 4–9 h inside availability, breaks of the rule's length inside the shift (more if the *breaks* rule asks), no more than the rule's hours without a break, the optional daily limit, rest between days, planning in one block of at least 30 min, the weekly cap, an opener at opening and a closer at closing (or at an early closing). Everything else is a weighted cost, in the priority order above.
+- It solves each day first with an even share of the week's hours (a day takes 2–3 s), then the whole week from that starting point so hours can move between days.
+- `solver/server.py` serves `POST /solve`. The page calls `http://localhost:8000` (or `?solver=…`).
+- Every result is checked with the planner's own rule engine in the tests (`tests/`); the saved schedule for weeks 41–52 has no warnings and everyone gets their contract hours.
+
+### What the demo does not do
+It is a demo and a guide, not a product:
+- no login or roles; anyone who opens it sees everything, including sick reasons;
+- data lives only in the browser's local storage, and only made-up data belongs in it;
+- the solver server has no access control or limits and is meant to run locally;
+- the solver uses fixed weights; a real product would let the organisation tune them, and might add wishes per person (e.g. only some staff need to finish early) and fixed events such as a staff meeting.
+
+See *State / backend requirements* above for what a real system needs.
+
