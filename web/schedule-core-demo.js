@@ -268,8 +268,8 @@ export const daysLabel = (days, lang) => days.length === 5 ? (lang === 'sv' ? 'h
 // ---------- OR-Tools solver ----------
 // The solver (solver/ in the repo) gets one self-contained problem per week and returns shifts and opener/closer roles.
 const SOLVER_SLOT = 15;
-// Where the solver server runs; override with ?solver=https://… in the page URL.
-const SOLVER_URL = ((typeof location !== 'undefined' && new URLSearchParams(location.search).get('solver')) || 'http://localhost:8000').replace(/\/$/, '');
+// Where the solver runs: the server the page came from (solver/server.py serves both), or ?solver=https://… in the page URL.
+const SOLVER_URL = ((typeof location !== 'undefined' && (new URLSearchParams(location.search).get('solver') || (/^https?:$/.test(location.protocol) && location.origin))) || 'http://localhost:8000').replace(/\/$/, '');
 export const checkWeek = (s, w, lang = 'en') => derive({ ...s, week: w }, T[lang] || T.en, lang).warns;
 export function solverProblem(s, weeks) {
   const n = (DE - DS) / SOLVER_SLOT, mids = Array.from({ length: n }, (_, i) => DS + i * SOLVER_SLOT + SOLVER_SLOT / 2);
@@ -867,7 +867,8 @@ export function controller(comp) {
       let sol = null, reached = false;
       try {
         const r = await fetch(SOLVER_URL + '/solve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(solverProblem(store.get(), [weeks[i]])) });
-        reached = true; if (r.ok) sol = await r.json();
+        // A server without a solver (e.g. a plain web host) answers 404/405/501: same as no solver.
+        reached = ![404, 405, 501].includes(r.status); if (r.ok) sol = await r.json();
       } catch (e) {}
       if (!reached && !done.length) { saved = true; break; }
       if (!sol) { missing.push(weeks[i]); continue; }

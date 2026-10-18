@@ -1,9 +1,9 @@
 // Browser test of the planner: empty week, Make schedule form, report, undo, demo, dates, Swedish.
-// Needs the web demo on http://localhost:5173 (cd web && npx http-server -p 5173 -c-1) and Playwright.
+// Needs the demo running (start.py on :8000 with BASE=http://localhost:8000, or cd web && npx http-server -p 5173) and Playwright.
 // The solver should NOT be running: the test uses the saved schedule.     Run: node tests/e2e.cjs
 const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
 const assert = require('node:assert/strict');
-const URL = 'http://localhost:5173/Schedule%20Demo.dc.html?solver=http://localhost:1';
+const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc.html?solver=http://localhost:1';
 
 (async () => {
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1440, height: 900 } }), errs = [];
