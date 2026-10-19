@@ -690,16 +690,39 @@ export function controller(comp) {
     const prev2 = prev && sib.find(x => x.end === prev.start), next2 = next && sib.find(x => x.start === next.end);
     const P = prev && { ...prev }, N = next && { ...next }, P2 = prev2 && { ...prev2 }, N2 = next2 && { ...next2 };
     let mode = ctx.mode;
-    if (sh.type === 'break' && ((mode === 'start' && prev) || (mode === 'end' && next) || (mode === 'move' && (prev || next)))) mode = 'slide';
+    // A break, planning or meeting that is part of a working day can be dropped anywhere in that day. Only the
+    // time with children closes up around it: other breaks and planning stay where they are, and the day keeps
+    // its start, end and minutes of each kind. Dropped onto another such block, it settles right next to it.
+    if (ctx.mode !== 'new' && sh.type !== 'contact' && (prev || next)) mode = 'reflow';
+    const chain = [o]; for (let a = prev && P; a; a = sib.find(x => x.end === a.start)) chain.unshift({ ...a });
+    for (let b = next && N; b; b = sib.find(x => x.start === b.end)) chain.push({ ...b });
+    const chainIds = new Set(chain.map(x => x.id)), spares = mode === 'reflow' ? [1, 2, 3].map(() => 'h' + (++s.nid)) : [];
     const cl = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    const reflow = at => {
+      const len = o.end - o.start, d0 = chain[0].start, d1 = chain[chain.length - 1].end, edge = o.type === 'break' ? slot : 0;
+      const fixed = chain.filter(x => x.id !== o.id && x.type !== 'contact'), lo = d0 + edge, hi = d1 - len - edge;
+      const free = t => t >= lo && t <= hi && !fixed.some(f => t < f.end && t + len > f.start);
+      let ins = cl(at, lo, hi);
+      if (!free(ins)) {
+        // the nearest free spot: just before or just after the blocks in the way
+        const cands = fixed.flatMap(f => [f.start - len, f.end]).concat([lo, hi]).filter(free);
+        if (!cands.length) return;
+        ins = cands.reduce((a, b) => Math.abs(b - at) < Math.abs(a - at) ? b : a);
+      }
+      const blocks = [...fixed, { ...o, start: ins, end: ins + len }].sort((a, b) => a.start - b.start), contacts = chain.filter(x => x.type === 'contact');
+      const ids = [...contacts.map(x => x.id), ...spares], out = [];
+      const fill = (a, b) => { if (b <= a) return; const src = contacts.find(x => x.start < b && x.end > a) || contacts[0] || o; out.push({ ...src, type: 'contact', id: ids.shift(), start: a, end: b }); };
+      let t = d0;
+      for (const x of blocks) { fill(t, x.start); out.push(x); t = x.end; }
+      fill(t, d1);
+      const st = store.get(); st.shifts = st.shifts.filter(x => !chainIds.has(x.id) && !spares.includes(x.id)).concat(out);
+    };
     const move = ev => {
       if (!moved && Math.abs(pos(ev) - p0) < 4) return; moved = true;
       const dm = snap(toMin(pos(ev)) - toMin(p0));
       store.live(() => {
-        if (mode === 'slide') {
-          const len = o.end - o.start, st = cl(o.start + dm, prev ? P.start + slot : DS, next ? N.end - slot - len : DE - len);
-          sh.start = st; sh.end = st + len; if (prev) prev.end = st; if (next) next.start = st + len;
-        } else if (mode === 'move') { const len = o.end - o.start; sh.start = Math.max(DS, Math.min(DE - len, o.start + dm)); sh.end = sh.start + len; }
+        if (mode === 'reflow') reflow(o.start + dm);
+        else if (mode === 'move') { const len = o.end - o.start; sh.start = Math.max(DS, Math.min(DE - len, o.start + dm)); sh.end = sh.start + len; }
         else if (mode === 'end') {
           if (next && next.type === 'break') {
             const len = N.end - N.start, e = cl(o.end + dm, o.start + slot, next2 ? N2.end - slot - len : DE - len);

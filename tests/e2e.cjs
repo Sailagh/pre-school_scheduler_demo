@@ -71,6 +71,19 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     assert.match(await body(), /Week 42 has no schedule yet|0 h \/ 612 h/);
     await btn(/Redo/).first().click(); await p.waitForTimeout(300);
   });
+  await step('a break can be dragged anywhere in the day; other blocks stay put', async () => {
+    const day = () => p.evaluate(() => JSON.parse(localStorage.getItem('schema-demo-v5')).s.shifts.filter(x => x.staff === 'p1' && x.week === 42 && x.day === 1).sort((a, b) => a.start - b.start).map(x => [x.type, x.start, x.end]));
+    const before = await day(), brk = before.find(x => x[0] === 'break'), others = before.filter(x => x[0] !== 'contact' && x[0] !== 'break');
+    const el = await p.evaluate(() => { const row = document.querySelector('[data-row="p1"]'); for (const e of row.querySelectorAll('[data-track] > div')) if (getComputedStyle(e).backgroundColor === 'rgb(255, 218, 216)') { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; } });
+    await p.mouse.move(el.x, el.y); await p.mouse.down(); for (let i = 1; i <= 20; i++) await p.mouse.move(el.x + i * 12, el.y); await p.mouse.up(); await p.waitForTimeout(300);
+    const after = await day(), moved = after.find(x => x[0] === 'break');
+    assert.ok(moved[1] - brk[1] >= 120, 'the break moved well past its old neighbours: ' + JSON.stringify(after));
+    assert.deepEqual(after.filter(x => x[0] !== 'contact' && x[0] !== 'break'), others, 'planning stays put');
+    const sum = d => d.reduce((a, x) => ({ ...a, [x[0]]: (a[x[0]] || 0) + x[2] - x[1] }), {});
+    assert.deepEqual(sum(after), sum(before)); assert.equal(after[0][1], before[0][1]); assert.equal(after.at(-1)[2], before.at(-1)[2]);
+    await btn(/Undo/).first().click(); await p.waitForTimeout(300);
+    assert.deepEqual(await day(), before, 'undo puts it back');
+  });
   await step('a week with shifts offers to keep them and fill in around them', async () => {
     await btn('Make schedule', true).click(); await p.waitForTimeout(200);
     const t = await body();

@@ -110,6 +110,7 @@ Fixed 1440 px wide canvas, scaled to fit the viewport with no page scroll. Font 
   - Drag a block to move it in time; drag its left or right edge to resize.
   - Drag onto another person's row to reassign it. This is blocked in single-person view.
   - Drag from empty space to create a shift.
+  - A break, planning or meeting block can be dragged anywhere in that person's working day: only the time with children closes up around it, other blocks stay put, and the day keeps its start, end and minutes of each kind. Dropped onto another block, it settles next to it.
   - Undo/Redo covers all edits.
 - **Notiser** panel (popover ~552 px wide, 20% larger than the old requests window): staff requests (swap / can't work / sick / cover), each with Godkänn / Neka, "Okej" for sick reports, and "Visa dagen". For cover requests it shows the reason (principal only), who it was sent to, and who accepted.
 - **Sjuk och vikarier** drawer (right side, 600 px, full height under the top bar, closes with ×):

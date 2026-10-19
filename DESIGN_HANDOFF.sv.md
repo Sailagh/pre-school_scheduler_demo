@@ -54,6 +54,9 @@ Högst 40 timmar per vecka, eller upp till `flex` timmar till (standard 2, går 
 - `solver/server.py` tar emot `POST /solve`. Sidan anropar `http://localhost:8000` (eller `?solver=…`).
 - Varje resultat kontrolleras med schemats egen regelmotor i testerna (`tests/`); det sparade schemat för vecka 41–52 har inga varningar och alla får sina avtalade timmar.
 
+## Flytta rast och planering
+En rast, planering eller ett möte kan dras var som helst inom personens arbetsdag. Bara barntiden flyttar sig runt blocket; andra raster och planeringar står kvar, och dagen behåller sin början, sitt slut och sina minuter av varje slag. Släpps blocket på ett annat block hamnar det precis bredvid.
+
 ## Det här gör inte demon
 Det är en demo och en guide, inte en produkt:
 - ingen inloggning eller roller; den som öppnar den ser allt, även orsaker till sjukfrånvaro;
