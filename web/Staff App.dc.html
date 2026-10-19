@@ -7,7 +7,7 @@
 </head>
 <body>
 <x-dc>
-<helmet><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#134e5e}</style></helmet>
+<helmet><link href="vendor/fonts/plex.css" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#134e5e}</style></helmet>
 <div style="position:relative;height:100%;display:flex;flex-direction:column;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#F4F7F9;overflow:hidden;font-variant-numeric:tabular-nums">
 <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
 
@@ -476,7 +476,13 @@ class Component extends DCLogic {
     const ctl = this.props.ctl || this.ctl, mod = this.props.mod || this.mod; if (!ctl || !mod) return { ready: false };
     const lang = this.props.lang === 'sv' ? 'sv' : 'en', sv = lang === 'sv', t = (a, b) => sv ? a : b, V = this.props.variant === 'b' ? 'b' : 'a';
     const s = ctl.store.get(), me = this.props.me || 'p1', P = mod.person(me) || mod.STAFF[0], st = this.state, W = st.week, D = st.day;
-    const b0 = mod.blockOf(TW), weeksArr = [b0, b0 + 1, b0 + 2, b0 + 3];
+    // Today's week may not be scheduled yet in the demo: then start on the planner's week, or the nearest scheduled one.
+    if (!this._weekChecked) {
+      this._weekChecked = true;
+      const has = w => s.shifts.some(x => x.week === w), weeks = [...new Set(s.shifts.map(x => x.week))];
+      if (!has(TW) && weeks.length) { const w = has(s.week) ? s.week : weeks.reduce((a, b) => Math.abs(b - TW) < Math.abs(a - TW) ? b : a); Promise.resolve().then(() => this.setState({ week: w })); }
+    }
+    const b0 = mod.blockOf(W), weeksArr = [b0, b0 + 1, b0 + 2, b0 + 3];
     const MON = sv ? ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'] : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const dt = (w, d) => new Date(2026, 9, 12 + (w - 42) * 7 + d);
     const dLab = (w, d) => { const x = dt(w, d); return x.getDate() + ' ' + MON[x.getMonth()]; };

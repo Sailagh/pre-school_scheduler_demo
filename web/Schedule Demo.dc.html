@@ -14,10 +14,10 @@
 <body>
 <template id="__bundler_thumbnail" data-bg-color="#EEF4F7"><svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect x="300" y="250" width="600" height="300" rx="24" fill="#fff"/><rect x="360" y="310" width="260" height="50" rx="10" fill="#BFE6EF"/><rect x="460" y="380" width="300" height="50" rx="10" fill="#F6C9D6"/><rect x="400" y="450" width="220" height="50" rx="10" fill="#F5E3A1"/></svg></template>
 <x-dc>
-<helmet><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#16627A}@media print{[data-ghost]{display:none!important}}</style></helmet>
+<helmet><link href="vendor/fonts/plex.css" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#16627A}@media print{[data-ghost]{display:none!important}}</style></helmet>
 <div data-root="1" ref="{{ rootRef }}" style="position:relative;width:1440px;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#fff;user-select:none;-webkit-user-select:none;border:1px solid #D3DDEA;box-sizing:border-box;transform-origin:0 0">
 <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
-  <div style="display:flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;border-bottom:1px solid #D3DDEA">
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 20px;background:#fff;border-bottom:1px solid #D3DDEA">
     <div style="font-weight:600;font-size:16px;white-space:nowrap">{{ L.app }}</div>
     <div style="display:flex;align-items:center;gap:6px;margin-left:12px;flex:none">
       <button onClick="{{ prevWeek }}" style="white-space:nowrap;flex:none;width:32px;height:32px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font-size:16px;cursor:pointer">‹</button>
@@ -27,7 +27,7 @@
     <div style="flex:1"></div>
     <button onClick="{{ undo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ undoOp }}">↶ {{ L.undo }}</button>
     <button onClick="{{ redo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ redoOp }}">↷ {{ L.redo }}</button>
-    <button onClick="{{ copyWeek }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer">{{ L.copyWeek }}</button>
+    <button onClick="{{ copyWeek }}" title="{{ copyWeekTip }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer">{{ L.copyWeek }}</button>
     <button onClick="{{ openGen }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:#1F7D97;color:#fff">{{ genBtnTxt }}</button>
     <button onClick="{{ startDemo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:{{ demoBtnBg }};color:{{ demoBtnFg }}">▶ Demo</button>
     <button onClick="{{ togglePhone }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ phoneBtnBg }};color:{{ phoneBtnFg }}">{{ phoneTxt }}</button>
@@ -686,7 +686,7 @@ class Component extends DCLogic {
     const has = x => s.shifts.some(z => z.week === x);
     const firstName = id => (mod.person(id) || {}).name.split(' ')[0];
     const out = {
-      genBtnTxt: t('Skapa schema', 'Make schedule'), openGen: () => this.setState({ gen: { n: 1 }, reqOpen: false, coverOpen: false, settings: false }),
+      copyWeekTip: t('Kopiera den här veckans schema till nästa vecka', "Copy this week's schedule to next week"), genBtnTxt: t('Skapa schema', 'Make schedule'), openGen: () => this.setState({ gen: { n: 1 }, reqOpen: false, coverOpen: false, settings: false }),
       daySpecials: mod.specialsOn(s, w, v.day).map(x => ({ text: mod.specialLabel(x, lang) })), hasDaySpecial: mod.specialsOn(s, w, v.day).length > 0,
       showEmpty: !has(w) && !(this.state.drawn || {})[w] && !G && !this.state.settings && !this.state.demo,
       emptyTitle: t('Vecka ' + w + ' har inget schema än', 'Week ' + w + ' has no schedule yet'), emptySub: t('Hur vill du börja?', 'How do you want to start?'),
@@ -897,7 +897,7 @@ class Component extends DCLogic {
               show: () => { this.setState({ reqOpen: false }); ctl.store.live(st => { st.week = r.week; }); ctl.up({ day: r.day }); } }; }) };
       })(),
       phoneOpen: !!this.state.phone, togglePhone: () => this.setState(st => ({ phone: !st.phone, reqOpen: false, settings: false, coverOpen: false })),
-      phoneTxt: sv ? 'Personalens telefon' : "Staff's phone", phoneBtnBg: this.state.phone ? '#1F2D3A' : '#fff', phoneBtnFg: this.state.phone ? '#fff' : '#1F2D3A',
+      phoneTxt: sv ? 'Telefon' : "Staff's phone", phoneBtnBg: this.state.phone ? '#1F2D3A' : '#fff', phoneBtnFg: this.state.phone ? '#fff' : '#1F2D3A',
       phoneOf: sv ? 'Telefon för' : 'Phone of', phoneClose: sv ? 'Stäng' : 'Close', phoneMe: this.state.phoneMe || 'p1', pickPhoneMe: e => this.setState({ phoneMe: e.target.value }),
       phoneOpts: [...this.mod.STAFF.slice().sort((x, y) => x.name.localeCompare(y.name, 'sv')).map(p => ({ v: p.id, name: p.name })), ...this.mod.SUBS.map(p => ({ v: p.id, name: p.name + (sv ? ' (vikarie)' : ' (substitute)') }))].map(o => ({ ...o, sel: o.v === (this.state.phoneMe || 'p1') })).sort((a, b) => b.sel - a.sel),
       phoneCmd: this.state.phoneCmd || null, barLegA: sv ? 'Med barn' : 'Children', barLegB: sv ? 'Utan barn' : 'No children', barLegS: sv ? 'Sjuk' : 'Sick', subTag: sv ? 'Vikarie' : 'Substitute',

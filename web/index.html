@@ -1,7 +1,10 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Förskolans schema</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="vendor/fonts/plex.css">
 <style>
 /* Layout: one calm column — name, two doors (planner / phone), a short how-to-demo list. */
 :root {
@@ -59,31 +62,39 @@ ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 ol b { font-weight: 600 }
 .note { font-size: 13px; color: var(--muted); max-width: 68ch; margin: 0 }
 kbd { font: 500 12px var(--mono); padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface) }
+.lang { position: absolute; top: 20px; right: 20px; display: flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface) }
+.lang button { border: 0; background: transparent; padding: 6px 10px; font: 600 12px var(--sans); color: var(--ink); cursor: pointer }
+.lang button[aria-pressed="true"] { background: var(--ink); color: #fff }
+html[lang="sv"] [lang="en"], html[lang="en"] [lang="sv"] { display: none }
 </style>
-
+</head>
+<body>
+<div class="lang" role="group" aria-label="Språk / Language"><button data-l="sv">SV</button><button data-l="en">EN</button></div>
 <main>
   <header>
     <div class="eyebrow">Förskolan Solrosen · demo</div>
     <h1>Förskolans schema</h1>
-    <p class="lede">Shift planning for a preschool: the principal plans staff per unit and sees whether every 15 minutes has enough adults for the children. Staff and substitutes use the phone app to see their week, report sick and pick up shifts.</p>
+    <p class="lede" lang="sv">Schemaläggning för en förskola. Rektorn planerar personalen per avdelning och ser att det finns tillräckligt många vuxna för barnen varje kvart. OR-Tools kan föreslå ett schema som följer reglerna och förklarar resultatet. Personal och vikarier ser sin vecka, sjukanmäler sig och tar lediga pass i telefonappen.</p>
+    <p class="lede" lang="en">Staff scheduling for a preschool. The principal plans staff per unit and sees that there are enough adults for the children every 15 minutes. OR-Tools can suggest a schedule that follows the rules and explains the result. Staff and substitutes see their week, report sick and pick up free shifts in the phone app.</p>
   </header>
 
   <div class="doors">
     <a class="door" href="Schedule%20Demo.dc.html">
-      <div class="who">Rektor · iPad or computer</div>
-      <h2>Planner</h2>
+      <div class="who"><span lang="sv">Rektor · iPad eller dator</span><span lang="en">Principal · iPad or computer</span></div>
+      <h2><span lang="sv">Planering</span><span lang="en">Planner</span></h2>
       <div class="mini" aria-hidden="true">
         <div class="row"><span class="c" style="left:24%;width:22%"></span><span class="b" style="left:47%;width:4%"></span><span class="c" style="left:52%;width:30%"></span></div>
         <div class="row"><span class="p" style="left:8%;width:8%"></span><span class="c" style="left:17%;width:26%"></span><span class="b" style="left:44%;width:4%"></span><span class="c" style="left:49%;width:16%"></span></div>
         <div class="row"><span class="c" style="left:40%;width:18%"></span><span class="m" style="left:60%;width:10%"></span><span class="c" style="left:71%;width:22%"></span></div>
         <div class="axis"><span>06:00</span><span>12:00</span><span>18:30</span></div>
       </div>
-      <p>Weekly timeline, staffing need per slot, rule warnings (R1–R10), sick cover and substitutes, settings.</p>
-      <span class="go">Open planner ›</span>
+      <p lang="sv">Veckans schema, behov av vuxna per kvart, regelvarningar, <b>Skapa schema</b> med OR-Tools, sjukfrånvaro och vikarier, inställningar.</p>
+      <p lang="en">The week's schedule, adults needed per 15 minutes, rule warnings, <b>Make schedule</b> with OR-Tools, sick cover and substitutes, settings.</p>
+      <span class="go"><span lang="sv">Öppna planeringen ›</span><span lang="en">Open the planner ›</span></span>
     </a>
     <a class="door" href="Phone.dc.html">
-      <div class="who">Personal och vikarier · phone</div>
-      <h2>Phone app</h2>
+      <div class="who"><span lang="sv">Personal och vikarier · telefon</span><span lang="en">Staff and substitutes · phone</span></div>
+      <h2><span lang="sv">Telefonappen</span><span lang="en">Phone app</span></h2>
       <div class="phone-mini" aria-hidden="true">
         <div class="day">MÅN<span class="bar"><i style="top:30%;height:55%"></i></span></div>
         <div class="day">TIS<span class="bar"><i style="top:10%;height:60%"></i></span></div>
@@ -91,31 +102,50 @@ kbd { font: 500 12px var(--mono); padding: 1px 5px; border: 1px solid var(--line
         <div class="day">TOR<span class="bar"><i style="top:20%;height:65%"></i></span></div>
         <div class="day">FRE<span class="bar"><i style="top:5%;height:50%"></i></span></div>
       </div>
-      <p>My week, who works today, report sick, swap, ask a colleague to cover part of a shift. Substitutes see offered shifts.</p>
-      <span class="go">Open phone app ›</span>
+      <p lang="sv">Min vecka, vem som arbetar i dag, sjukanmälan, byta pass, be en kollega ta en del av ett pass. Vikarier ser lediga pass.</p>
+      <p lang="en">My week, who works today, report sick, swap, ask a colleague to cover part of a shift. Substitutes see free shifts.</p>
+      <span class="go"><span lang="sv">Öppna telefonappen ›</span><span lang="en">Open the phone app ›</span></span>
     </a>
   </div>
 
   <section>
-    <h3>Open the phone as</h3>
+    <h3><span lang="sv">Öppna telefonen som</span><span lang="en">Open the phone as</span></h3>
     <div class="chips">
       <a class="chip" href="Phone.dc.html?me=p1">Anna Lindqvist <small>Hjortron</small></a>
       <a class="chip" href="Phone.dc.html?me=p2">Erik Johansson <small>Lingon</small></a>
       <a class="chip" href="Phone.dc.html?me=p3">Fatima Hassan <small>Blåbär</small></a>
-      <a class="chip" href="Phone.dc.html?me=s1">Sara Ek <small>vikarie</small></a>
-      <a class="chip" href="Phone.dc.html?me=s2">Karin Öberg <small>vikarie</small></a>
+      <a class="chip" href="Phone.dc.html?me=s1">Sara Ek <small><span lang="sv">vikarie</span><span lang="en">substitute</span></small></a>
+      <a class="chip" href="Phone.dc.html?me=s2">Karin Öberg <small><span lang="sv">vikarie</span><span lang="en">substitute</span></small></a>
     </div>
   </section>
 
   <section>
-    <h3>Showing it</h3>
-    <ol>
-      <li>In the planner, press <b>▶ Demo</b> for the six-step sick-report story: Anna reports sick, the shift goes to substitutes, Sara takes it, the principal confirms.</li>
-      <li>Open the planner and the phone app in two tabs of the same browser. A sick report or swap sent from the phone shows up in the planner's <b>Notifications</b> and <b>Sick cover</b> right away.</li>
-      <li>On a phone, open the phone app and add it to the home screen for a full-screen app feel.</li>
-      <li>To start over, go to <b>Settings › General › Start over</b> in the planner.</li>
+    <h3><span lang="sv">Så visar du den</span><span lang="en">Showing it</span></h3>
+    <ol lang="sv">
+      <li>Öppna planeringen. En tom vecka erbjuder <b>Skapa ett förslag åt mig</b>: välj veckor, lägg till det som är annorlunda (t.ex. en konsert eller en röd dag) och se rapporten efteråt.</li>
+      <li>Rita eller flytta pass för hand: dra en rast eller planering var som helst inom dagen. Varningarna under <b>Att kontrollera</b> uppdateras direkt.</li>
+      <li>Tryck <b>▶ Demo</b> för berättelsen om en sjukanmälan: Anna sjukanmäler sig, passet går till vikarier, Sara tar det och rektorn bekräftar.</li>
+      <li>Öppna planeringen och telefonappen i två flikar i samma webbläsare. En sjukanmälan eller ett byte från telefonen syns direkt under <b>Notiser</b> och <b>Sjuk och vikarier</b>.</li>
+      <li>Börja om när som helst under <b>Inställningar › Allmänt › Börja om</b>.</li>
+    </ol>
+    <ol lang="en">
+      <li>Open the planner. An empty week offers <b>Make a suggestion for me</b>: choose the weeks, add what is different (e.g. a concert or a public holiday) and see the report afterwards.</li>
+      <li>Draw or move shifts by hand: drag a break or planning block anywhere in the day. The warnings under <b>Things to check</b> update straight away.</li>
+      <li>Press <b>▶ Demo</b> for the sick-report story: Anna reports sick, the shift goes to substitutes, Sara takes it, the principal confirms.</li>
+      <li>Open the planner and the phone app in two tabs of the same browser. A sick report or swap sent from the phone shows up under <b>Notifications</b> and <b>Sick cover</b> right away.</li>
+      <li>Start over at any time under <b>Settings › General › Start over</b>.</li>
     </ol>
   </section>
 
-  <p class="note">This is a click-through demo with made-up people. Changes are saved only in the browser you use, so each viewer gets their own copy. The schedule solver (OR-Tools) and shared data between devices come in the next step.</p>
+  <p class="note" lang="sv">En demo med påhittade personer och barn. Ändringar sparas bara i webbläsaren du använder. Schemaförslagen görs av OR-Tools på den här datorn; inget skickas någon annanstans.</p>
+  <p class="note" lang="en">A demo with made-up staff and children. Changes are saved only in the browser you use. Schedule suggestions are made by OR-Tools on this computer; nothing is sent anywhere else.</p>
 </main>
+<script>
+  // SV/EN for this page; the choice is remembered in this browser when possible.
+  const set = l => { document.documentElement.lang = l; document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.l === l))); try { localStorage.setItem('schema-start-lang', l); } catch (e) {} };
+  document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => set(b.dataset.l)));
+  let saved = null; try { saved = localStorage.getItem('schema-start-lang'); } catch (e) {}
+  set(saved === 'en' ? 'en' : 'sv');
+</script>
+</body>
+</html>

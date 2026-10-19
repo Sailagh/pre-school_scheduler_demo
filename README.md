@@ -37,6 +37,7 @@ Run locally: `python3 start.py` (above). It serves `web/` and the solver togethe
 
 Changes from the prototype:
 - React, ReactDOM and Babel are vendored in `web/vendor/` (same files and SRI hashes as the unpkg URLs) so the demo needs no script CDN.
+- The IBM Plex fonts are in `web/vendor/fonts/` (SIL Open Font License), so the demo needs no internet at all.
 - `Phone.dc.html` is new: the Staff App on its own page, full screen on a phone and in the iPhone bezel on a wide screen, with a person picker and SV/EN.
 
 ## Schedule solver (OR-Tools)

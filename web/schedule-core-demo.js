@@ -105,7 +105,7 @@ export const T = {
   },
   sv: {
     app: 'Förskolans schema', schedule: 'Schema', staff: 'Personal', groups: 'Grupper', hours: 'Timmar', cover: 'Ersättare',
-    week: 'Vecka', block: 'Period', weekOf: 'vecka {n} av {m}', undo: 'Ångra', redo: 'Gör om', copyWeek: 'Kopiera till nästa vecka',
+    week: 'Vecka', block: 'Period', weekOf: 'vecka {n} av {m}', undo: 'Ångra', redo: 'Gör om', copyWeek: 'Kopiera veckan',
     copied: 'Vecka {a} kopierad till vecka {b}', warnings: 'Varningar', noWarnings: 'Inga varningar. Allt följer reglerna.',
     children: 'Barn', need: 'Behövs', have: 'I tjänst', haveNeed: 'Personal i tjänst / behov', coverage: 'Bemanning',
     contact: 'Barntid', break: 'Rast', planning: 'Planering', meeting: 'Möte',

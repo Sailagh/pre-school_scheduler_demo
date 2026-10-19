@@ -27,6 +27,11 @@ WEB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 
 
 class Handler(SimpleHTTPRequestHandler):
+    def guess_type(self, path):
+        # Text files are UTF-8 (Swedish letters); say so, so no browser has to guess.
+        t = super().guess_type(path)
+        return t + "; charset=utf-8" if t.startswith("text/") or t in ("application/javascript", "application/json") else t
+
     def end_headers(self):
         # Always serve the latest files while working on the demo.
         self.send_header("Cache-Control", "no-store")
