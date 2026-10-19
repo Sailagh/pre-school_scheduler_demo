@@ -96,7 +96,62 @@
       <div style="flex:none;padding:10px 18px;font-size:12px;color:#5A6B7A;border-top:1px solid #D3DDEA;margin-top:8px;display:flex;justify-content:space-between;gap:8px"><span>{{ L.thisWeek }}</span><span style="font-family:'IBM Plex Mono',monospace;color:#1F2D3A">{{ totalWeek }}</span></div>
     </div>
     <div style="position:relative;flex:1;min-width:0;background:#fff;padding:0;overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box">
-      <sc-if value="{{ gRunning }}"><div style="position:absolute;inset:0;z-index:9;background:rgba(247,250,251,.35);cursor:progress"></div></sc-if>
+      <sc-if value="{{ gCenter }}">
+        <div style="position:absolute;inset:0;z-index:10;background:rgba(247,250,251,.78);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+          <div style="position:relative;width:640px;max-width:100%;max-height:100%;display:flex">
+            <div style="flex:1;min-width:0;max-height:100%;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.05);display:flex;flex-direction:column;overflow:hidden;opacity:{{ gCardOp }};pointer-events:{{ gCardPe }};transition:opacity .3s">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
+        <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ genTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ genSub }}</div></div>
+        <button onClick="{{ genClose }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
+      </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 24px 24px;display:flex;flex-direction:column;gap:22px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:16px;font-weight:600">{{ gWeeksHead }}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ gWeeks }}" as="k"><button onClick="{{ k.pick }}" style="height:40px;padding:0 16px;border:1px solid {{ k.bd }};border-radius:8px;background:{{ k.bg }};color:{{ k.fg }};font:inherit;font-size:15px;cursor:pointer">{{ k.name }}</button></sc-for></div>
+            <sc-if value="{{ gReplace }}"><div style="font-size:14px;line-height:1.45;color:#6B5214;background:#FFF1CF;border-radius:8px;padding:8px 12px">{{ gReplaceTxt }}</div></sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div><div style="font-size:16px;font-weight:600">{{ gSpecHead }}</div><div style="font-size:14px;color:#5A6B7A;margin-top:2px">{{ gSpecSub }}</div></div>
+            <sc-if value="{{ gNoSpecs }}"><div style="font-size:14px;color:#5A6B7A">{{ gNoSpecsTxt }}</div></sc-if>
+            <sc-for list="{{ gSpecs }}" as="x"><div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #E3EAF0;border-radius:8px;background:#F7FAFB"><span style="color:#D9A23A">★</span><div style="flex:1;font-size:14px;line-height:1.4">{{ x.text }}</div><button onClick="{{ x.remove }}" title="×" style="border:0;background:transparent;font-size:18px;color:#8796A5;cursor:pointer">×</button></div></sc-for>
+            <sc-if value="{{ gAdding }}">
+              <div style="border:1px solid #9FCFDB;background:#EAF6F8;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+                <div><div style="font-size:15px;font-weight:600">{{ dHead }}</div><div style="font-size:13px;line-height:1.45;color:#3C4B5A;margin-top:2px">{{ dHelp }}</div></div>
+                <sc-if value="{{ dHasPerson }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dPersonLbl }}<select onChange="{{ dPickPerson }}" style="height:38px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dPeople }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label>
+                  <div style="display:flex;gap:6px"><sc-for list="{{ dLeaves }}" as="o"><button onClick="{{ o.pick }}" style="height:34px;padding:0 12px;border:1px solid #C9D5E0;border-radius:8px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:14px;cursor:pointer">{{ o.name }}</button></sc-for></div></sc-if>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dWeekLbl }}<select onChange="{{ dPickWeek }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dWeeks }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label>
+                <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dDaysLbl }}<div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ dDays }}" as="o"><button onClick="{{ o.pick }}" style="height:38px;min-width:54px;padding:0 10px;border:1px solid {{ o.bd }};border-radius:8px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:15px;cursor:pointer">{{ o.name }}</button></sc-for><button onClick="{{ dAllDays }}" style="height:38px;padding:0 10px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ dAllTxt }}</button></div></div>
+                <sc-if value="{{ dHasTime }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dTimeLbl }}<select onChange="{{ dPickTime }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dTimes }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label></sc-if>
+                <sc-if value="{{ dHasPct }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dPctLbl }}<select onChange="{{ dPickPct }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dPcts }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label></sc-if>
+                <sc-if value="{{ dHasNote }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dNoteLbl }}<input value="{{ dNote }}" onInput="{{ dOnNote }}" placeholder="{{ dNotePh }}" style="height:38px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A;outline-color:#2B91AD"></label></sc-if>
+                <div style="display:flex;gap:10px"><button onClick="{{ dSave }}" style="height:40px;padding:0 18px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;opacity:{{ dSaveOp }}">{{ dSaveTxt }}</button><button onClick="{{ dCancel }}" style="height:40px;padding:0 14px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:15px;cursor:pointer">{{ dCancelTxt }}</button></div>
+              </div>
+            </sc-if>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><sc-for list="{{ gAddBtns }}" as="a"><button onClick="{{ a.pick }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border:1px dashed #9FCFDB;border-radius:8px;background:#fff;font:inherit;cursor:pointer;color:#1F2D3A"><span style="font-size:14px;font-weight:600;color:#1F7D97">+ {{ a.name }}</span><span style="font-size:12px;color:#5A6B7A">{{ a.sub }}</span></button></sc-for></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div><div style="font-size:16px;font-weight:600">{{ gFollowHead }}</div><div style="font-size:14px;color:#5A6B7A;margin-top:2px">{{ gFollowSub }}</div></div>
+            <sc-for list="{{ gFollow }}" as="f"><div style="border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:baseline;gap:10px"><div style="flex:1;font-size:14px;font-weight:600">{{ f.head }}</div><sc-if value="{{ f.hasLink }}"><button onClick="{{ f.go }}" style="border:0;background:transparent;color:#1F7D97;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:0">{{ f.link }} →</button></sc-if></div>
+              <sc-for list="{{ f.lines }}" as="ln"><div style="font-size:14px;line-height:1.45;color:#3C4B5A">{{ ln.t }}</div></sc-for>
+            </div></sc-for>
+          </div>
+        </div>
+        <div style="flex:none;border-top:1px solid #E3EAF0;padding:14px 24px;display:flex;align-items:center;gap:14px">
+          <button onClick="{{ gRun }}" style="height:46px;padding:0 20px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:16px;font-weight:600;cursor:pointer">{{ gRunTxt }}</button>
+          <div style="font-size:13px;color:#5A6B7A">{{ gRunNote }}</div>
+        </div>
+            </div>
+            <sc-if value="{{ gRunning }}">
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:440px;max-width:calc(100% - 32px);box-sizing:border-box;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(15,30,45,.22),0 0 0 1px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:14px;padding:24px 28px">
+          <div style="font-size:18px;font-weight:600">{{ gProgTxt }}</div>
+          <div style="height:8px;border-radius:4px;background:#EEF3F6;overflow:hidden"><div style="height:100%;width:{{ gProgW }}%;background:#1F7D97;transition:width .4s"></div></div>
+          <div style="font-size:14px;line-height:1.5;color:#5A6B7A">{{ gProgSub }}</div>
+        </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
       <sc-if value="{{ showEmpty }}">
         <div style="position:absolute;inset:0;z-index:8;background:rgba(247,250,251,.78);display:flex;align-items:center;justify-content:center;padding:24px">
           <div style="width:520px;max-width:100%;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.05);padding:24px;display:flex;flex-direction:column;gap:14px">
@@ -314,58 +369,12 @@
       </sc-for>
     </div>
   </sc-if>
-  <sc-if value="{{ genOpen }}">
+  <sc-if value="{{ gDone }}">
     <div style="position:absolute;top:57px;right:0;bottom:0;width:600px;z-index:30;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
       <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
-        <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ genTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ genSub }}</div></div>
+        <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ genTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ gDoneSub }}</div></div>
         <button onClick="{{ genClose }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
       </div>
-      <sc-if value="{{ gForm }}">
-        <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 24px 24px;display:flex;flex-direction:column;gap:22px">
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="font-size:16px;font-weight:600">{{ gWeeksHead }}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ gWeeks }}" as="k"><button onClick="{{ k.pick }}" style="height:40px;padding:0 16px;border:1px solid {{ k.bd }};border-radius:8px;background:{{ k.bg }};color:{{ k.fg }};font:inherit;font-size:15px;cursor:pointer">{{ k.name }}</button></sc-for></div>
-            <sc-if value="{{ gReplace }}"><div style="font-size:14px;line-height:1.45;color:#6B5214;background:#FFF1CF;border-radius:8px;padding:8px 12px">{{ gReplaceTxt }}</div></sc-if>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div><div style="font-size:16px;font-weight:600">{{ gSpecHead }}</div><div style="font-size:14px;color:#5A6B7A;margin-top:2px">{{ gSpecSub }}</div></div>
-            <sc-if value="{{ gNoSpecs }}"><div style="font-size:14px;color:#5A6B7A">{{ gNoSpecsTxt }}</div></sc-if>
-            <sc-for list="{{ gSpecs }}" as="x"><div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #E3EAF0;border-radius:8px;background:#F7FAFB"><span style="color:#D9A23A">★</span><div style="flex:1;font-size:14px;line-height:1.4">{{ x.text }}</div><button onClick="{{ x.remove }}" title="×" style="border:0;background:transparent;font-size:18px;color:#8796A5;cursor:pointer">×</button></div></sc-for>
-            <sc-if value="{{ gAdding }}">
-              <div style="border:1px solid #9FCFDB;background:#EAF6F8;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
-                <div><div style="font-size:15px;font-weight:600">{{ dHead }}</div><div style="font-size:13px;line-height:1.45;color:#3C4B5A;margin-top:2px">{{ dHelp }}</div></div>
-                <sc-if value="{{ dHasPerson }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dPersonLbl }}<select onChange="{{ dPickPerson }}" style="height:38px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dPeople }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label>
-                  <div style="display:flex;gap:6px"><sc-for list="{{ dLeaves }}" as="o"><button onClick="{{ o.pick }}" style="height:34px;padding:0 12px;border:1px solid #C9D5E0;border-radius:8px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:14px;cursor:pointer">{{ o.name }}</button></sc-for></div></sc-if>
-                <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dWeekLbl }}<select onChange="{{ dPickWeek }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dWeeks }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label>
-                <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dDaysLbl }}<div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ dDays }}" as="o"><button onClick="{{ o.pick }}" style="height:38px;min-width:54px;padding:0 10px;border:1px solid {{ o.bd }};border-radius:8px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:15px;cursor:pointer">{{ o.name }}</button></sc-for><button onClick="{{ dAllDays }}" style="height:38px;padding:0 10px;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ dAllTxt }}</button></div></div>
-                <sc-if value="{{ dHasTime }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dTimeLbl }}<select onChange="{{ dPickTime }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dTimes }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label></sc-if>
-                <sc-if value="{{ dHasPct }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dPctLbl }}<select onChange="{{ dPickPct }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dPcts }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label></sc-if>
-                <sc-if value="{{ dHasNote }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dNoteLbl }}<input value="{{ dNote }}" onInput="{{ dOnNote }}" placeholder="{{ dNotePh }}" style="height:38px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A;outline-color:#2B91AD"></label></sc-if>
-                <div style="display:flex;gap:10px"><button onClick="{{ dSave }}" style="height:40px;padding:0 18px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;opacity:{{ dSaveOp }}">{{ dSaveTxt }}</button><button onClick="{{ dCancel }}" style="height:40px;padding:0 14px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:15px;cursor:pointer">{{ dCancelTxt }}</button></div>
-              </div>
-            </sc-if>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><sc-for list="{{ gAddBtns }}" as="a"><button onClick="{{ a.pick }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px;border:1px dashed #9FCFDB;border-radius:8px;background:#fff;font:inherit;cursor:pointer;color:#1F2D3A"><span style="font-size:14px;font-weight:600;color:#1F7D97">+ {{ a.name }}</span><span style="font-size:12px;color:#5A6B7A">{{ a.sub }}</span></button></sc-for></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div><div style="font-size:16px;font-weight:600">{{ gFollowHead }}</div><div style="font-size:14px;color:#5A6B7A;margin-top:2px">{{ gFollowSub }}</div></div>
-            <sc-for list="{{ gFollow }}" as="f"><div style="border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px">
-              <div style="display:flex;align-items:baseline;gap:10px"><div style="flex:1;font-size:14px;font-weight:600">{{ f.head }}</div><sc-if value="{{ f.hasLink }}"><button onClick="{{ f.go }}" style="border:0;background:transparent;color:#1F7D97;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:0">{{ f.link }} →</button></sc-if></div>
-              <sc-for list="{{ f.lines }}" as="ln"><div style="font-size:14px;line-height:1.45;color:#3C4B5A">{{ ln.t }}</div></sc-for>
-            </div></sc-for>
-          </div>
-        </div>
-        <div style="flex:none;border-top:1px solid #E3EAF0;padding:14px 24px;display:flex;align-items:center;gap:14px">
-          <button onClick="{{ gRun }}" style="height:46px;padding:0 20px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:16px;font-weight:600;cursor:pointer">{{ gRunTxt }}</button>
-          <div style="font-size:13px;color:#5A6B7A">{{ gRunNote }}</div>
-        </div>
-      </sc-if>
-      <sc-if value="{{ gRunning }}">
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:24px 40px">
-          <div style="font-size:18px;font-weight:600">{{ gProgTxt }}</div>
-          <div style="height:8px;border-radius:4px;background:#EEF3F6;overflow:hidden"><div style="height:100%;width:{{ gProgW }}%;background:#1F7D97;transition:width .4s"></div></div>
-          <div style="font-size:14px;line-height:1.5;color:#5A6B7A">{{ gProgSub }}</div>
-        </div>
-      </sc-if>
       <sc-if value="{{ gDone }}">
         <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 24px 24px;display:flex;flex-direction:column;gap:16px">
           <div style="font-size:17px;font-weight:600">{{ gDoneHead }}</div>
@@ -683,14 +692,13 @@ class Component extends DCLogic {
         { title: t('Rita själv', 'Draw it myself'), sub: t('Börja med en tom vecka och dra ut passen för hand.', 'Start from an empty week and draw the shifts by hand.'), go: () => this.setState(st => ({ drawn: { ...st.drawn, [w]: true } })), bg: '#fff', fg: '#1F2D3A', sfg: '#5A6B7A', bd: '#C9D5E0' },
         ...(w > mod.W0 && has(w - 1) ? [{ title: t('Kopiera vecka ' + (w - 1), 'Copy week ' + (w - 1)), sub: t('Börja från förra veckans schema.', "Start from last week's schedule."), go: () => ctl.store.set(st => { st.shifts = st.shifts.concat(st.shifts.filter(x => x.week === w - 1).map(x => ({ ...x, id: 'h' + (++st.nid), week: w }))); for (let d = 0; d < 5; d++) st.roles[w + '-' + d] = { ...(st.roles[(w - 1) + '-' + d] || {}) }; }), bg: '#fff', fg: '#1F2D3A', sfg: '#5A6B7A', bd: '#C9D5E0' }] : []),
       ],
-      genOpen: !!G,
     };
     if (!G) return out;
     const n = Math.min(G.n, mod.W1 - w + 1), range = Array.from({ length: n }, (_, i) => w + i), rangeTxt = n === 1 ? t('vecka ' + w, 'week ' + w) : t('vecka ' + w + '–' + (w + n - 1), 'weeks ' + w + '–' + (w + n - 1));
     const close = () => this.setState({ gen: null });
     Object.assign(out, {
       genClose: close, genTitle: t('Skapa schema', 'Make schedule'), genSub: t('Välj veckor, berätta om något är annorlunda än vanligt, och se vad schemat följer.', 'Choose the weeks, tell it what is different from usual, and see what the schedule follows.'),
-      gForm: !G.running && !G.done, gRunning: !!G.running, gDone: !!G.done,
+      gCenter: !G.done, gRunning: !!G.running, gDone: !!G.done, gCardOp: G.running ? .35 : 1, gCardPe: G.running ? 'none' : 'auto',
       gWeeksHead: t('1. Vilka veckor?', '1. Which weeks?'),
       gWeeks: [...new Set([1, 2, 4, 7].map(k => Math.min(k, mod.W1 - w + 1)))].map(k => ({
         name: k === 1 ? t('Bara vecka ' + w, 'Only week ' + w) : t(k + ' veckor', k + ' weeks'), pick: () => setG({ n: k }),
@@ -772,15 +780,21 @@ class Component extends DCLogic {
       if (G.add) return;
       this.setState({ gen: { ...G, running: { i: 0, n, w } } });
       const res = await ctl.generate(range, (i, k, x) => setG({ running: { i, n: k, w: x } }));
-      setG({ running: null, done: res ? { weeks: range.filter(x => !res.missing.includes(x)), saved: res.saved, missing: res.missing } : { weeks: [], failed: true } });
+      setG({ running: null, done: { weeks: res.done, saved: res.saved, missing: res.missing, errors: res.errors, unreachable: res.unreachable, failed: !res.done.length } });
     };
     if (G.running) { const r = G.running; out.gProgTxt = t('Gör vecka ' + r.w + (r.n > 1 ? ' (' + (r.i + 1) + ' av ' + r.n + ')' : '') + '…', 'Making week ' + r.w + (r.n > 1 ? ' (' + (r.i + 1) + ' of ' + r.n + ')' : '') + '…'); out.gProgW = Math.round((r.i + .5) / r.n * 100); out.gProgSub = t('Datorn provar många sätt att lägga passen och väljer det som följer reglerna bäst.', 'The computer tries many ways to place the shifts and picks the one that follows the rules best.'); }
     if (G.done) {
       const R = G.done;
-      out.gFailed = !!R.failed; out.gFailedTxt = t('Det gick inte att skapa ett schema: lösaren är inte igång och det finns inget sparat schema för de här veckorna.', 'No schedule could be made: the solver is not running and there is no saved schedule for these weeks.');
-      out.gMissing = !!(R.missing || []).length; out.gMissingTxt = t('Vecka ' + (R.missing || []).join(', ') + ' kunde inte göras. Försök igen, eller rita de veckorna själv.', ((R.missing || []).length > 1 ? 'Weeks ' : 'Week ') + (R.missing || []).join(', ') + ' could not be made. Try again, or draw those weeks yourself.');
+      // Say what actually went wrong: the solver answered with an error, or it could not be reached.
+      const miss = R.missing || [], wks = miss.join(', '), errTxt = (R.errors || []).length ? ' (' + R.errors[0] + ')' : '';
+      const why = R.unreachable && !(R.errors || []).length
+        ? t('Lösaren svarade inte. Är det svarta fönstret (Start-…) fortfarande öppet? Starta det igen och försök en gång till.', 'The solver did not answer. Is the black window (Start-…) still open? Start it again and try once more.')
+        : t('OR-Tools hann inte bli klar' + errTxt + '. Försök igen – det brukar gå andra gången. Händer det igen, titta vad det svarta fönstret skriver.', 'OR-Tools could not finish' + errTxt + '. Try again – it usually works the second time. If it happens again, look at what the black window says.');
+      out.gFailed = !!R.failed; out.gFailedTxt = t('Inget schema gjordes för vecka ' + wks + '. ', 'No schedule was made for ' + (miss.length > 1 ? 'weeks ' : 'week ') + wks + '. ') + why;
+      out.gMissing = !R.failed && !!miss.length; out.gMissingTxt = t('Vecka ' + wks + ' kunde inte göras. ', (miss.length > 1 ? 'Weeks ' : 'Week ') + wks + ' could not be made. ') + why;
       out.gSaved = !!R.saved; out.gSavedTxt = t('Lösaren var inte igång, så schemat hämtades från ett som gjorts tidigare för demodata. Det du lagt till under 2 är inte med.', 'The solver was not running, so the schedule was loaded from one made earlier for the demo data. What you added under 2 is not included.');
       out.gReport = R.failed ? [] : mod.scheduleReport(s, R.weeks, lang, !!R.saved).map(r => ({ head: t('Vecka ', 'Week ') + r.week, items: r.items.map(i => ({ ...i, icon: i.ok ? '✓' : '!', ibg: i.ok ? '#E2F6D4' : '#FFF1CF', ifg: i.ok ? '#2D6A1F' : '#6B5214', more: (i.more || []).map(t => ({ t })) })) }));
+      out.gDoneSub = t('Här ser du vad som blev bra och vad som inte gick, och varför. Schemat syns till vänster.', 'Here is what worked and what did not, and why. The schedule is on the left.');
       out.gDoneHead = R.failed ? t('Inget schema', 'No schedule') : t('Klart. Så här blev det:', 'Done. This is how it turned out:');
       out.gOkTxt = t('Bra, stäng', 'Good, close'); out.gUndoTxt = t('Ångra schemat', 'Undo the schedule');
       out.gUndo = () => { if (!R.failed) ctl.store.undo(); close(); };

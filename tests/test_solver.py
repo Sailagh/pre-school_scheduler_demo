@@ -15,6 +15,9 @@ sys.path.insert(0, os.path.join(ROOT, "solver"))
 from schedule_solver import solve  # noqa: E402
 
 LIMIT = float(os.environ.get("TEST_TIME_LIMIT", "20"))
+NAMES = {"p1": "Anna", "p2": "Erik", "p3": "Fatima", "p4": "Maja", "p5": "Johan", "p6": "Tove", "p7": "Lena", "p8": "Ahmed",
+         "p9": "Elin", "p10": "Mohammed", "p11": "Ida", "p12": "Peter", "p13": "Nora", "p14": "Hanna", "p15": "Gustav",
+         "p16": "Leila", "p17": "Viktor", "p18": "Sofia"}
 
 
 def node(*args):
@@ -69,6 +72,13 @@ class SolverTest(unittest.TestCase):
             self.assertLessEqual(w43["hours"][pid], 80 * 60 - mins, f"{pid} must work less in week 43")
         self.assertEqual([w["text"] for w in w42["warnings"] + w43["warnings"] if w["code"] == "R2"], [])
         self.assertEqual([w["text"] for w in w43["warnings"]], [])
+        # Anyone over their contract in week 42, part-timers included, gets that much less in week 43,
+        # unless the children need them; then the report must say so.
+        explained = " ".join(" ".join(i.get("more", [])) for i in w43["report"] if "Could not get a shorter week" in i["text"])
+        for pid, mins in w42["hours"].items():
+            extra = mins - w42["contract"][pid]
+            if extra > 15 and w43["hours"][pid] > max(0, w43["contract"][pid] - extra) + 15:
+                self.assertIn(NAMES[pid], explained, f"{pid} worked {extra} min extra and was neither evened out nor explained")
 
 
 if __name__ == "__main__":

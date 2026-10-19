@@ -99,3 +99,19 @@ test('the flexible week: 41 then 39 is fine, 41 then 40 and 43 are warned about,
   add('p5', 42, 4, 1000, 1180);                                  // Johan: 43 h, over 40 + 2
   assert.match(codes(42).join(), /Johan N\. is scheduled 43 h this week\. The limit is 42 h/);
 });
+
+test('extra hours over contract are evened out the next week, also for part-timers', () => {
+  const s = solvedState(), erik = m.person('p2');                       // Erik: 30 h contract
+  const fri = s.shifts.filter(x => x.staff === 'p2' && x.week === 42).sort((a, b) => b.day - a.day || b.end - a.end)[0];
+  fri.end += 120;                                                     // 2 h extra in week 42
+  const t = m.weekTarget(s, erik, 43);
+  assert.equal(t.owe, 120);
+  assert.equal(t.target, m.effC(erik, 43) - 120, 'week 43 aims for 28 h');
+  assert.equal(m.solverProblem(s, [43]).weeks[0].staff.find(x => x.id === 'p2').target, t.target);
+  const r42 = m.scheduleReport(s, [42], 'en')[0].items.map(i => i.text + ' ' + (i.more || []).join(' ')).join('\n');
+  assert.match(r42, /The next week is made that much shorter: Erik 32 h of 30 h/);
+  s.shifts.filter(x => x.staff === 'p2' && x.week === 43).sort((a, b) => b.day - a.day || b.end - a.end)[0].end -= 120;
+  const r43 = m.scheduleReport(s, [43], 'sv')[0].items.map(i => i.text + ' ' + (i.more || []).join(' ')).join('\n');
+  assert.match(r43, /Kortare vecka för att jämna ut extra timmar veckan innan: Erik 28 h – 2 h extra vecka 42/);
+  assert.doesNotMatch(r43, /färre timmar än sitt avtal[^\n]*Erik/);
+});

@@ -14,6 +14,7 @@ web demo can also be served from elsewhere.
 import json
 import os
 import sys
+import traceback
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -73,6 +74,9 @@ class Handler(SimpleHTTPRequestHandler):
             self._send(400, {"error": f"bad problem: {e}"})
         except RuntimeError as e:
             self._send(422, {"error": str(e)})
+        except Exception as e:  # anything unexpected: tell the page, and show the details in the window
+            traceback.print_exc()
+            self._send(500, {"error": f"{type(e).__name__}: {e}"})
 
 
 def serve(port=8000, lan=False):

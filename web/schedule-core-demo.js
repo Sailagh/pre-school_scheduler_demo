@@ -280,16 +280,10 @@ export function solverProblem(s, weeks) {
       return {
       week: w, rules: R,
       staff: STAFF.map(p => {
-        // The flexible week: going over the limit last week means this week must be that much shorter,
-        // and an already scheduled next week limits how far over this week may go.
-        const prev = weekMins(s, p.id, w - 1), next = weekMins(s, p.id, w + 1), owe = Math.max(0, prev - lim);
-        let cap = lim + R.weekFlex * SOLVER_SLOT;
-        if (owe) cap = Math.min(cap, lim - owe);
-        if (next) cap = Math.min(cap, lim + Math.max(0, lim - next));
+        const { target, cap, owe } = weekTarget(s, p, w);
         return {
         id: p.id, group: p.group, open: !!p.open, close: !!p.close, sn: !!p.sn,
-        target: Math.max(0, Math.min(effC(p, w) - owe, cap)), planning: nonChildTarget(s, p, w),
-        maxSlots: Math.max(0, Math.floor(cap / SOLVER_SLOT)), owe,
+        target, planning: nonChildTarget(s, p, w), maxSlots: Math.floor(cap / SOLVER_SLOT), owe,
         days: [0, 1, 2, 3, 4].map(d => !(p.end && w > p.end) && !(p.off || []).includes(d) && !isAbsent(s, p.id, w, d)),
         earliest: p.earliest, latest: p.latest,
       }; }),
@@ -306,6 +300,19 @@ export function solverProblem(s, weeks) {
       }),
     }; }),
   };
+}
+// What a person should work in week `w`, in minutes, evening out the week before:
+//   owe    – minutes worked over contract last week; this week's target is that much lower
+//   cap    – the most this week may have: the weekly limit plus the flexible part, less what last week
+//            went over the limit, and no more than an already scheduled next week leaves room for
+export function weekTarget(s, p, w) {
+  const R = solverRules(s, w), lim = R.weekMax * SOLVER_SLOT, prev = weekMins(s, p.id, w - 1), next = weekMins(s, p.id, w + 1);
+  const owe = prev ? Math.max(0, prev - effC(p, w - 1)) : 0;
+  let cap = lim + R.weekFlex * SOLVER_SLOT;
+  if (prev > lim) cap = Math.min(cap, 2 * lim - prev);
+  if (next) cap = Math.min(cap, lim + Math.max(0, lim - next));
+  cap = Math.max(0, cap);
+  return { target: Math.max(0, Math.min(effC(p, w) - owe, cap)), cap, owe };
 }
 // The rules from Settings that are on in week `w`, in solver units (slots of SOLVER_SLOT minutes).
 function solverRules(s, w) {
@@ -341,19 +348,25 @@ export function scheduleReport(s, weeks, lang, saved = false) {
     items.push(staffing.length ? { ok: false, text: sv ? 'Ibland är det för få vuxna. Överväg en vikarie eller ändra passen för hand:' : 'Some times have too few adults. Consider a substitute or adjust the shifts by hand:', more: staffing.map(x => x.text) }
       : { ok: true, text: sv ? 'Tillräckligt många vuxna med barnen hela dagarna.' : 'Enough adults with the children all day, every day.' });
     if (other.length) items.push({ ok: false, text: sv ? 'Saker att kontrollera:' : 'Things to check:', more: other.map(x => x.text) });
-    const more = [], less = [], lessPlan = [], flexed = [], wr = (s.rules || []).find(r => r.type === 'week'), wv = wr && ruleVer(wr, w), lim = wv && wv.on ? wv.p.h * 60 : Infinity;
+    const more = [], less = [], lessPlan = [], flexed = [], evened = [], notEven = [], wr = (s.rules || []).find(r => r.type === 'week'), wv = wr && ruleVer(wr, w), lim = wv && wv.on ? wv.p.h * 60 : Infinity;
     for (const p of STAFF) {
       const q = personWeek(s, p.id, w);
       if (!q.C) continue;
       // Over the limit plus the flexible part is a broken rule, listed under Things to check.
       if (q.worked > lim) { if (q.worked <= lim + (wv.p.flex || 0) * 60) flexed.push(p.name.split(' ')[0] + ' ' + h(q.worked) + ' – ' + (sv ? 'vecka ' + (w + 1) + ' högst ' : 'week ' + (w + 1) + ' at most ') + h(Math.max(0, 2 * lim - q.worked))); continue; }
-      const line = p.name.split(' ')[0] + ' ' + h(q.worked) + (sv ? ' av ' : ' of ') + h(q.C);
-      if (q.worked > q.C + 15) more.push(line); else if (q.worked < q.C - 15) less.push(line);
+      // The target is the contract less what the week before went over it (see weekTarget).
+      const { target, owe } = weekTarget(s, p, w), first = p.name.split(' ')[0];
+      const extra = ' – ' + (sv ? h(owe) + ' extra vecka ' + (w - 1) : h(owe) + ' extra in week ' + (w - 1));
+      if (owe > 15) { if (q.worked <= target + 15) evened.push(first + ' ' + h(q.worked) + extra); else { notEven.push(first + ' ' + h(q.worked) + (sv ? ' av ' : ' of ') + h(target) + extra); continue; } }
+      const line = first + ' ' + h(q.worked) + (sv ? ' av ' : ' of ') + h(target);
+      if (q.worked > target + 15) more.push(line); else if (q.worked < target - 15) less.push(line);
       if (q.non < q.N - 15) lessPlan.push(p.name.split(' ')[0] + ' ' + h(q.non) + (sv ? ' av ' : ' of ') + h(q.N));
     }
     if (!more.length && !less.length) items.push({ ok: true, text: sv ? 'Alla får sina avtalade timmar.' : 'Everyone gets their contract hours.' });
+    if (notEven.length) items.push({ ok: false, text: sv ? 'Kunde inte få en kortare vecka efter extra timmar veckan innan, eftersom barnen behövde de vuxna. Jämna ut för hand eller ta in en vikarie:' : 'Could not get a shorter week after extra hours the week before, because the children needed the adults. Even it out by hand or bring in a substitute:', more: notEven });
+    if (evened.length) items.push({ ok: true, text: sv ? 'Kortare vecka för att jämna ut extra timmar veckan innan:' : 'A shorter week to even out extra hours the week before:', more: evened });
     if (flexed.length) items.push({ ok: false, text: sv ? 'Arbetar lite över ' + h(lim) + ' den här veckan för att barnen ska ha tillräckligt med vuxna. Det jämnas ut nästa vecka:' : 'Work a little over ' + h(lim) + ' this week so the children have enough adults. It evens out next week:', more: flexed });
-    if (more.length) items.push({ ok: false, text: sv ? 'Arbetar mer än sina avtalade timmar, eftersom barnen annars hade haft för få vuxna:' : 'Work more than their contract hours, because otherwise the children would have too few adults:', more });
+    if (more.length) items.push({ ok: false, text: sv ? 'Arbetar mer än sina avtalade timmar, eftersom barnen annars hade haft för få vuxna. Nästa vecka görs lika mycket kortare:' : 'Work more than their contract hours, because otherwise the children would have too few adults. The next week is made that much shorter:', more });
     if (less.length) items.push({ ok: false, text: sv ? 'Får färre timmar än sitt avtal den här veckan. Du kan lägga till tid för hand:' : 'Get fewer hours than their contract this week. You can add time by hand:', more: less });
     if (lessPlan.length) items.push({ ok: false, text: sv ? 'Mindre planeringstid än vanligt, eftersom barnen behövde de vuxna:' : 'Less planning time than usual, because the children needed the adults:', more: lessPlan });
     for (const x of (s.special || []).filter(x => x.week === w)) {
@@ -858,9 +871,9 @@ export function controller(comp) {
   // Makes the schedule for `weeks` with the solver, one week at a time and in order, so each week sees the
   // hours of the week before (the flexible week). If the solver can't be reached at all, the weeks come from
   // the saved schedule instead. Everything is one change (one Undo).
-  // Returns { saved, missing: weeks that could not be made } or null if nothing was made.
+  // Returns { saved, missing: weeks that could not be made, errors: what the solver said, unreachable }.
   const generate = async (weeks, onProgress) => {
-    const done = [], missing = []; let saved = false;
+    const done = [], missing = [], errors = []; let saved = false, unreachable = false;
     store.begin();
     for (let i = 0; i < weeks.length; i++) {
       onProgress && onProgress(i, weeks.length, weeks[i]);
@@ -868,9 +881,11 @@ export function controller(comp) {
       try {
         const r = await fetch(SOLVER_URL + '/solve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(solverProblem(store.get(), [weeks[i]])) });
         // A server without a solver (e.g. a plain web host) answers 404/405/501: same as no solver.
-        reached = ![404, 405, 501].includes(r.status); if (r.ok) sol = await r.json();
+        reached = ![404, 405, 501].includes(r.status);
+        if (r.ok) sol = await r.json(); else if (reached) errors.push((await r.json().catch(() => ({}))).error || 'HTTP ' + r.status);
       } catch (e) {}
-      if (!reached && !done.length) { saved = true; break; }
+      if (!reached && !done.length && !errors.length) { saved = unreachable = true; break; }
+      if (!reached) unreachable = true;
       if (!sol) { missing.push(weeks[i]); continue; }
       store.live(st => applySolution(st, sol)); done.push(weeks[i]);
     }
@@ -879,9 +894,9 @@ export function controller(comp) {
       store.live(st => applySolution(st, { weeks: have })); done.push(...have.map(x => x.week));
       missing.push(...weeks.filter(w => !done.includes(w)));
     } catch (e) {}
-    if (!done.length) { store.cancel(); return null; }
+    if (!done.length) { store.cancel(); return { done, missing: weeks, errors, unreachable, saved: false }; }
     up({ sel: null }); store.commit();
-    return { saved, missing };
+    return { done, saved, missing, errors, unreachable };
   };
   return { store, ui, view, up, touch, resetDemo, generate };
 }

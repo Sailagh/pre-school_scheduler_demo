@@ -37,8 +37,9 @@ W_HOURS, W_PLAN, W_GROUP, W_OVER, W_LONE, W_FINISH = 60, 20, 30, 4, 40, 25
 W_TIRED = 30  # per slot over the weekly limit, and again per slot more than an hour over it
 
 
-def _build(problem, wk, days, targets):
-    """Model for `days` of a week; `targets[pid]` is (work slots, planning slots) over those days."""
+def _build(problem, wk, days, targets, caps=None):
+    """Model for `days` of a week; `targets[pid]` is (work slots, planning slots) over those days, and
+    `caps[pid]` the most slots over those days (default: the person's weekly cap)."""
     n, slot, day_start = problem["slots"], problem["slot"], problem["dayStart"]
     R = {**DEFAULT_RULES, **wk.get("rules", {})}
     blen, max_run = R["breakLen"], R["maxRun"]
@@ -126,7 +127,7 @@ def _build(problem, wk, days, targets):
         total = sum(sum(work[pid, d]) for d in mine)
         planned = sum(sum(plan[pid, d]) for d in mine)
         # The flexible week: `maxSlots` already allows the extra hours, but going over tires people.
-        m.add(total <= p.get("maxSlots", R["weekMax"]))
+        m.add(total <= (caps[pid] if caps else p.get("maxSlots", R["weekMax"])))
         if len(mine) > 1:
             for extra in (0, 4):
                 tired = m.new_int_var(0, 5 * n, "")
@@ -215,12 +216,15 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
         caps = [min(MAX_SHIFT, wk["days"][d].get("closeSlot", n - 1) + 1) for d in on]
         hours = _split(p["target"] / slot, caps, 1)
         planning = _split(p["planning"] / slot, [max(0, h - MIN_SHIFT) for h in hours], 2)
-        share[p["id"]] = {d: (hours[i], planning[i]) for i, d in enumerate(on)}
+        # Each day also gets its share of the weekly cap, so the days together never break it and
+        # the whole-week stage can start from them.
+        cap_share = _split(p.get("maxSlots", 999), caps, 1)
+        share[p["id"]] = {d: (hours[i], planning[i], cap_share[i]) for i, d in enumerate(on)}
     # A day usually reaches its best answer in 2-3 s and then stops; the week gets the time that is left.
     started, hint = time.monotonic(), {}
     for d in range(5):
-        targets = {pid: s.get(d, (0, 0)) for pid, s in share.items()}
-        m, *vars_ = _build(problem, wk, [d], targets)
+        day = {pid: s.get(d, (0, 0, 0)) for pid, s in share.items()}
+        m, *vars_ = _build(problem, wk, [d], {pid: x[:2] for pid, x in day.items()}, {pid: x[2] for pid, x in day.items()})
         solver, status = _solve(m, time_limit * 0.2, workers)
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
             hint.update({k: solver.value(v) for k, v in _all_vars(vars_).items()})
@@ -228,7 +232,11 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
     m, contact, brk, plan, work, opener, closer = _build(problem, wk, range(5), targets)
     full = _all_vars((contact, brk, plan, work, opener, closer))
     left = max(time_limit * 0.3, time_limit - (time.monotonic() - started))
-    solver, status = _solve(m, left, workers, [(v, hint[k]) for k, v in full.items() if k in hint])
+    hints = [(v, hint[k]) for k, v in full.items() if k in hint]
+    solver, status = _solve(m, left, workers, hints)
+    if status == cp_model.UNKNOWN:
+        # A slow computer may not find any schedule in the time; keep going rather than give up.
+        solver, status = _solve(m, 60, workers, hints)
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         raise RuntimeError(f"No schedule found for week {wk['week']} ({solver.status_name(status)})")
 
@@ -278,7 +286,8 @@ def _all_vars(groups):
 
 def solve(problem, time_limit=20.0, parallel=4):
     """Solves every week in the problem; weeks are independent, so they run side by side."""
-    workers = max(1, (os.cpu_count() or 4) // max(1, min(parallel, len(problem["weeks"]))))
+    # CP-SAT searches in several ways at once; fewer than 4 makes it much slower to find a schedule.
+    workers = max(4, (os.cpu_count() or 4) // max(1, min(parallel, len(problem["weeks"]))))
     with ThreadPoolExecutor(max_workers=parallel) as pool:
         weeks = list(pool.map(lambda wk: solve_week(problem, wk, time_limit, workers), problem["weeks"]))
     return {"weeks": weeks}
