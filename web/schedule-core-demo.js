@@ -50,7 +50,10 @@ const allP = () => [...STAFF, ...SUBS];
 export const person = id => STAFF.find(p => p.id === id) || SUBS.find(p => p.id === id);
 export const contractPct = (p, w) => { let v = p.pct || 0, f = -1; for (const x of p.changes || []) if (x.from <= w && x.from > f) { f = x.from; v = x.pct; } return v; };
 export const contractH = (p, w) => p.sub ? 0 : Math.round(40 * contractPct(p, w)) / 100;
-export const effC = (p, w) => { if (p.sub || (p.end && w > p.end)) return 0; const n = 5 - (p.off || []).length, full = contractH(p, w) * 60; let away = 0; for (let d = 0; d < 5; d++) if (!(p.off || []).includes(d) && (p.leave || []).some(l => l.w1 * 10 + l.d1 <= w * 10 + d && w * 10 + d <= l.w2 * 10 + l.d2)) away++; return Math.round(full * (n - away) / n); };
+export const effC = (p, w, closed = []) => { if (p.sub || (p.end && w > p.end)) return 0; const n = 5 - (p.off || []).length, full = contractH(p, w) * 60; let away = 0; for (let d = 0; d < 5; d++) if (!(p.off || []).includes(d) && (closed.includes(d) || (p.leave || []).some(l => l.w1 * 10 + l.d1 <= w * 10 + d && w * 10 + d <= l.w2 * 10 + l.d2))) away++; return Math.round(full * (n - away) / n); };
+// Contract minutes in week `w` of state `s`: days the preschool is closed (e.g. a public holiday) count like leave.
+export const closedDays = (s, w) => [0, 1, 2, 3, 4].filter(d => (s.special || []).some(x => x.kind === 'closed' && x.week === w && x.days.includes(d)));
+const effCs = (s, p, w) => effC(p, w, closedDays(s, w));
 export const RULE_TEXT = {
   en: { rest: 'At least {h} hours of rest between working days', week: 'No more than {h} hours in a week, or up to {flex} hours more if the next week is that much shorter', avg: 'On average no more than {h} hours a week over 4 weeks', cont: 'No more than {h} hours of work without a break', breakLen: 'A break is {a}–{b} minutes', count: 'Contract hours count time with children, breaks, planning and meetings', openClose: 'Someone opens and someone closes every day', avail: 'Nobody works when they are not available', absent: 'Nobody works while absent', sn: 'A trained adult is with children who have special needs', breaks: 'At least {n} breaks of {a} minutes on days longer than {over} hours', dayMax: 'No more than {h} hours of work in a day', minStaff: 'At least {n} adults at the preschool while children are there', ratio: 'Enough adults for the number of children' },
   sv: { rest: 'Minst {h} timmars vila mellan arbetsdagar', week: 'Högst {h} timmar per vecka, eller upp till {flex} timmar till om nästa vecka är lika mycket kortare', avg: 'I snitt högst {h} timmar per vecka över 4 veckor', cont: 'Högst {h} timmars arbete utan rast', breakLen: 'En rast är {a}–{b} minuter', count: 'Avtalade timmar räknar barntid, rast, planering och möten', openClose: 'Någon öppnar och någon stänger varje dag', avail: 'Ingen arbetar när de inte är tillgängliga', absent: 'Ingen arbetar när de är frånvarande', sn: 'En utbildad vuxen finns hos barn med särskilda behov', breaks: 'Minst {n} raster på {a} minuter dagar längre än {over} timmar', dayMax: 'Högst {h} timmars arbete per dag', minStaff: 'Minst {n} vuxna på förskolan när barn är där', ratio: 'Tillräckligt med vuxna för antalet barn' },
@@ -95,7 +98,7 @@ export const T = {
     w_openNA: '{name} is set to open on {day} but is not allowed to open.',
     w_closeNA: '{name} is set to close on {day} but is not allowed to close.',
     w_cover: '{name} is {why} on {day}. {from}–{to} needs cover.',
-    w_overlap: '{name} has two shifts at the same time on {day}.', breakLen: 'Break length',
+    w_overlap: '{name} has two shifts at the same time on {day}.', w_closed: 'The preschool is closed on {day}, but {name} has a shift.', breakLen: 'Break length',
     w_under: 'Too few staff on {day} {from}–{to}: {have} working, {need} needed.',
     r_busy: 'Already working then', r_unav: 'Not available on {day}', r_40: 'Would go over 40 hours this week',
     r_contract: 'Only {h} left in contract', r_absent: 'Also absent', c_staff: 'Staff · {h} left in contract', c_sub: 'Substitute · {phone}',
@@ -131,7 +134,7 @@ export const T = {
     w_openNA: '{name} ska öppna på {day} men får inte öppna.',
     w_closeNA: '{name} ska stänga på {day} men får inte stänga.',
     w_cover: '{name} är {why} på {day}. {from}–{to} behöver ersättare.',
-    w_overlap: '{name} har två pass samtidigt på {day}.', breakLen: 'Rastens längd',
+    w_overlap: '{name} har två pass samtidigt på {day}.', w_closed: 'Förskolan är stängd på {day}, men {name} har ett pass.', breakLen: 'Rastens längd',
     w_under: 'För lite personal på {day} {from}–{to}: {have} i tjänst, {need} behövs.',
     r_busy: 'Arbetar redan då', r_unav: 'Inte tillgänglig på {day}', r_40: 'Skulle gå över 40 timmar denna vecka',
     r_contract: 'Bara {h} kvar i avtalet', r_absent: 'Också frånvarande', c_staff: 'Personal · {h} kvar i avtalet', c_sub: 'Vikarie · {phone}',
@@ -227,7 +230,7 @@ export function decideRequest(st, id, ok) {
 export const MERGE0 = { on: true, am: 450, pm: 960, ratio: 8, room: 'g3' };
 // Children, adults needed and merge state at minute `mid` of `day`. Shared by the planner's staffing row and the solver.
 function needAt(s, day, mid) {
-  const sp = specialsOn(s, s.week, day), fewer = sp.find(x => x.kind === 'fewer'), shut = sp.find(x => x.kind === 'closeEarly');
+  const sp = specialsOn(s, s.week, day), fewer = sp.find(x => x.kind === 'fewer'), shut = sp.find(x => x.kind === 'closeEarly') || (sp.some(x => x.kind === 'closed') && { time: 0 });
   const f = (day === 4 ? .7 : 1) * (fewer ? fewer.pct / 100 : 1), M = s.merge || MERGE0, merged = !!M.on && (mid < M.am || mid >= M.pm);
   const groups = GROUPS.map(g => {
     const c = (mid < g.open || mid > g.close || (shut && mid > shut.time)) ? 0 : Math.round(g.max * curve(mid) * f);
@@ -255,14 +258,19 @@ function slotsFor(s, day, uncovSet) {
 //   finishBy   – staff hope to finish by `time` (a wish; the solver tries, the report says who could not)
 //   closeEarly – the preschool closes at `time`, so no children after it
 //   fewer      – only about `pct` % of the children come (e.g. autumn break)
-export const SPECIAL_KINDS = ['finishBy', 'closeEarly', 'fewer'];
+//   closed     – the preschool is closed all day (e.g. a public holiday): no children, nobody works,
+//                and contract hours for the week shrink as for a day of leave
+export const SPECIAL_KINDS = ['finishBy', 'closeEarly', 'fewer', 'closed'];
 export const specialsOn = (s, w, d) => (s.special || []).filter(x => x.week === w && x.days.includes(d));
 export function specialLabel(x, lang) {
   const sv = lang === 'sv', note = x.note ? x.note + ': ' : '';
   if (x.kind === 'finishBy') return note + (sv ? 'personalen vill sluta senast ' : 'staff hope to finish by ') + fmt(x.time);
   if (x.kind === 'closeEarly') return note + (sv ? 'förskolan stänger ' : 'the preschool closes at ') + fmt(x.time);
+  if (x.kind === 'closed') return note + (sv ? 'förskolan är stängd hela dagen' : 'the preschool is closed all day');
   return note + (sv ? 'ungefär ' + x.pct + ' % av barnen kommer' : 'about ' + x.pct + '% of the children come');
 }
+// Swedish public holidays (and Christmas Eve, when preschools close) that fall on weekdays in the demo period.
+export const HOLIDAYS = [{ week: 52, day: 3, sv: 'Julafton', en: 'Christmas Eve' }, { week: 52, day: 4, sv: 'Juldagen', en: 'Christmas Day' }];
 export const daysLabel = (days, lang) => days.length === 5 ? (lang === 'sv' ? 'hela veckan' : 'all week') : days.map(d => dayName(d, lang)).join(', ');
 
 // ---------- OR-Tools solver ----------
@@ -271,31 +279,38 @@ const SOLVER_SLOT = 15;
 // Where the solver runs: the server the page came from (solver/server.py serves both), or ?solver=https://… in the page URL.
 const SOLVER_URL = ((typeof location !== 'undefined' && (new URLSearchParams(location.search).get('solver') || (/^https?:$/.test(location.protocol) && location.origin))) || 'http://localhost:8000').replace(/\/$/, '');
 export const checkWeek = (s, w, lang = 'en') => derive({ ...s, week: w }, T[lang] || T.en, lang).warns;
-export function solverProblem(s, weeks) {
+// With `keep`, people who already have shifts in a week keep them (the principal scheduled them by hand):
+// they are left out of the problem, what they cover is taken off what is needed, and opener/closer
+// already set stay. Everyone else is scheduled around them.
+export function solverProblem(s, weeks, { keep = false } = {}) {
   const n = (DE - DS) / SOLVER_SLOT, mids = Array.from({ length: n }, (_, i) => DS + i * SOLVER_SLOT + SOLVER_SLOT / 2);
   return {
     dayStart: DS, slot: SOLVER_SLOT, slots: n, groups: GROUPS.map(g => g.id),
     weeks: weeks.map(w => {
-      const R = solverRules(s, w), lim = R.weekMax * SOLVER_SLOT;
+      const R = solverRules(s, w), closed = closedDays(s, w);
+      const kept = keep ? STAFF.filter(p => s.shifts.some(x => x.week === w && x.staff === p.id)).map(p => p.id) : [];
+      const keptShifts = s.shifts.filter(x => x.week === w && kept.includes(x.staff) && x.type === 'contact' && !isAbsent(s, x.staff, w, x.day));
+      const covered = (d, m, test = () => true) => new Set(keptShifts.filter(x => x.day === d && x.start <= m && x.end > m && test(x)).map(x => x.staff)).size;
       return {
-      week: w, rules: R,
-      staff: STAFF.map(p => {
+      week: w, rules: R, kept,
+      staff: STAFF.filter(p => !kept.includes(p.id)).map(p => {
         const { target, cap, owe } = weekTarget(s, p, w);
         return {
         id: p.id, group: p.group, open: !!p.open, close: !!p.close, sn: !!p.sn,
         target, planning: nonChildTarget(s, p, w), maxSlots: Math.floor(cap / SOLVER_SLOT), owe,
-        days: [0, 1, 2, 3, 4].map(d => !(p.end && w > p.end) && !(p.off || []).includes(d) && !isAbsent(s, p.id, w, d)),
+        days: [0, 1, 2, 3, 4].map(d => !closed.includes(d) && !(p.end && w > p.end) && !(p.off || []).includes(d) && !isAbsent(s, p.id, w, d)),
         earliest: p.earliest, latest: p.latest,
       }; }),
       days: [0, 1, 2, 3, 4].map(d => {
         const sw = { ...s, week: w }, at = mids.map(m => needAt(sw, d, m)), sp = specialsOn(s, w, d);
-        const shut = sp.find(x => x.kind === 'closeEarly'), fin = sp.find(x => x.kind === 'finishBy');
+        const shut = sp.find(x => x.kind === 'closeEarly'), fin = sp.find(x => x.kind === 'finishBy'), role = (keep && s.roles[w + '-' + d]) || {};
         return {
+          closed: closed.includes(d), hasOpen: !!role.open, hasClose: !!role.close,
           closeSlot: shut ? Math.max(0, Math.ceil((shut.time - DS) / SOLVER_SLOT) - 1) : n - 1,
           finishBy: fin ? Math.max(0, Math.round((fin.time - DS) / SOLVER_SLOT)) : null,
-          need: at.map(x => x.need ? Math.max(x.need, R.minStaff) : 0), merged: at.map(x => x.merged),
-          groupNeed: Object.fromEntries(GROUPS.map((g, i) => [g.id, at.map(x => x.merged ? 0 : x.groups[i].need)])),
-          sn: R.sn ? (s.snKids || []).filter(k => k.days.includes(d)).map(k => ({ group: k.unit, slots: mids.map((m, i) => m > k.from && m < k.to ? i : -1).filter(i => i >= 0) })) : [],
+          need: at.map((x, i) => Math.max(0, (x.need ? Math.max(x.need, R.minStaff) : 0) - covered(d, mids[i]))), merged: at.map(x => x.merged),
+          groupNeed: Object.fromEntries(GROUPS.map((g, gi) => [g.id, at.map((x, i) => x.merged ? 0 : Math.max(0, x.groups[gi].need - covered(d, mids[i], z => z.group === g.id)))])),
+          sn: R.sn ? (s.snKids || []).filter(k => k.days.includes(d)).map(k => ({ group: k.unit, slots: mids.map((m, i) => m > k.from && m < k.to && !covered(d, m, z => z.group === k.unit && (person(z.staff) || {}).sn) ? i : -1).filter(i => i >= 0) })) : [],
         };
       }),
     }; }),
@@ -307,12 +322,12 @@ export function solverProblem(s, weeks) {
 //            went over the limit, and no more than an already scheduled next week leaves room for
 export function weekTarget(s, p, w) {
   const R = solverRules(s, w), lim = R.weekMax * SOLVER_SLOT, prev = weekMins(s, p.id, w - 1), next = weekMins(s, p.id, w + 1);
-  const owe = prev ? Math.max(0, prev - effC(p, w - 1)) : 0;
+  const owe = prev ? Math.max(0, prev - effCs(s, p, w - 1)) : 0;
   let cap = lim + R.weekFlex * SOLVER_SLOT;
   if (prev > lim) cap = Math.min(cap, 2 * lim - prev);
   if (next) cap = Math.min(cap, lim + Math.max(0, lim - next));
   cap = Math.max(0, cap);
-  return { target: Math.max(0, Math.min(effC(p, w) - owe, cap)), cap, owe };
+  return { target: Math.max(0, Math.min(effCs(s, p, w) - owe, cap)), cap, owe };
 }
 // The rules from Settings that are on in week `w`, in solver units (slots of SOLVER_SLOT minutes).
 function solverRules(s, w) {
@@ -329,11 +344,16 @@ function solverRules(s, w) {
     sn: !!one('sn'), openClose: !!one('openClose'),
   };
 }
-// Replaces the shifts and roles of the solved weeks with the solver's result.
+// Puts the solver's result into the solved weeks. People in `kept` (see solverProblem) keep their shifts,
+// and opener/closer already set stay; everything else in those weeks is replaced.
 export function applySolution(st, sol) {
   for (const wk of sol.weeks) {
-    st.shifts = st.shifts.filter(x => x.week !== wk.week).concat(wk.shifts.map(x => ({ ...x, id: 'h' + (++st.nid), week: wk.week })));
-    for (let d = 0; d < 5; d++) st.roles[wk.week + '-' + d] = { ...(wk.roles[d] || {}) };
+    const kept = wk.kept || [];
+    st.shifts = st.shifts.filter(x => x.week !== wk.week || kept.includes(x.staff)).concat(wk.shifts.map(x => ({ ...x, id: 'h' + (++st.nid), week: wk.week })));
+    for (let d = 0; d < 5; d++) {
+      const had = kept.length ? st.roles[wk.week + '-' + d] || {} : {}, got = wk.roles[d] || {};
+      st.roles[wk.week + '-' + d] = { open: had.open || got.open || null, close: had.close || got.close || null };
+    }
   }
 }
 export const seedState = () => seed();
@@ -466,7 +486,7 @@ export function removeFree(st, pid, w, d) {
 export function nonChildTarget(s, p, w) {
   const full = contractH(p, w) * 60; if (!full) return 0;
   const h = p.nonChild != null ? p.nonChild : Math.round(((s.prefs || {}).nonChild ?? 5) * contractPct(p, w) / 100 * 2) / 2;
-  return Math.round(h * 60 * effC(p, w) / full);
+  return Math.round(h * 60 * effCs(s, p, w) / full);
 }
 export function personWeek(s, pid, w) {
   const p = person(pid) || {}, r = { contact: 0, break: 0, planning: 0, meeting: 0, sick: 0, sickDays: 0, vac: 0, leave: 0, days: [] };
@@ -485,7 +505,7 @@ export function personWeek(s, pid, w) {
     r.days.push(day);
   }
   r.child = r.contact + r.break; r.non = r.planning + r.meeting; r.worked = r.child + r.non;
-  r.C = p.sub ? 0 : effC(p, w); r.N = p.sub ? 0 : nonChildTarget(s, p, w); r.A = r.C - r.N;
+  r.C = p.sub ? 0 : effCs(s, p, w); r.N = p.sub ? 0 : nonChildTarget(s, p, w); r.A = r.C - r.N;
   return r;
 }
 export function coverCands(s, r, lang) {
@@ -580,7 +600,9 @@ function derive(s, L, lang) {
     if (R.avg && minsB[p.id] / BLOCK_WEEKS > R.avg.h * 60) W(R.avg.id, 'w_avg', { name, h: hrs(minsB[p.id] / BLOCK_WEEKS, lang), lim: hrs(R.avg.h * 60, lang) }, null, null, 'rule', p.id);
   }
   const slotsByDay = [0, 1, 2, 3, 4].map(d => slotsFor(s, d, uncov));
-  if (R.oc) for (let d = 0; d < 5; d++) { const r = s.roles[s.week + '-' + d] || {}, day = L.dayW[d]; if (!r.open) W(R.oc.id, 'w_noOpen', { day }, d, null, 'role'); if (!r.close) W(R.oc.id, 'w_noClose', { day }, d, null, 'role'); }
+  const closed = closedDays(s, s.week);
+  for (const x of wk.filter(x => closed.includes(x.day))) W(null, 'w_closed', { name: nmOf(person(x.staff) || { name: '?' }), day: L.dayW[x.day] }, x.day, x.id);
+  if (R.oc) for (let d = 0; d < 5; d++) { if (closed.includes(d)) continue; const r = s.roles[s.week + '-' + d] || {}, day = L.dayW[d]; if (!r.open) W(R.oc.id, 'w_noOpen', { day }, d, null, 'role'); if (!r.close) W(R.oc.id, 'w_noClose', { day }, d, null, 'role'); }
   const units = [];
   for (const z of abs) {
     const ids = wk.filter(x => x.staff === z.staff && x.day === z.day && uncov.has(x.id)); if (!ids.length) continue;
@@ -593,11 +615,13 @@ function derive(s, L, lang) {
     const day = L.dayW[d], fr = i => fmt(sl[i].t), to = j => fmt(sl[j].t + s.slot);
     runs(sl, x => x.status === 'under', (i, j) => W('ratio', 'w_under', { day, from: fr(i), to: to(j), have: Math.min(...sl.slice(i, j + 1).map(x => x.have)), need: Math.max(...sl.slice(i, j + 1).map(x => x.need)) }, d, null, 'staffing'));
     for (const m of minR) runs(sl, x => x.children > 0 && x.have < m.n, (i, j) => W(m.id, 'w_min', { day, from: fr(i), to: to(j), have: Math.min(...sl.slice(i, j + 1).map(x => x.have)), n: m.n }, d, null, 'staffing'));
-    if (R.sn) for (const kid of (s.snKids || []).filter(q => q.days.includes(d))) {
+    if (R.sn && !closed.includes(d)) for (const kid of (s.snKids || []).filter(q => q.days.includes(d))) {
       const cs = wk.filter(x => x.day === d && x.type === 'contact' && x.group === kid.unit && !uncov.has(x.id) && (person(x.staff) || {}).sn);
       runs(sl, x => { const mid = x.t + s.slot / 2; return mid > kid.from && mid < kid.to && !cs.some(q => q.start <= mid && q.end > mid); }, (i, j) => W(R.sn.id, 'w_sn', { unit: (grp(kid.unit) || {}).name, day, from: fr(i), to: to(j) }, d, null, 'staffing'));
     }
   });
+  // An empty week has nothing to check yet: warnings would only say what is missing.
+  if (!wk.length) { warns.length = 0; bad.clear(); }
   return { wk, uncov, warns, bad, minsW, minsB, byType, slotsByDay, units, absent, nm: nmOf };
 }
 
@@ -745,7 +769,7 @@ export function controller(comp) {
     };
     const role = d => s.roles[s.week + '-' + d] || {};
     const hoursOf = p => {
-      const m = D.minsW[p.id], c = effC(p, s.week), diff = m - c;
+      const m = D.minsW[p.id], c = effCs(s, p, s.week), diff = m - c;
       const flag = p.sub ? 'ok' : diff > 15 ? 'over' : diff < -15 ? 'under' : 'ok';
       return {
         total: hrs(m, lang), contract: p.sub ? '' : hrs(c, lang), text: p.sub ? hrs(m, lang) : hrs(m, lang) + ' / ' + hrs(c, lang).replace(' h', '') + ' h',
@@ -831,8 +855,8 @@ export function controller(comp) {
       onDay: w.day === day, go: () => up({ day: w.day ?? day, sel: w.shiftId || null, person: null }),
       color: pal['w_' + w.kind] || '#c33',
     }));
-    const totB = STAFF.reduce((a, p) => a + D.minsB[p.id], 0), conB = STAFF.reduce((a, p) => a + [0, 1, 2, 3].reduce((x, i) => x + effC(p, b0 + i), 0), 0);
-    const totW = STAFF.reduce((a, p) => a + D.minsW[p.id], 0), conW = STAFF.reduce((a, p) => a + effC(p, s.week), 0);
+    const totB = STAFF.reduce((a, p) => a + D.minsB[p.id], 0), conB = STAFF.reduce((a, p) => a + [0, 1, 2, 3].reduce((x, i) => x + effCs(s, p, b0 + i), 0), 0);
+    const totW = STAFF.reduce((a, p) => a + D.minsW[p.id], 0), conW = STAFF.reduce((a, p) => a + effCs(s, p, s.week), 0);
     const fp = person(ui.focus) || STAFF[0];
     return {
       ready: true, L, lang, s, merge: s.merge || MERGE0, roster, ghost: gh, hasGhost: !!gh, weekNo: s.week, slot: s.slot, is15: s.slot === 15, is30: s.slot === 30,
@@ -872,17 +896,18 @@ export function controller(comp) {
   // hours of the week before (the flexible week). If the solver can't be reached at all, the weeks come from
   // the saved schedule instead. Everything is one change (one Undo).
   // Returns { saved, missing: weeks that could not be made, errors: what the solver said, unreachable }.
-  const generate = async (weeks, onProgress) => {
+  const generate = async (weeks, onProgress, { keep = false } = {}) => {
     const done = [], missing = [], errors = []; let saved = false, unreachable = false;
     store.begin();
     for (let i = 0; i < weeks.length; i++) {
       onProgress && onProgress(i, weeks.length, weeks[i]);
       let sol = null, reached = false;
       try {
-        const r = await fetch(SOLVER_URL + '/solve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(solverProblem(store.get(), [weeks[i]])) });
+        const problem = solverProblem(store.get(), [weeks[i]], { keep });
+        const r = await fetch(SOLVER_URL + '/solve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(problem) });
         // A server without a solver (e.g. a plain web host) answers 404/405/501: same as no solver.
         reached = ![404, 405, 501].includes(r.status);
-        if (r.ok) sol = await r.json(); else if (reached) errors.push((await r.json().catch(() => ({}))).error || 'HTTP ' + r.status);
+        if (r.ok) { sol = await r.json(); sol.weeks.forEach(x => { x.kept = problem.weeks[0].kept; }); } else if (reached) errors.push((await r.json().catch(() => ({}))).error || 'HTTP ' + r.status);
       } catch (e) {}
       if (!reached && !done.length && !errors.length) { saved = unreachable = true; break; }
       if (!reached) unreachable = true;
@@ -890,7 +915,8 @@ export function controller(comp) {
       store.live(st => applySolution(st, sol)); done.push(weeks[i]);
     }
     if (saved) try {
-      const all = await (await fetch(new URL('solved-schedule.json', import.meta.url))).json(), have = all.weeks.filter(x => weeks.includes(x.week));
+      // The saved schedule covers everyone, so it can't fill in around shifts that are kept.
+      const all = await (await fetch(new URL('solved-schedule.json', import.meta.url))).json(), have = all.weeks.filter(x => weeks.includes(x.week) && !(keep && store.get().shifts.some(z => z.week === x.week)));
       store.live(st => applySolution(st, { weeks: have })); done.push(...have.map(x => x.week));
       missing.push(...weeks.filter(w => !done.includes(w)));
     } catch (e) {}

@@ -16,6 +16,22 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     assert.match(await body(), /Week 42 has no schedule yet/);
     assert.equal(await btn(/Copy week 41/).count(), 0, 'no copy when last week is empty');
   });
+  await step('an empty week has no warnings', async () => {
+    assert.match(await body(), /Things to check\s*0/);
+  });
+  await step('a public holiday closes the preschool with one click', async () => {
+    for (let i = 0; i < 10; i++) await btn('›').click();
+    await btn('Make schedule', true).click(); await btn(/The preschool is closed/).click();
+    await btn(/Christmas Day \(Fri w\.52\)/).click(); await p.waitForTimeout(200);
+    assert.match(await body(), /Week 52 · Friday – Christmas Day: the preschool is closed all day/);
+    await btn(/The preschool is closed/).click(); await p.waitForTimeout(200);
+    assert.equal(await btn(/Christmas Day \(Fri/).count(), 0, 'not offered twice');
+    await btn('Cancel', true).click(); await btn('Close', true).click();
+    await btn(/^Friday/).click(); await p.waitForTimeout(200);
+    assert.match(await body(), /★ Christmas Day: the preschool is closed all day/);
+    await btn(/^Tuesday/).click();
+    for (let i = 0; i < 10; i++) await btn('‹').click();
+  });
   await step('dates are real dates', async () => {
     assert.match(await body(), /12–16 Oct 2026/);
     for (let i = 0; i < 3; i++) await btn('›').click();
@@ -54,6 +70,13 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     await btn(/Undo/).first().click(); await p.waitForTimeout(300);
     assert.match(await body(), /Week 42 has no schedule yet|0 h \/ 612 h/);
     await btn(/Redo/).first().click(); await p.waitForTimeout(300);
+  });
+  await step('a week with shifts offers to keep them and fill in around them', async () => {
+    await btn('Make schedule', true).click(); await p.waitForTimeout(200);
+    const t = await body();
+    assert.match(t, /Week 42 already has shifts for 18 people/);
+    assert.match(t, /Keep them and fill in around them/); assert.match(t, /Start over: replace the whole week/);
+    await btn('Close', true).click();
   });
   await step('Copy last week appears once the week before has a schedule', async () => {
     for (let i = 0; i < 2; i++) await btn('›').click(); await p.waitForTimeout(300);

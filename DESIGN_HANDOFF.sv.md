@@ -2,7 +2,7 @@
 
 *Det här är den svenska versionen av avsnittet "Schedule generation with OR-Tools" i `DESIGN_HANDOFF.md`. Resten av det dokumentet finns bara på engelska.*
 
-Demon börjar med ett tomt schema. Personal, avdelningar, vikarier och barndata är påhittade och finns kvar. Rektorn kan få ett förslag på schema, och det viktigaste designmålet är att **det inte får kännas som en svart låda**: den som lägger schemat (tänk en erfaren administratör, inte en programmerare) ska se vad förslaget bygger på, kunna säga vad som är annorlunda den här veckan och få en begriplig förklaring av resultatet.
+En tom vecka visar inga varningar (de skulle bara räkna upp vad som saknas). Demon börjar med ett tomt schema. Personal, avdelningar, vikarier och barndata är påhittade och finns kvar. Rektorn kan få ett förslag på schema, och det viktigaste designmålet är att **det inte får kännas som en svart låda**: den som lägger schemat (tänk en erfaren administratör, inte en programmerare) ska se vad förslaget bygger på, kunna säga vad som är annorlunda den här veckan och få en begriplig förklaring av resultatet.
 
 ## Tom vecka
 När veckan på skärmen saknar pass tonas schemat ned och ett kort framför det erbjuder:
@@ -13,13 +13,14 @@ När veckan på skärmen saknar pass tonas schemat ned och ett kort framför det
 Knappen **Skapa schema** i övre raden öppnar samma formulär när som helst.
 
 ## Formuläret Skapa schema (panel till höger, 600 px)
-1. **Vilka veckor?** Bara den här veckan, eller 2, 4 eller 7 veckor (slutar vid demons sista vecka). Har en vecka redan ett schema står det att det ersätts och att det går att ångra.
+1. **Vilka veckor?** Bara den här veckan, eller 2, 4 eller 7 veckor (slutar vid demons sista vecka). Har en vecka redan pass visar formuläret vilka personer som har dem och ger två val: **Behåll dem och fyll i runt dem** (förvalt), där de personerna behåller sina pass och öppnare/stängare som redan är satta står kvar, och alla andra schemaläggs så att det som saknas täcks; eller **Börja om: ersätt hela veckan** (går att ångra). Så kan rektorn lägga några personer för hand och låta resten fyllas i.
 2. **Är något annorlunda än vanligt?** En lista över särskilda dagar och frånvaro i de valda veckorna, var och en går att ta bort, och fyra knappar som öppnar ett kort formulär (vecka, knappar för veckodagar, tid eller procent ur en lista, frivillig anteckning):
    - *Personalen vill sluta tidigt*, t.ex. en konsert. Ett **önskemål**: lösaren försöker, och rapporten säger vem som inte kunde och varför.
    - *Förskolan stänger tidigt*, t.ex. dagen före en helgdag. Inga barn och ingen personal efter den tiden; stängaren arbetar till dess.
    - *Färre barn än vanligt*, t.ex. lov: ungefär 25–90 % av barnen. Färre vuxna behövs.
    - *Någon är borta*: semester, eller kurs eller annat. Sparas som ledighet på personen (Inställningar › Personal), en post per följd av dagar.
-   Särskilda dagar sparas som `special: [{ id, kind: 'finishBy'|'closeEarly'|'fewer', week, days[], time?, pct?, note }]` och visas som en ★-notering på dagen i schemat.
+   - *Förskolan är stängd*, t.ex. en röd dag: inga barn och ingen arbetar hela dagen, och veckans avtalade timmar minskar som för en ledig dag. Röda dagar som infaller på vardagar i de valda veckorna erbjuds som knappar med ett klick (i demoperioden: julafton och juldagen). Den som har ett pass en stängd dag får en varning; ingen öppnare eller stängare behövs.
+   Särskilda dagar sparas som `special: [{ id, kind: 'finishBy'|'closeEarly'|'fewer'|'closed', week, days[], time?, pct?, note }]` och visas som en ★-notering på dagen i schemat.
 3. **Det här följer schemat**, hämtat från Inställningar med en länk för att ändra varje del: personal (avtalade timmar, fasta lediga dagar, vem som får öppna och stänga), barn (per avdelning: antal, barn per vuxen, öppettider, barn som behöver en utbildad vuxen), reglerna som är på, och **prioritetsordningen** när allt inte går ihop:
    1. tillräckligt många vuxna med barnen, och en utbildad vuxen för barn i behov av särskilt stöd;
    2. allas avtalade timmar, över veckogränsen bara om barnen behöver det;
@@ -32,7 +33,7 @@ Knappen längst ned säger vad som kommer att hända ("Skapa schema för vecka 4
 När schemat är klart visar panelen för varje vecka, med ✓ eller !:
 - tillräckligt många vuxna hela dagarna, eller tiderna då det är för få (med ett tips: en vikarie, eller ändra för hand);
 - andra regler som bryts, som under *Att kontrollera*;
-- avtalade timmar: alla får sina timmar, eller vem som arbetar mer (för att barnen behövde det) och vem som får färre;
+- avtalade timmar: alla får sina timmar, eller vem som arbetar mer (för att barnen behövde det) och vem som får färre. Timmar över avtalet en vecka (även för deltidare) tas tillbaka veckan efter; rapporten säger vem som fick en kortare vecka för att jämna ut, och vem som inte kunde få det för att barnen behövde dem;
 - den flexibla veckan: vem som arbetar lite över gränsen och hur kort nästa vecka måste bli;
 - mindre planeringstid än vanligt, och för vem;
 - varje särskild dag: med i schemat, eller för *sluta tidigt* hur många som slutar i tid och vilka som stannar (t.ex. "Ida Forsberg (stänger)").

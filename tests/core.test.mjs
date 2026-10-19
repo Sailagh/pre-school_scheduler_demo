@@ -115,3 +115,39 @@ test('extra hours over contract are evened out the next week, also for part-time
   assert.match(r43, /Kortare vecka för att jämna ut extra timmar veckan innan: Erik 28 h – 2 h extra vecka 42/);
   assert.doesNotMatch(r43, /färre timmar än sitt avtal[^\n]*Erik/);
 });
+
+test('an empty week shows no warnings', () => {
+  const s = m.seedState();
+  assert.deepEqual(m.checkWeek(s, 42), []);
+});
+
+test('a closed day: no children, nobody available, fewer contract hours, warned if someone works', () => {
+  const s = m.seedState();
+  s.special = [{ id: 'c', week: 52, days: [3, 4], kind: 'closed', note: 'Jul' }];
+  const p = m.solverProblem(s, [52]).weeks[0], anna = p.staff.find(x => x.id === 'p1');
+  assert.ok(p.days[3].need.every(x => x === 0) && p.days[4].need.every(x => x === 0));
+  assert.ok(p.days[3].closed && p.days[4].closed);
+  assert.deepEqual(anna.days, [true, true, true, false, false]);
+  assert.equal(anna.target, m.effC(m.person('p1'), 52) * 3 / 5, 'three days of five');
+  assert.equal(m.personWeek(s, 'p1', 52).C, anna.target);
+  s.shifts.push({ id: 'z', staff: 'p1', week: 52, day: 4, start: 480, end: 900, type: 'contact', group: 'g3' });
+  const w = m.checkWeek(s, 52, 'sv').map(x => x.text);
+  assert.ok(w.includes('Förskolan är stängd på fredag, men Anna L. har ett pass.'), w.join('\n'));
+  assert.ok(!w.some(t => /Ingen är satt att (öppna|stänga) på (torsdag|fredag)/.test(t)), 'no opener/closer needed on closed days');
+});
+
+test('keeping hand-made shifts: those people are left out and what they cover is taken off the need', () => {
+  const s = m.seedState(), full = solvedState(), mine = ['p1', 'p2', 'p3', 'p4'];
+  s.shifts = full.shifts.filter(x => x.week === 42 && mine.includes(x.staff));
+  s.roles['42-0'] = { open: 'p1' };
+  const base = m.solverProblem(m.seedState(), [42]).weeks[0], p = m.solverProblem(s, [42], { keep: true }).weeks[0];
+  assert.deepEqual(p.kept, mine);
+  assert.equal(p.staff.length, 14);
+  const sum = d => d.need.reduce((a, b) => a + b, 0);
+  assert.ok(sum(p.days[1]) < sum(base.days[1]), 'less is needed once the kept shifts are counted');
+  assert.ok(p.days[0].hasOpen && !p.days[0].hasClose);
+  assert.equal(m.solverProblem(s, [42]).weeks[0].staff.length, 18, 'without keep everyone is scheduled');
+  m.applySolution(s, { weeks: [{ week: 42, kept: mine, shifts: [{ staff: 'p5', day: 0, start: 420, end: 900, type: 'contact', group: 'g3' }], roles: [{ open: 'p9', close: 'p5' }, {}, {}, {}, {}] }] });
+  assert.equal(s.shifts.filter(x => mine.includes(x.staff)).length, full.shifts.filter(x => x.week === 42 && mine.includes(x.staff)).length, 'kept shifts stay');
+  assert.deepEqual(s.roles['42-0'], { open: 'p1', close: 'p5' }, 'an opener already set stays');
+});

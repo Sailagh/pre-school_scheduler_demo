@@ -29,7 +29,9 @@ def solve_weeks(scenario, weeks, tmp):
     """Solves the weeks in order, each after the ones before it, like the planner does."""
     files = []
     for w in weeks:
-        sol = solve(node("problem", scenario, str(w), *files), time_limit=LIMIT, parallel=1)
+        problem = node("problem", scenario, str(w), *files)
+        sol = solve(problem, time_limit=LIMIT, parallel=1)
+        sol["weeks"][0]["kept"] = problem["weeks"][0]["kept"]  # as the planner does
         path = os.path.join(tmp, f"{scenario}-{w}.json")
         with open(path, "w") as f:
             json.dump(sol, f)
@@ -63,6 +65,21 @@ class SolverTest(unittest.TestCase):
     def test_rules_from_settings_are_followed(self):
         (wk,) = solve_weeks("rules", [42], self.tmp)
         self.assertNoWarnings(wk)
+
+    def test_fills_in_around_shifts_made_by_hand(self):
+        (wk,) = solve_weeks("partial", [42], self.tmp)
+        self.assertNoWarnings(wk)
+        saved = next(x for x in json.load(open(os.path.join(ROOT, "web", "solved-schedule.json")))["weeks"] if x["week"] == 42)
+        mine = lambda shifts: sorted((x["staff"], x["day"], x["start"], x["end"], x["type"]) for x in shifts if x["staff"] in ("p1", "p2", "p3", "p4"))
+        self.assertEqual(mine(wk["shifts"]), mine(saved["shifts"]), "the hand-made shifts are untouched")
+        self.assertEqual(wk["roles"][0]["open"], "p3", "the opener set by hand stays")
+
+    def test_closed_days(self):
+        (wk,) = solve_weeks("holiday", [52], self.tmp)
+        self.assertNoWarnings(wk)
+        self.assertFalse([x for x in wk["shifts"] if x["day"] in (3, 4)], "nobody works on closed days")
+        for pid, mins in wk["hours"].items():
+            self.assertLessEqual(abs(mins - wk["contract"][pid]), 15, pid)
 
     def test_flexible_week_evens_out(self):
         w42, w43 = solve_weeks("short", [42, 43], self.tmp)

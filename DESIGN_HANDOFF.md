@@ -223,7 +223,7 @@ No images or icons. The only glyphs are text characters (‹ › × ▶ ⏩ ▾ 
 
 *A Swedish version of this section is in `DESIGN_HANDOFF.sv.md`.*
 
-The demo starts with an empty schedule. Staff, units, substitutes and children data are made up and kept. The principal can have a schedule suggested, with the main design goal that **it must not feel like a black box**: the person scheduling (think of an experienced administrator, not a programmer) should see what the suggestion is based on, be able to say what is different this week, and get a plain explanation of the result.
+An empty week shows no warnings (they would only list what is missing). The demo starts with an empty schedule. Staff, units, substitutes and children data are made up and kept. The principal can have a schedule suggested, with the main design goal that **it must not feel like a black box**: the person scheduling (think of an experienced administrator, not a programmer) should see what the suggestion is based on, be able to say what is different this week, and get a plain explanation of the result.
 
 ### Empty week
 When the week on screen has no shifts, the schedule is dimmed and a card in front of it offers:
@@ -234,13 +234,14 @@ When the week on screen has no shifts, the schedule is dimmed and a card in fron
 The **Make schedule** button in the top bar opens the same form at any time.
 
 ### The Make schedule form (right drawer, 600 px)
-1. **Which weeks?** Only this week, or 2, 4 or 7 weeks (cut off at the last demo week). If a week already has a schedule, a note says it will be replaced and can be undone.
+1. **Which weeks?** Only this week, or 2, 4 or 7 weeks (cut off at the last demo week). If a week already has shifts, the form names the people who have them and offers two choices: **Keep them and fill in around them** (default), where those people keep their shifts and an opener/closer already set stays, and everyone else is scheduled to cover what is still missing; or **Start over: replace the whole week** (can be undone). This lets the principal schedule a few people by hand and have the rest filled in.
 2. **Is anything different from usual?** A list of special days and absences in the chosen weeks, each removable, and four buttons that open a short form (week, weekday buttons, time or percentage from a list, optional note):
    - *Staff hope to finish early*, e.g. a concert. A **wish**: the solver tries, and the report says who could not and why.
    - *The preschool closes early*, e.g. the day before a holiday. No children and no staff after that time; the closer works until then.
    - *Fewer children than usual*, e.g. a school break: about 25–90 % of the children. Fewer adults are needed.
    - *Someone is away*: holiday, or a course or other. Saved as leave on the person (Settings › Staff), one entry per run of days.
-   Special days are stored as `special: [{ id, kind: 'finishBy'|'closeEarly'|'fewer', week, days[], time?, pct?, note }]` and shown as a ★ note on the day in the planner.
+   - *The preschool is closed*, e.g. a public holiday: no children and nobody works all day, and contract hours for the week shrink as for a day of leave. Public holidays that fall on weekdays in the chosen weeks are offered as one-click buttons (in the demo period: Christmas Eve and Christmas Day). Someone with a shift on a closed day gets a warning; no opener or closer is needed.
+   Special days are stored as `special: [{ id, kind: 'finishBy'|'closeEarly'|'fewer'|'closed', week, days[], time?, pct?, note }]` and shown as a ★ note on the day in the planner.
 3. **What the schedule follows**, read from Settings with a link to change each part: staff (contract hours, fixed days off, who may open or close), children (per unit: number, ratio, opening hours, children who need a trained adult), the rules that are on, and the **order of priority** when not everything fits:
    1. enough adults with the children, and a trained adult for children who need special support;
    2. everyone's contract hours, going over the weekly limit only if the children need it;
@@ -253,7 +254,7 @@ The footer button says what will happen (“Make schedule for weeks 42–43”) 
 After solving, the drawer shows per week, with ✓ or !:
 - enough adults all day, or the times with too few (and a hint: a substitute, or adjust by hand);
 - other broken rules, as in *Things to check*;
-- contract hours: everyone on target, or who works more (because the children needed it) and who gets less;
+- contract hours: everyone on target, or who works more (because the children needed it) and who gets less. Hours over contract one week (also for part-timers) are taken back the next week; the report says who got a shorter week to even out, and who could not because the children needed them;
 - the flexible week: who works a little over the limit and how short the next week must be;
 - less planning time than usual, and for whom;
 - each special day: included, or for *finish early* how many finish in time and who stays (e.g. “Ida Forsberg (closes)”).

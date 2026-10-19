@@ -45,8 +45,8 @@ The demo starts with an empty schedule. The made-up staff, units, substitutes an
 
 An empty week is dimmed with three choices in front of it: **Make a suggestion for me**, **Draw it myself** and **Copy last week**. **Make schedule** (also in the top bar) opens a form written for the person who does the scheduling, not for a programmer:
 
-1. **Which weeks:** only this week, or 2, 4 or 7 weeks.
-2. **Is anything different from usual:** staff hope to finish early (a concert), the preschool closes early (the day before a holiday), fewer children than usual (school break), someone is away (holiday or a course; saved to the person's leave in Settings). These are stored as `special` days in the state and shown as a ★ note on the day in the planner.
+1. **Which weeks:** only this week, or 2, 4 or 7 weeks. If a week already has shifts, choose **Keep them and fill in around them** (schedule a few people by hand and let OR-Tools do the rest) or **Start over**.
+2. **Is anything different from usual:** staff hope to finish early (a concert), the preschool closes early (the day before a holiday), fewer children than usual (school break), someone is away (holiday or a course; saved to the person's leave in Settings), the preschool is closed (a public holiday; one click for those in the chosen weeks). These are stored as `special` days in the state and shown as a ★ note on the day in the planner.
 3. **What the schedule follows:** staff, days off, who may open and close, children and ratios, and the rules, read from Settings with links to change them, plus the order of priority when not everything fits.
 
 After solving, a report says per week what worked and what did not, and why, e.g. who works after 17:00 on the concert day because children are still there (`scheduleReport()` in `web/schedule-core-demo.js`). **Undo the schedule** removes it in one step.

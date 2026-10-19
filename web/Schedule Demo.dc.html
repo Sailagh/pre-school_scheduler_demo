@@ -102,13 +102,15 @@
             <div style="flex:1;min-width:0;max-height:100%;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.05);display:flex;flex-direction:column;overflow:hidden;opacity:{{ gCardOp }};pointer-events:{{ gCardPe }};transition:opacity .3s">
       <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
         <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ genTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ genSub }}</div></div>
-        <button onClick="{{ genClose }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
+        <button onClick="{{ genClose }}" title="{{ genCloseTxt }}" aria-label="{{ genCloseTxt }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
       </div>
         <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 24px 24px;display:flex;flex-direction:column;gap:22px">
           <div style="display:flex;flex-direction:column;gap:10px">
             <div style="font-size:16px;font-weight:600">{{ gWeeksHead }}</div>
             <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ gWeeks }}" as="k"><button onClick="{{ k.pick }}" style="height:40px;padding:0 16px;border:1px solid {{ k.bd }};border-radius:8px;background:{{ k.bg }};color:{{ k.fg }};font:inherit;font-size:15px;cursor:pointer">{{ k.name }}</button></sc-for></div>
-            <sc-if value="{{ gReplace }}"><div style="font-size:14px;line-height:1.45;color:#6B5214;background:#FFF1CF;border-radius:8px;padding:8px 12px">{{ gReplaceTxt }}</div></sc-if>
+            <sc-if value="{{ gReplace }}"><div style="display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45;color:#6B5214;background:#FFF1CF;border-radius:8px;padding:10px 12px">{{ gReplaceTxt }}
+              <sc-for list="{{ gKeepOpts }}" as="o"><button onClick="{{ o.pick }}" style="display:flex;gap:10px;align-items:flex-start;text-align:left;padding:10px 12px;border:1px solid {{ o.bd }};border-radius:8px;background:{{ o.bg }};font:inherit;color:#1F2D3A;cursor:pointer"><span style="flex:none;width:14px;height:14px;margin-top:3px;border-radius:50%;border:2px solid #1F7D97;background:{{ o.dot }};box-shadow:inset 0 0 0 2px #fff"></span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:600">{{ o.name }}</span><span style="font-size:13px;color:#3C4B5A">{{ o.sub }}</span></span></button></sc-for>
+            </div></sc-if>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px">
             <div><div style="font-size:16px;font-weight:600">{{ gSpecHead }}</div><div style="font-size:14px;color:#5A6B7A;margin-top:2px">{{ gSpecSub }}</div></div>
@@ -117,6 +119,7 @@
             <sc-if value="{{ gAdding }}">
               <div style="border:1px solid #9FCFDB;background:#EAF6F8;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px">
                 <div><div style="font-size:15px;font-weight:600">{{ dHead }}</div><div style="font-size:13px;line-height:1.45;color:#3C4B5A;margin-top:2px">{{ dHelp }}</div></div>
+                <sc-for list="{{ dHolidays }}" as="hd"><button onClick="{{ hd.pick }}" style="align-self:flex-start;height:36px;padding:0 12px;border:1px solid #1F7D97;border-radius:8px;background:#fff;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ hd.name }}</button></sc-for>
                 <sc-if value="{{ dHasPerson }}"><label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dPersonLbl }}<select onChange="{{ dPickPerson }}" style="height:38px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dPeople }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label>
                   <div style="display:flex;gap:6px"><sc-for list="{{ dLeaves }}" as="o"><button onClick="{{ o.pick }}" style="height:34px;padding:0 12px;border:1px solid #C9D5E0;border-radius:8px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;font-size:14px;cursor:pointer">{{ o.name }}</button></sc-for></div></sc-if>
                 <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:#3C4B5A">{{ dWeekLbl }}<select onChange="{{ dPickWeek }}" style="height:38px;width:160px;padding:0 10px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font:inherit;font-size:15px;color:#1F2D3A"><sc-for list="{{ dWeeks }}" as="o"><option value="{{ o.v }}" selected="{{ o.sel }}">{{ o.name }}</option></sc-for></select></label>
@@ -373,7 +376,7 @@
     <div style="position:absolute;top:57px;right:0;bottom:0;width:600px;z-index:30;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
       <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
         <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ genTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ gDoneSub }}</div></div>
-        <button onClick="{{ genClose }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
+        <button onClick="{{ genClose }}" title="{{ genCloseTxt }}" aria-label="{{ genCloseTxt }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
       </div>
       <sc-if value="{{ gDone }}">
         <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 24px 24px;display:flex;flex-direction:column;gap:16px">
@@ -697,13 +700,22 @@ class Component extends DCLogic {
     const n = Math.min(G.n, mod.W1 - w + 1), range = Array.from({ length: n }, (_, i) => w + i), rangeTxt = n === 1 ? t('vecka ' + w, 'week ' + w) : t('vecka ' + w + '–' + (w + n - 1), 'weeks ' + w + '–' + (w + n - 1));
     const close = () => this.setState({ gen: null });
     Object.assign(out, {
-      genClose: close, genTitle: t('Skapa schema', 'Make schedule'), genSub: t('Välj veckor, berätta om något är annorlunda än vanligt, och se vad schemat följer.', 'Choose the weeks, tell it what is different from usual, and see what the schedule follows.'),
+      genClose: close, genCloseTxt: t('Stäng', 'Close'), genTitle: t('Skapa schema', 'Make schedule'), genSub: t('Välj veckor, berätta om något är annorlunda än vanligt, och se vad schemat följer.', 'Choose the weeks, tell it what is different from usual, and see what the schedule follows.'),
       gCenter: !G.done, gRunning: !!G.running, gDone: !!G.done, gCardOp: G.running ? .35 : 1, gCardPe: G.running ? 'none' : 'auto',
       gWeeksHead: t('1. Vilka veckor?', '1. Which weeks?'),
       gWeeks: [...new Set([1, 2, 4, 7].map(k => Math.min(k, mod.W1 - w + 1)))].map(k => ({
         name: k === 1 ? t('Bara vecka ' + w, 'Only week ' + w) : t(k + ' veckor', k + ' weeks'), pick: () => setG({ n: k }),
         bg: k === n ? '#1F2D3A' : '#fff', fg: k === n ? '#fff' : '#1F2D3A', bd: k === n ? '#1F2D3A' : '#C9D5E0' })),
-      gReplace: range.some(has), gReplaceTxt: t('Vecka ' + range.filter(has).join(', ') + ' har redan ett schema. Det nya ersätter det, men du kan ångra.', (range.filter(has).length > 1 ? 'Weeks ' : 'Week ') + range.filter(has).join(', ') + ' already ' + (range.filter(has).length > 1 ? 'have' : 'has') + ' a schedule. The new one replaces it, and you can undo.'),
+      gReplace: range.some(has),
+      gReplaceTxt: (() => {
+        const ws = range.filter(has), who = mod.STAFF.filter(p => s.shifts.some(x => ws.includes(x.week) && x.staff === p.id)).map(p => firstName(p.id));
+        return t((ws.length > 1 ? 'Vecka ' + ws.join(', ') + ' har' : 'Vecka ' + ws[0] + ' har') + ' redan pass för ' + who.length + ' personer: ' + who.join(', ') + '.', (ws.length > 1 ? 'Weeks ' + ws.join(', ') + ' already have' : 'Week ' + ws[0] + ' already has') + ' shifts for ' + who.length + (who.length === 1 ? ' person: ' : ' people: ') + who.join(', ') + '.');
+      })(),
+      gKeepOpts: [[true, t('Behåll dem och fyll i runt dem', 'Keep them and fill in around them'), t('De här personerna behåller sina pass, och öppnare/stängare som redan är satta står kvar. Alla andra schemaläggs så att det som saknas täcks.', 'These people keep their shifts, and an opener or closer already set stays. Everyone else is scheduled to cover what is still missing.')],
+                  [false, t('Börja om: ersätt hela veckan', 'Start over: replace the whole week'), t('Alla pass i veckan ersätts. Du kan ångra efteråt.', 'All shifts in the week are replaced. You can undo afterwards.')]].map(([k, name, sub]) => {
+        const on = (G.keep !== false) === k;
+        return { name, sub, pick: () => setG({ keep: k }), bd: on ? '#1F7D97' : '#C9D5E0', bg: on ? '#EAF6F8' : '#fff', dot: on ? '#1F7D97' : '#fff' };
+      }),
       gSpecHead: t('2. Är något annorlunda än vanligt?', '2. Is anything different from usual?'),
       gSpecSub: t('Till exempel en konsert, en klämdag, lov eller någon som är bortrest.', 'For example a concert, a day before a holiday, a school break, or someone who is away.'),
     });
@@ -728,13 +740,14 @@ class Component extends DCLogic {
       { kind: 'closeEarly', name: t('Förskolan stänger tidigt', 'The preschool closes early'), sub: t('T.ex. dag före helgdag', 'E.g. the day before a holiday') },
       { kind: 'fewer', name: t('Färre barn än vanligt', 'Fewer children than usual'), sub: t('T.ex. höstlov eller jullov', 'E.g. autumn or Christmas break') },
       { kind: 'away', name: t('Någon är borta', 'Someone is away'), sub: t('Semester, kurs eller ledighet', 'Holiday, a course or leave') },
+      { kind: 'closed', name: t('Förskolan är stängd', 'The preschool is closed'), sub: t('T.ex. en röd dag eller julafton', 'E.g. a public holiday or Christmas Eve') },
     ].map(x => ({ ...x, pick: () => setG({ add: x.kind, draft: null }) }));
     if (D) {
       const kind = G.add, times = []; for (let m = 600; m <= 1080; m += 30) times.push(m);
       const ok = D.days.length > 0 && (kind !== 'away' || D.staff);
       Object.assign(out, {
-        dHead: { finishBy: t('Personalen vill sluta tidigt', 'Staff hope to finish early'), closeEarly: t('Förskolan stänger tidigt', 'The preschool closes early'), fewer: t('Färre barn än vanligt', 'Fewer children than usual'), away: t('Någon är borta', 'Someone is away') }[kind],
-        dHelp: { finishBy: t('Schemat försöker låta alla gå hem i tid. Några kan behöva stanna så länge barn är kvar, och då ser du vilka.', 'The schedule tries to let everyone go home in time. Some may have to stay while children are still there, and you will see who.'), closeEarly: t('Inga barn och ingen personal efter den tiden. Stängaren arbetar till dess.', 'No children and no staff after that time. The closer works until then.'), fewer: t('Färre barn betyder att färre vuxna behövs.', 'Fewer children means fewer adults are needed.'), away: t('Personen schemaläggs inte de dagarna. Det sparas också under Personal.', 'The person gets no shifts on those days. It is also saved under Staff.') }[kind],
+        dHead: { finishBy: t('Personalen vill sluta tidigt', 'Staff hope to finish early'), closeEarly: t('Förskolan stänger tidigt', 'The preschool closes early'), fewer: t('Färre barn än vanligt', 'Fewer children than usual'), away: t('Någon är borta', 'Someone is away'), closed: t('Förskolan är stängd', 'The preschool is closed') }[kind],
+        dHelp: { closed: t('Inga barn och ingen personal hela dagen. Veckans avtalade timmar minskar som för en ledig dag.', 'No children and no staff all day. Contract hours for the week shrink as for a day off.'), finishBy: t('Schemat försöker låta alla gå hem i tid. Några kan behöva stanna så länge barn är kvar, och då ser du vilka.', 'The schedule tries to let everyone go home in time. Some may have to stay while children are still there, and you will see who.'), closeEarly: t('Inga barn och ingen personal efter den tiden. Stängaren arbetar till dess.', 'No children and no staff after that time. The closer works until then.'), fewer: t('Färre barn betyder att färre vuxna behövs.', 'Fewer children means fewer adults are needed.'), away: t('Personen schemaläggs inte de dagarna. Det sparas också under Personal.', 'The person gets no shifts on those days. It is also saved under Staff.') }[kind],
         dWeekLbl: t('Vecka', 'Week'), dWeeks: range.map(x => ({ v: x, name: t('Vecka ', 'Week ') + x, sel: x === D.week })), dPickWeek: e => setD({ week: +e.target.value }),
         dDaysLbl: t('Dagar', 'Days'), dDays: [0, 1, 2, 3, 4].map(d => { const on = D.days.includes(d); return { name: v.L.short[d], pick: () => setD({ days: on ? D.days.filter(x => x !== d) : [...D.days, d].sort() }), bg: on ? '#1F7D97' : '#fff', fg: on ? '#fff' : '#1F2D3A', bd: on ? '#1F7D97' : '#C9D5E0' }; }),
         dAllDays: () => setD({ days: [0, 1, 2, 3, 4] }), dAllTxt: t('Hela veckan', 'All week'),
@@ -745,7 +758,11 @@ class Component extends DCLogic {
         dHasPerson: kind === 'away', dPersonLbl: t('Vem?', 'Who?'),
         dPeople: [{ v: '', name: t('Välj person', 'Choose a person'), sel: !D.staff }, ...mod.STAFF.slice().sort((a, b) => a.name.localeCompare(b.name, 'sv')).map(p => ({ v: p.id, name: p.name, sel: p.id === D.staff }))], dPickPerson: e => setD({ staff: e.target.value }),
         dLeaves: [['vacation', t('Semester', 'Holiday')], ['leave', t('Kurs eller annat', 'Course or other')]].map(([k, name]) => ({ name, pick: () => setD({ leave: k }), bg: D.leave === k ? '#1F2D3A' : '#fff', fg: D.leave === k ? '#fff' : '#1F2D3A' })),
-        dHasNote: kind !== 'away', dNoteLbl: t('Vad gäller det? (frivilligt)', 'What is it? (optional)'), dNotePh: t('T.ex. Luciakonsert', 'E.g. Christmas concert'), dNote: D.note, dOnNote: e => setD({ note: e.target.value }),
+        dHasNote: kind !== 'away', dNoteLbl: t('Vad gäller det? (frivilligt)', 'What is it? (optional)'), dNotePh: kind === 'closed' ? t('T.ex. Midsommarafton', 'E.g. Midsummer Eve') : t('T.ex. Luciakonsert', 'E.g. Christmas concert'),
+        // Public holidays in the chosen weeks, one click each.
+        dHolidays: kind !== 'closed' ? [] : mod.HOLIDAYS.filter(x => range.includes(x.week) && !mod.specialsOn(s, x.week, x.day).some(y => y.kind === 'closed')).map(x => ({
+          name: '+ ' + t(x.sv, x.en) + ' (' + v.L.short[x.day] + ' ' + t('v.', 'w.') + x.week + ')',
+          pick: () => { ctl.store.set(st => { st.special = [...(st.special || []), { id: 'x' + Date.now(), kind: 'closed', week: x.week, days: [x.day], note: t(x.sv, x.en) }]; }); setG({ add: null, draft: null }); } })), dNote: D.note, dOnNote: e => setD({ note: e.target.value }),
         dSaveTxt: t('Lägg till', 'Add'), dCancelTxt: t('Avbryt', 'Cancel'), dCancel: () => setG({ add: null, draft: null }), dSaveOp: ok ? 1 : .45,
         dSave: () => {
           if (!ok) return;
@@ -756,7 +773,7 @@ class Component extends DCLogic {
               for (const d of D.days) { const r = runs[runs.length - 1]; if (r && r[1] === d - 1) r[1] = d; else runs.push([d, d]); }
               p.leave = [...(p.leave || []), ...runs.map(([d1, d2]) => ({ id: 'l' + Date.now() + d1, kind: D.leave, w1: D.week, d1, w2: D.week, d2 }))];
             }
-            else st.special = [...(st.special || []), { id: 'x' + Date.now(), kind, week: D.week, days: D.days, time: D.time, pct: D.pct, note: D.note.trim() }];
+            else st.special = [...(st.special || []), { id: 'x' + Date.now(), kind, week: D.week, days: D.days, ...(kind === 'closeEarly' || kind === 'finishBy' ? { time: D.time } : {}), ...(kind === 'fewer' ? { pct: D.pct } : {}), note: D.note.trim() }];
           });
           setG({ add: null, draft: null });
         },
@@ -779,7 +796,7 @@ class Component extends DCLogic {
     out.gRun = async () => {
       if (G.add) return;
       this.setState({ gen: { ...G, running: { i: 0, n, w } } });
-      const res = await ctl.generate(range, (i, k, x) => setG({ running: { i, n: k, w: x } }));
+      const res = await ctl.generate(range, (i, k, x) => setG({ running: { i, n: k, w: x } }), { keep: G.keep !== false });
       setG({ running: null, done: { weeks: res.done, saved: res.saved, missing: res.missing, errors: res.errors, unreachable: res.unreachable, failed: !res.done.length } });
     };
     if (G.running) { const r = G.running; out.gProgTxt = t('Gör vecka ' + r.w + (r.n > 1 ? ' (' + (r.i + 1) + ' av ' + r.n + ')' : '') + '…', 'Making week ' + r.w + (r.n > 1 ? ' (' + (r.i + 1) + ' of ' + r.n + ')' : '') + '…'); out.gProgW = Math.round((r.i + .5) / r.n * 100); out.gProgSub = t('Datorn provar många sätt att lägga passen och väljer det som följer reglerna bäst.', 'The computer tries many ways to place the shifts and picks the one that follows the rules best.'); }

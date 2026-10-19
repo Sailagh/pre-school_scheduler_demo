@@ -20,6 +20,13 @@ const SCENARIOS = {
     s.rules.push({ id: 'r11', type: 'dayMax', base: false, versions: [{ from: m.W0, on: true, p: { h: 8 } }] });
     s.rules.push({ id: 'r12', type: 'minStaff', base: false, versions: [{ from: m.W0, on: true, p: { n: 2 } }] });
   },
+  // Four people scheduled by hand in week 42 (from the saved schedule); the rest is filled in around them.
+  partial: s => {
+    const saved = JSON.parse(readFileSync(new URL('../web/solved-schedule.json', import.meta.url), 'utf8')).weeks.find(x => x.week === 42);
+    s.shifts = saved.shifts.filter(x => ['p1', 'p2', 'p3', 'p4'].includes(x.staff)).map((x, i) => ({ ...x, id: 'k' + i, week: 42 }));
+    s.roles['42-0'] = { open: 'p3' };
+  },
+  holiday: s => { s.special = [{ id: 'h', week: 52, days: [3, 4], kind: 'closed', note: 'Jul' }]; },
   // Three Blåbär staff away in week 42: the others have to cover, using the flexible week.
   short: s => {
     for (const id of ['p3', 'p11', 'p14']) s.absences.push(...[0, 1, 2, 3, 4].map(day => ({ staff: id, week: 42, day, from: 0, to: 1440, reason: 'leave' })));
@@ -31,7 +38,7 @@ const s = m.seedState();
 SCENARIOS[name](s);
 const files = cmd === 'problem' ? rest.slice(1) : rest;
 for (const f of files) m.applySolution(s, JSON.parse(readFileSync(f, 'utf8')));
-if (cmd === 'problem') process.stdout.write(JSON.stringify(m.solverProblem(s, [+rest[0]])));
+if (cmd === 'problem') process.stdout.write(JSON.stringify(m.solverProblem(s, [+rest[0]], { keep: name === 'partial' })));
 else {
   const weeks = [...new Set(s.shifts.map(x => x.week))].sort();
   process.stdout.write(JSON.stringify(weeks.map(w => ({
@@ -40,5 +47,7 @@ else {
     hours: Object.fromEntries(m.STAFF.map(p => [p.id, m.personWeek(s, p.id, w).worked])),
     contract: Object.fromEntries(m.STAFF.map(p => [p.id, m.personWeek(s, p.id, w).C])),
     report: m.scheduleReport(s, [w], 'en')[0].items,
+    shifts: s.shifts.filter(x => x.week === w).map(({ staff, day, start, end, type }) => ({ staff, day, start, end, type })),
+    roles: [0, 1, 2, 3, 4].map(d => s.roles[w + '-' + d] || {}),
   }))));
 }

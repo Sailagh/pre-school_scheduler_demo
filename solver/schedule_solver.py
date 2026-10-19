@@ -149,7 +149,10 @@ def _build(problem, wk, days, targets, caps=None):
     staff = {p["id"]: p for p in wk["staff"]}
     for d in days:
         day = wk["days"][d]
-        for role in ((opener, closer) if R["openClose"] else ()):
+        # No opener/closer on a closed day, or when the principal already set one.
+        roles = [] if not R["openClose"] or day.get("closed") else \
+            [r for r, have in ((opener, day.get("hasOpen")), (closer, day.get("hasClose"))) if not have]
+        for role in roles:
             vars_ = [v for (pid, dd), v in role.items() if dd == d]
             missing = m.new_bool_var("")
             m.add(sum(vars_) + missing == 1)
