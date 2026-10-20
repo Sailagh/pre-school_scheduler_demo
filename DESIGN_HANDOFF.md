@@ -244,7 +244,7 @@ The **Make schedule** button in the top bar opens the same form at any time.
    - *The preschool is closed*, e.g. a public holiday: no children and nobody works all day, and contract hours for the week shrink as for a day of leave. Public holidays that fall on weekdays in the chosen weeks are offered as one-click buttons (in the demo period: Christmas Eve and Christmas Day). Someone with a shift on a closed day gets a warning; no opener or closer is needed.
    Special days are stored as `special: [{ id, kind: 'finishBy'|'closeEarly'|'fewer'|'closed', week, days[], time?, pct?, note }]` and shown as a ★ note on the day in the planner.
 3. **What the schedule follows**, read from Settings with a link to change each part: staff (contract hours, fixed days off, who may open or close), children (per unit: number, ratio, opening hours, children who need a trained adult), the rules that are on, and the **order of priority** when not everything fits:
-   1. enough adults with the children, and a trained adult for children who need special support;
+   1. enough adults with the children **in every unit** (not only in the preschool as a whole), and a trained adult for children who need special support;
    2. everyone's contract hours, going over the weekly limit only if the children need it;
    3. wishes such as finishing early;
    4. planning time.
@@ -253,7 +253,8 @@ The footer button says what will happen (“Make schedule for weeks 42–43”) 
 
 ### The report
 After solving, the drawer shows per week, with ✓ or !:
-- enough adults all day, or the times with too few (and a hint: a substitute, or adjust by hand);
+- enough adults all day in every unit, or the times with too few (and a hint: a substitute, or adjust by hand);
+- who helped in another unit than their own, and on which days;
 - other broken rules, as in *Things to check*;
 - contract hours: everyone on target, or who works more (because the children needed it) and who gets less. Hours over contract one week (also for part-timers) are taken back the next week; the report says who got a shorter week to even out, and who could not because the children needed them;
 - the flexible week: who works a little over the limit and how short the next week must be;
@@ -271,7 +272,7 @@ No more than 40 hours in a week, or up to `flex` hours more (default 2, settable
 ### How the solver works
 - `solverProblem(state, weeks)` in `schedule-core-demo.js` turns the app's data into one self-contained problem per week. Per person: home unit, may open/close, trained for special needs, contract and planning minutes, available days, earliest/latest time, the weekly cap. Per day and 15-minute slot: adults needed (from the same children forecast and ratios the planner shows, adjusted for special days and the *minimum adults* rule), the closing slot, the finish-by slot, and the slots where a trained adult must be in a unit. The rules from Settings that are on are passed along.
 - **No names, phone numbers, reasons for absence or notes are sent.** People are ids (`p1`); absences are only “not available that day”.
-- `solver/schedule_solver.py` (OR-Tools CP-SAT) models every person-day as 15-minute slots of time with children, break or planning. Hard: one continuous shift of 4–9 h inside availability, breaks of the rule's length inside the shift (more if the *breaks* rule asks), no more than the rule's hours without a break, the optional daily limit, rest between days, planning in one block of at least 30 min, the weekly cap, an opener at opening and a closer at closing (or at an early closing). Everything else is a weighted cost, in the priority order above.
+- `solver/schedule_solver.py` (OR-Tools CP-SAT) models every person-day as 15-minute slots of time with children, break or planning. Hard: one continuous shift of 4–9 h inside availability, breaks of the rule's length inside the shift (more if the *breaks* rule asks), no more than the rule's hours without a break, the optional daily limit, rest between days, planning in one block of at least 30 min, the weekly cap, an opener at opening and a closer at closing (or at an early closing). Each working day a person is in one unit, their own or another; helping elsewhere costs a little, so it happens only when a unit would otherwise be short. Every unit's need (outside the merged opening and closing hours) counts as strictly as the total. Everything else is a weighted cost, in the priority order above.
 - It solves each day first with an even share of the week's hours (a day takes 2–3 s), then the whole week from that starting point so hours can move between days.
 - `solver/server.py` serves `POST /solve`. The page calls `http://localhost:8000` (or `?solver=…`).
 - Every result is checked with the planner's own rule engine in the tests (`tests/`); the saved schedule for weeks 41–52 has no warnings and everyone gets their contract hours.

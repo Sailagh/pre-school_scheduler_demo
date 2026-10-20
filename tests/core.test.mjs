@@ -151,3 +151,12 @@ test('keeping hand-made shifts: those people are left out and what they cover is
   assert.equal(s.shifts.filter(x => mine.includes(x.staff)).length, full.shifts.filter(x => x.week === 42 && mine.includes(x.staff)).length, 'kept shifts stay');
   assert.deepEqual(s.roles['42-0'], { open: 'p1', close: 'p5' }, 'an opener already set stays');
 });
+
+test('every unit needs its own adults: a gap in one unit is warned about even if the total is fine', () => {
+  const s = solvedState();
+  // Move all of Lingon's Tuesday time with children to Hjortron: the total stays the same, Lingon is left empty.
+  s.shifts.filter(x => x.week === 42 && x.day === 1 && x.group === 'g2' && x.type === 'contact').forEach(x => { x.group = 'g3'; });
+  const w = m.checkWeek(s, 42, 'sv').map(x => x.text);
+  assert.ok(w.some(t => /^För få vuxna i Lingon på tisdag/.test(t)), w.join('\n'));
+  assert.ok(!w.some(t => /^För lite personal på tisdag/.test(t)), 'the preschool as a whole is still covered');
+});

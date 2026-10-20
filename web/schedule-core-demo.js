@@ -99,7 +99,7 @@ export const T = {
     w_closeNA: '{name} is set to close on {day} but is not allowed to close.',
     w_cover: '{name} is {why} on {day}. {from}–{to} needs cover.',
     w_overlap: '{name} has two shifts at the same time on {day}.', w_closed: 'The preschool is closed on {day}, but {name} has a shift.', breakLen: 'Break length',
-    w_under: 'Too few staff on {day} {from}–{to}: {have} working, {need} needed.',
+    w_under: 'Too few staff on {day} {from}–{to}: {have} working, {need} needed.', w_underUnit: 'Too few adults in {unit} on {day} {from}–{to}: {have} working, {need} needed.',
     r_busy: 'Already working then', r_unav: 'Not available on {day}', r_40: 'Would go over 40 hours this week',
     r_contract: 'Only {h} left in contract', r_absent: 'Also absent', c_staff: 'Staff · {h} left in contract', c_sub: 'Substitute · {phone}',
   },
@@ -135,7 +135,7 @@ export const T = {
     w_closeNA: '{name} ska stänga på {day} men får inte stänga.',
     w_cover: '{name} är {why} på {day}. {from}–{to} behöver ersättare.',
     w_overlap: '{name} har två pass samtidigt på {day}.', w_closed: 'Förskolan är stängd på {day}, men {name} har ett pass.', breakLen: 'Rastens längd',
-    w_under: 'För lite personal på {day} {from}–{to}: {have} i tjänst, {need} behövs.',
+    w_under: 'För lite personal på {day} {from}–{to}: {have} i tjänst, {need} behövs.', w_underUnit: 'För få vuxna i {unit} på {day} {from}–{to}: {have} i tjänst, {need} behövs.',
     r_busy: 'Arbetar redan då', r_unav: 'Inte tillgänglig på {day}', r_40: 'Skulle gå över 40 timmar denna vecka',
     r_contract: 'Bara {h} kvar i avtalet', r_absent: 'Också frånvarande', c_staff: 'Personal · {h} kvar i avtalet', c_sub: 'Vikarie · {phone}',
   },
@@ -388,6 +388,9 @@ export function scheduleReport(s, weeks, lang, saved = false) {
     if (flexed.length) items.push({ ok: false, text: sv ? 'Arbetar lite över ' + h(lim) + ' den här veckan för att barnen ska ha tillräckligt med vuxna. Det jämnas ut nästa vecka:' : 'Work a little over ' + h(lim) + ' this week so the children have enough adults. It evens out next week:', more: flexed });
     if (more.length) items.push({ ok: false, text: sv ? 'Arbetar mer än sina avtalade timmar, eftersom barnen annars hade haft för få vuxna. Nästa vecka görs lika mycket kortare:' : 'Work more than their contract hours, because otherwise the children would have too few adults. The next week is made that much shorter:', more });
     if (less.length) items.push({ ok: false, text: sv ? 'Får färre timmar än sitt avtal den här veckan. Du kan lägga till tid för hand:' : 'Get fewer hours than their contract this week. You can add time by hand:', more: less });
+    // People who help in another unit than their own, and on which days.
+    const helped = STAFF.map(p => { const days = [0, 1, 2, 3, 4].filter(d => s.shifts.some(z => z.staff === p.id && z.week === w && z.day === d && z.type === 'contact' && z.group !== p.group)); return days.length ? p.name.split(' ')[0] + ' (' + ((GROUPS.find(g => g.id === p.group) || {}).name || '') + ' → ' + [...new Set(s.shifts.filter(z => z.staff === p.id && z.week === w && days.includes(z.day) && z.group !== p.group).map(z => (GROUPS.find(g => g.id === z.group) || {}).name))].join(', ') + ', ' + days.map(d => dayName(d, lang)).join(', ') + ')' : null; }).filter(Boolean);
+    if (helped.length) items.push({ ok: true, text: sv ? 'Hjälper till på en annan avdelning än sin egen, så att alla avdelningar har tillräckligt med vuxna:' : 'Help in another unit than their own, so every unit has enough adults:', more: helped });
     if (lessPlan.length) items.push({ ok: false, text: sv ? 'Mindre planeringstid än vanligt, eftersom barnen behövde de vuxna:' : 'Less planning time than usual, because the children needed the adults:', more: lessPlan });
     for (const x of (s.special || []).filter(x => x.week === w)) {
       if (saved) { items.push({ ok: false, text: cap(daysLabel(x.days, lang)) + ': ' + specialLabel(x, lang) + (sv ? ' – inte med, eftersom lösaren inte var igång.' : ' – not included, because the solver was not running.') }); continue; }
@@ -614,6 +617,8 @@ function derive(s, L, lang) {
   slotsByDay.forEach((sl, d) => {
     const day = L.dayW[d], fr = i => fmt(sl[i].t), to = j => fmt(sl[j].t + s.slot);
     runs(sl, x => x.status === 'under', (i, j) => W('ratio', 'w_under', { day, from: fr(i), to: to(j), have: Math.min(...sl.slice(i, j + 1).map(x => x.have)), need: Math.max(...sl.slice(i, j + 1).map(x => x.need)) }, d, null, 'staffing'));
+    // Each unit needs its own adults, except while the units are merged into one room.
+    GROUPS.forEach((g, gi) => runs(sl, x => !x.merged && x.groups[gi].have < x.groups[gi].need, (i, j) => W('ratio', 'w_underUnit', { unit: g.name, day, from: fr(i), to: to(j), have: Math.min(...sl.slice(i, j + 1).map(x => x.groups[gi].have)), need: Math.max(...sl.slice(i, j + 1).map(x => x.groups[gi].need)) }, d, null, 'staffing')));
     for (const m of minR) runs(sl, x => x.children > 0 && x.have < m.n, (i, j) => W(m.id, 'w_min', { day, from: fr(i), to: to(j), have: Math.min(...sl.slice(i, j + 1).map(x => x.have)), n: m.n }, d, null, 'staffing'));
     if (R.sn && !closed.includes(d)) for (const kid of (s.snKids || []).filter(q => q.days.includes(d))) {
       const cs = wk.filter(x => x.day === d && x.type === 'contact' && x.group === kid.unit && !uncov.has(x.id) && (person(x.staff) || {}).sn);

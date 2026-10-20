@@ -81,6 +81,12 @@ class SolverTest(unittest.TestCase):
         for pid, mins in wk["hours"].items():
             self.assertLessEqual(abs(mins - wk["contract"][pid]), 15, pid)
 
+    def test_every_unit_is_covered_with_help_from_other_units(self):
+        (wk,) = solve_weeks("lingon", [42], self.tmp)
+        self.assertEqual([w["text"] for w in wk["warnings"] if w["kind"] == "staffing"], [])
+        helped = [i for i in wk["report"] if i["text"].startswith("Help in another unit")]
+        self.assertTrue(helped and any("→ Lingon" in x for x in helped[0]["more"]), wk["report"])
+
     def test_flexible_week_evens_out(self):
         w42, w43 = solve_weeks("short", [42, 43], self.tmp)
         over = {pid: m for pid, m in w42["hours"].items() if m > 40 * 60}

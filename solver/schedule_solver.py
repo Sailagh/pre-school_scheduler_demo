@@ -33,13 +33,16 @@ DEFAULT_RULES = {"maxRun": 20, "breakLen": 2, "weekMax": 160, "weekFlex": 8, "da
                  "rest": 660, "sn": True, "openClose": True}
 
 W_SHORT, W_SN, W_ROLE = 1000, 1000, 1000
-W_HOURS, W_PLAN, W_GROUP, W_OVER, W_LONE, W_FINISH = 60, 20, 30, 4, 40, 25
+W_HOURS, W_PLAN, W_OVER, W_LONE, W_FINISH = 60, 20, 4, 40, 25
+W_GROUP = W_SHORT  # every unit needs its own adults, as strictly as the preschool as a whole
+W_AWAY = 120  # a day helping in another unit than one's own: fine when needed, not for nothing
 W_TIRED = 30  # per slot over the weekly limit, and again per slot more than an hour over it
 
 
-def _build(problem, wk, days, targets, caps=None):
+def _build(problem, wk, days, targets, caps=None, away=True):
     """Model for `days` of a week; `targets[pid]` is (work slots, planning slots) over those days, and
-    `caps[pid]` the most slots over those days (default: the person's weekly cap)."""
+    `caps[pid]` the most slots over those days (default: the person's weekly cap). With `away`, people
+    may help in another unit than their own."""
     n, slot, day_start = problem["slots"], problem["slot"], problem["dayStart"]
     R = {**DEFAULT_RULES, **wk.get("rules", {})}
     blen, max_run = R["breakLen"], R["maxRun"]
@@ -47,6 +50,10 @@ def _build(problem, wk, days, targets, caps=None):
     m = cp_model.CpModel()
     cost = []
     contact, brk, plan, work = {}, {}, {}, {}
+    # Each working person-day is in one unit (`m.units`), home or another; `m.unit_contact` is time with
+    # children per unit, which is what each unit's need and special-needs cover count.
+    m.units, m.unit_contact = {}, {}
+    units = problem["groups"]
     opener, closer = {}, {}
 
     for p in wk["staff"]:
@@ -112,6 +119,16 @@ def _build(problem, wk, days, targets, caps=None):
                 m.add(lone >= c[t] - (c[t - 1] if t else 0) - (c[t + 1] if t + 1 < n else 0))
                 cost.append(W_LONE * lone)
             contact[pid, d], brk[pid, d], plan[pid, d], work[pid, d] = c, b, pl, wv
+            a = {g: m.new_bool_var("") for g in (units if away or p["group"] not in units else [p["group"]])}
+            m.add(sum(a.values()) == on)
+            cg = {g: [m.new_bool_var("") for _ in range(n)] for g in a}
+            for t in range(n):
+                m.add(sum(cg[g][t] for g in a) == c[t])
+                for g in a:
+                    m.add_implication(cg[g][t], a[g])
+            if p["group"] in a:
+                cost.append(W_AWAY * (on - a[p["group"]]))
+            m.units[pid, d], m.unit_contact[pid, d] = a, cg
             if p["open"] and R["openClose"]:
                 opener[pid, d] = m.new_bool_var("")
                 m.add_implication(opener[pid, d], wv[0])
@@ -168,13 +185,13 @@ def _build(problem, wk, days, targets, caps=None):
             for g, gneed in day["groupNeed"].items():
                 if gneed[t]:
                     gshort = m.new_int_var(0, gneed[t], "")
-                    m.add(sum(contact[pid, d][t] for pid in staff if (pid, d) in contact and staff[pid]["group"] == g) + gshort >= gneed[t])
+                    m.add(sum(m.unit_contact[pid, d][g][t] for pid in staff if g in m.unit_contact.get((pid, d), {})) + gshort >= gneed[t])
                     cost.append(W_GROUP * gshort)
         for kid in day["sn"]:
-            trained = [pid for pid in staff if (pid, d) in contact and staff[pid]["sn"] and staff[pid]["group"] == kid["group"]]
+            trained = [pid for pid in staff if staff[pid]["sn"] and kid["group"] in m.unit_contact.get((pid, d), {})]
             for t in kid["slots"]:
                 miss = m.new_bool_var("")
-                m.add(sum(contact[pid, d][t] for pid in trained) + miss >= 1)
+                m.add(sum(m.unit_contact[pid, d][kid["group"]][t] for pid in trained) + miss >= 1)
                 cost.append(W_SN * miss)
 
     m.minimize(sum(cost))
@@ -227,18 +244,30 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
     started, hint = time.monotonic(), {}
     for d in range(5):
         day = {pid: s.get(d, (0, 0, 0)) for pid, s in share.items()}
-        m, *vars_ = _build(problem, wk, [d], {pid: x[:2] for pid, x in day.items()}, {pid: x[2] for pid, x in day.items()})
+        # Days stay in their home units first (small and fast). A day that leaves some unit short is
+        # solved again with people allowed to help in other units.
+        args = (problem, wk, [d], {pid: x[:2] for pid, x in day.items()}, {pid: x[2] for pid, x in day.items()})
+        m, *vars_ = _build(*args, away=False)
         solver, status = _solve(m, time_limit * 0.2, workers)
+        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) and solver.objective_value >= W_SHORT:
+            m, *vars_ = _build(*args, away=True)
+            solver, status = _solve(m, time_limit * 0.3, workers)
         if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            hint.update({k: solver.value(v) for k, v in _all_vars(vars_).items()})
+            hint.update({k: solver.value(v) for k, v in _all_vars(vars_, m).items()})
     targets = {p["id"]: (round(p["target"] / slot), round(p["planning"] / slot)) for p in wk["staff"]}
     m, contact, brk, plan, work, opener, closer = _build(problem, wk, range(5), targets)
-    full = _all_vars((contact, brk, plan, work, opener, closer))
+    full = _all_vars((contact, brk, plan, work, opener, closer), m)
     left = max(time_limit * 0.3, time_limit - (time.monotonic() - started))
     hints = [(v, hint[k]) for k, v in full.items() if k in hint]
     solver, status = _solve(m, left, workers, hints)
+    if status == cp_model.UNKNOWN and hints:
+        # No week schedule found in the time: the days found one together, so take that.
+        for v, val in hints:
+            m.add(v == val)
+        solver, status = _solve(m, 10, workers)
     if status == cp_model.UNKNOWN:
         # A slow computer may not find any schedule in the time; keep going rather than give up.
+        m.clear_hints()
         solver, status = _solve(m, 60, workers, hints)
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         raise RuntimeError(f"No schedule found for week {wk['week']} ({solver.status_name(status)})")
@@ -247,6 +276,7 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
     day_start = problem["dayStart"]
     shifts = []
     for (pid, d), wv in work.items():
+        unit = next((g for g, v in m.units[pid, d].items() if solver.value(v)), staff[pid]["group"])
         kinds = []
         for t in range(n):
             if solver.value(contact[pid, d][t]):
@@ -266,7 +296,7 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
             while u + 1 < n and kinds[u + 1] == kinds[t]:
                 u += 1
             shifts.append({"staff": pid, "day": d, "start": day_start + t * slot, "end": day_start + (u + 1) * slot,
-                           "type": kinds[t], "group": staff[pid]["group"]})
+                           "type": kinds[t], "group": unit})
             t = u + 1
     roles = []
     for d in range(5):
@@ -276,9 +306,12 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
             "status": solver.status_name(status), "objective": solver.objective_value}
 
 
-def _all_vars(groups):
+def _all_vars(groups, model):
     """The decision variables of a model, keyed by kind, person, day and slot."""
     out = {}
+    for (pid, d), a in model.units.items():
+        out.update({("unit", g, pid, d): v for g, v in a.items()})
+        out.update({("unit_contact", g, pid, d, t): v for g, slots in model.unit_contact[pid, d].items() for t, v in enumerate(slots)})
     for kind, vars_ in zip(("contact", "break", "planning", "work"), groups[:4]):
         for (pid, d), slots in vars_.items():
             out.update({(kind, pid, d, t): v for t, v in enumerate(slots)})

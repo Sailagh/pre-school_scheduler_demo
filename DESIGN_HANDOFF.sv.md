@@ -22,7 +22,7 @@ Knappen **Skapa schema** i övre raden öppnar samma formulär när som helst.
    - *Förskolan är stängd*, t.ex. en röd dag: inga barn och ingen arbetar hela dagen, och veckans avtalade timmar minskar som för en ledig dag. Röda dagar som infaller på vardagar i de valda veckorna erbjuds som knappar med ett klick (i demoperioden: julafton och juldagen). Den som har ett pass en stängd dag får en varning; ingen öppnare eller stängare behövs.
    Särskilda dagar sparas som `special: [{ id, kind: 'finishBy'|'closeEarly'|'fewer'|'closed', week, days[], time?, pct?, note }]` och visas som en ★-notering på dagen i schemat.
 3. **Det här följer schemat**, hämtat från Inställningar med en länk för att ändra varje del: personal (avtalade timmar, fasta lediga dagar, vem som får öppna och stänga), barn (per avdelning: antal, barn per vuxen, öppettider, barn som behöver en utbildad vuxen), reglerna som är på, och **prioritetsordningen** när allt inte går ihop:
-   1. tillräckligt många vuxna med barnen, och en utbildad vuxen för barn i behov av särskilt stöd;
+   1. tillräckligt många vuxna med barnen **på varje avdelning** (inte bara på förskolan som helhet), och en utbildad vuxen för barn i behov av särskilt stöd;
    2. allas avtalade timmar, över veckogränsen bara om barnen behöver det;
    3. önskemål som att sluta tidigt;
    4. planeringstid.
@@ -31,7 +31,8 @@ Knappen längst ned säger vad som kommer att hända ("Skapa schema för vecka 4
 
 ## Rapporten
 När schemat är klart visar panelen för varje vecka, med ✓ eller !:
-- tillräckligt många vuxna hela dagarna, eller tiderna då det är för få (med ett tips: en vikarie, eller ändra för hand);
+- tillräckligt många vuxna hela dagarna på varje avdelning, eller tiderna då det är för få (med ett tips: en vikarie, eller ändra för hand);
+- vem som hjälpte till på en annan avdelning än sin egen, och vilka dagar;
 - andra regler som bryts, som under *Att kontrollera*;
 - avtalade timmar: alla får sina timmar, eller vem som arbetar mer (för att barnen behövde det) och vem som får färre. Timmar över avtalet en vecka (även för deltidare) tas tillbaka veckan efter; rapporten säger vem som fick en kortare vecka för att jämna ut, och vem som inte kunde få det för att barnen behövde dem;
 - den flexibla veckan: vem som arbetar lite över gränsen och hur kort nästa vecka måste bli;
@@ -49,7 +50,7 @@ Högst 40 timmar per vecka, eller upp till `flex` timmar till (standard 2, går 
 ## Så fungerar lösaren
 - `solverProblem(state, weeks)` i `schedule-core-demo.js` gör om appens data till ett fristående problem per vecka. Per person: hemavdelning, får öppna/stänga, utbildad för särskilt stöd, avtalade minuter och planeringsminuter, tillgängliga dagar, tidigaste/senaste tid, veckotaket. Per dag och kvart: hur många vuxna som behövs (från samma barnprognos och barn per vuxen som schemat visar, justerat för särskilda dagar och regeln *minst antal vuxna*), stängningstiden, sluta-senast-tiden och de kvartar då en utbildad vuxen måste finnas på en avdelning. Reglerna från Inställningar som är på skickas med.
 - **Inga namn, telefonnummer, orsaker till frånvaro eller anteckningar skickas.** Personer är id:n (`p1`); frånvaro är bara "inte tillgänglig den dagen".
-- `solver/schedule_solver.py` (OR-Tools CP-SAT) delar varje persons dag i kvartar med barntid, rast eller planering. Måste gälla: ett sammanhängande pass på 4–9 timmar inom tillgängligheten, raster av regelns längd inne i passet (fler om regeln *raster* kräver det), högst regelns timmar utan rast, den valfria dagsgränsen, vila mellan dagar, planering i ett block på minst 30 minuter, veckotaket, en öppnare vid öppning och en stängare vid stängning (eller vid tidig stängning). Allt annat är en viktad kostnad, i prioritetsordningen ovan.
+- `solver/schedule_solver.py` (OR-Tools CP-SAT) delar varje persons dag i kvartar med barntid, rast eller planering. Måste gälla: ett sammanhängande pass på 4–9 timmar inom tillgängligheten, raster av regelns längd inne i passet (fler om regeln *raster* kräver det), högst regelns timmar utan rast, den valfria dagsgränsen, vila mellan dagar, planering i ett block på minst 30 minuter, veckotaket, en öppnare vid öppning och en stängare vid stängning (eller vid tidig stängning). Varje arbetsdag är en person på en avdelning, sin egen eller en annan; att hjälpa till någon annanstans kostar lite, så det sker bara när en avdelning annars skulle ha för få. Varje avdelnings behov (utom när avdelningarna är sammanslagna morgon och kväll) räknas lika strikt som helheten. Allt annat är en viktad kostnad, i prioritetsordningen ovan.
 - Den löser först varje dag för sig med en jämn andel av veckans timmar (en dag tar 2–3 sekunder), sedan hela veckan med det som startpunkt så att timmar kan flyttas mellan dagar.
 - `solver/server.py` tar emot `POST /solve`. Sidan anropar `http://localhost:8000` (eller `?solver=…`).
 - Varje resultat kontrolleras med schemats egen regelmotor i testerna (`tests/`); det sparade schemat för vecka 41–52 har inga varningar och alla får sina avtalade timmar.
