@@ -130,6 +130,8 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     await btn('SV', true).click(); await btn('Skapa schema', true).click(); await p.waitForTimeout(300);
     const t = await body();
     assert.match(t, /Vilka veckor\?/); assert.match(t, /eller upp till 2 timmar till om nästa vecka är lika mycket kortare/);
+    await p.reload(); await p.waitForTimeout(2500);
+    assert.match(await body(), /Förskolans schema/, 'Swedish is kept after a reload');
   });
   assert.deepEqual(errs, []);
   await b.close();
