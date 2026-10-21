@@ -424,6 +424,29 @@
                 <div style="font-size:14px;line-height:1.5;color:#3C4B5A">{{ f.replaces }}</div>
                 <sc-if value="{{ f.hasTags }}"><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ f.tags }}" as="tg"><span style="font-size:13px;font-weight:600;padding:3px 8px;border-radius:5px;background:#EEF3F6;color:#3C4B5A">{{ tg.t }}</span></sc-for></div></sc-if>
                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"><sc-for list="{{ f.steps }}" as="sp"><div style="display:flex;flex-direction:column;gap:6px"><div style="height:6px;border-radius:3px;background:{{ sp.bar }}"></div><div style="font-size:13px;font-weight:{{ sp.fw }};color:{{ sp.fg }}">{{ sp.name }}</div></div></sc-for></div>
+                <div style="display:flex;flex-direction:column;gap:8px;border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px">
+                  <div style="font-size:13px;font-weight:600;color:#5A6B7A">{{ f.gapTitle }}</div>
+                  <sc-for list="{{ f.gaps }}" as="g"><div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="width:8px;height:8px;border-radius:50%;background:#E5534B;flex:none"></span><span>{{ g.t }}</span></div></sc-for>
+                  <sc-if value="{{ f.noGaps }}"><div style="font-size:14px;color:#2D6A1F">{{ f.noGapTxt }}</div></sc-if>
+                  <div style="height:1px;background:#EEF3F6;margin:2px 0"></div>
+                  <div style="font-size:14px;line-height:1.45"><b>{{ f.winTxt }}</b> {{ f.winSub }}</div>
+                  <sc-if value="{{ f.canWin }}">
+                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+                      <sc-for list="{{ f.winSteps }}" as="r">
+                        <div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;color:#3C4B5A">{{ r.label }}</span>
+                          <div style="display:inline-flex;align-items:stretch;height:32px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                            <button onClick="{{ r.dec }}" style="width:30px;border:0;background:#fff;color:#3C4B5A;font-size:15px;cursor:pointer;padding:0">−</button>
+                            <div style="min-width:56px;display:flex;align-items:center;justify-content:center;font:500 13px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div>
+                            <button onClick="{{ r.inc }}" style="width:30px;border:0;background:#fff;color:#3C4B5A;font-size:15px;cursor:pointer;padding:0">+</button>
+                          </div>
+                        </div>
+                      </sc-for>
+                      <button onClick="{{ f.toGaps }}" style="height:32px;padding:0 10px;border:1px solid #9FCFDB;border-radius:6px;background:#EAF6F8;color:#16627A;font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ f.toGapsTxt }}</button>
+                      <button onClick="{{ f.toFull }}" style="height:32px;padding:0 10px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:13px;cursor:pointer">{{ f.toFullTxt }}</button>
+                    </div>
+                    <div style="font-size:12px;line-height:1.45;color:#5A6B7A">{{ f.winNote }}</div>
+                  </sc-if>
+                </div>
                 <div style="font-size:16px;font-weight:600;line-height:1.4">{{ f.statusLine }}</div>
                 <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid #EEF3F6;padding-top:12px"><sc-for list="{{ f.log }}" as="lg"><div style="display:grid;grid-template-columns:52px minmax(0,1fr);column-gap:10px;font-size:14px;line-height:1.45"><span style="font-family:'IBM Plex Mono',monospace;color:#5A6B7A">{{ lg.t }}</span><span style="color:#1F2D3A">{{ lg.text }}</span></div></sc-for></div>
                 <sc-if value="{{ f.hasEx }}">
@@ -973,11 +996,27 @@ class Component extends DCLogic {
         const freeCards = list.map((f, i) => { const g = v.groups.find(x => x.id === f.group) || {}, u = U[f.group] || { letter: '', ub: 'transparent', uf: '#000' }, idx = { offered: 0, nobody: 0, accepted: 1, confirmed: 2 }[f.status] ?? 0;
           const LOG = l => ({ sick: nm(f.staff) + (sv ? ' sjukanmälde sig' : ' reported sick'), offerPref: (sv ? 'Erbjudet ' : 'Offered to ') + names(l.ids) + (sv ? ', föredragen för ' : ', preferred for ') + g.name,
             noAnswer: sv ? 'Inget svar på 15 minuter' : 'No answer in 15 minutes', offerAll: (sv ? 'Skickat till ' : 'Sent to ') + names(l.ids), accepted: nm(l.by) + (sv ? ' tog passet' : ' took the shift'),
-            declined: nm(l.by) + (sv ? ' tackade nej' : ' declined'), confirmed: sv ? 'Bekräftat av dig' : 'Confirmed by you', wait: sv ? '15 minuter till utan svar' : '15 more minutes without an answer', nobody: sv ? 'Ingen vikarie kan ta passet' : 'No substitute can take the shift' })[l.k] || '';
+            declined: nm(l.by) + (sv ? ' tackade nej' : ' declined'), window: (sv ? 'Vikarien behövs ' : 'Substitute needed ') + fm(l.from) + '–' + fm(l.to), confirmed: sv ? 'Bekräftat av dig' : 'Confirmed by you', wait: sv ? '15 minuter till utan svar' : '15 more minutes without an answer', nobody: sv ? 'Ingen vikarie kan ta passet' : 'No substitute can take the shift' })[l.k] || '';
           const statusLine = f.status === 'accepted' ? (sv ? 'Accepterat · ' : 'Accepted · ') + nm(f.by) : f.status === 'confirmed' ? (sv ? 'Bekräftat · ' : 'Confirmed · ') + nm(f.by) : f.status === 'nobody' ? (sv ? 'Ingen vikarie kan ta passet. Välj personal nedan.' : 'No substitute can take the shift. Choose staff below.')
             : f.stage === 'preferred' ? (sv ? 'Erbjudet ' : 'Offered to ') + names(f.offered) + (sv ? '. Går till alla om 15 min utan svar.' : '. Goes to everyone after 15 min without an answer.') : (sv ? 'Erbjudet ' + f.offered.length + ' vikarier. Den som svarar först får passet.' : 'Offered to ' + f.offered.length + ' substitutes. The first to answer gets it.');
           const ex = f.status === 'offered' || f.status === 'nobody' ? mod.subCands(S, f, lang).filter(x => !x.ok) : [];
-          return { title: sv ? 'Ledigt pass' : 'Free shift', unit: g.name, ...u, time: fm(f.from) + '–' + fm(f.to), replaces: (sv ? 'Ersätter ' : 'Replaces ') + nm(f.staff) + (sv ? ' (sjuk). Vikarier ser bara ”ledigt pass”.' : ' (sick). Substitutes only see “free shift”.'),
+          // Partial cover: where the day is short now, and the part of the shift the substitute is offered.
+          const full = f.full || { from: f.from, to: f.to }, min = Math.min((S.prefs || {}).subMin ?? mod.SUB_MIN, full.to - full.from), hh = x => mod.fmtN(Math.round(x / 6) / 10, lang) + ' h';
+          const gaps = mod.shortfall(S, f.week, f.day).filter(r => r.from < full.to + 60 && r.to > full.from - 60);
+          const setW = (a, b) => { if (b - a < min) return; ctl.touch(st => mod.setFreeWindow(st, f.id, a, b)); };
+          const restShort = gaps.some(r => (r.group === f.group || r.group === null) && ((r.from < f.from && r.to > full.from) || (r.to > f.to && r.from < full.to)));
+          const partial = f.from > full.from || f.to < full.to, before = f.from > full.from ? fm(full.from) + '–' + fm(f.from) : '', after = f.to < full.to ? fm(f.to) + '–' + fm(full.to) : '';
+          const part = { gapTitle: sv ? 'Där det saknas vuxna nu' : 'Where adults are missing now',
+            gaps: gaps.map(r => ({ t: ((v.groups.find(x => x.id === r.group) || {}).name || (sv ? 'Hela förskolan' : 'Whole preschool')) + ' ' + fm(r.from) + '–' + fm(r.to) + ': ' + r.n + (sv ? ' för få' : ' too few') })),
+            noGaps: !gaps.length, noGapTxt: f.status === 'confirmed' || f.status === 'accepted' ? (sv ? 'Inga luckor. Dagen är täckt.' : 'No gaps. The day is covered.') : (sv ? 'Inga luckor just nu: kollegorna täcker dagen. Det kanske inte behövs någon vikarie.' : 'No gaps right now: colleagues cover the day. A substitute may not be needed.'),
+            winTxt: (sv ? 'Vikarien ' + (f.by ? 'tar ' : 'behövs ') : 'The substitute ' + (f.by ? 'takes ' : 'is needed ')) + fm(f.from) + '–' + fm(f.to) + ' (' + hh(f.to - f.from) + ')',
+            winSub: partial ? (sv ? 'av passet ' : 'of the shift ') + fm(full.from) + '–' + fm(full.to) + '. ' + (sv ? 'Resten (' : 'The rest (') + [before, after].filter(Boolean).join(sv ? ' och ' : ' and ') + (restShort ? (sv ? ') måste täckas av personalen – det saknas vuxna där nu.' : ') must be covered by the staff – adults are missing there now.') : (sv ? ') täcks redan av personalen.' : ') is already covered by the staff.')) : (sv ? '– hela passet.' : '– the whole shift.'),
+            canWin: f.status === 'offered' || f.status === 'nobody',
+            winSteps: [{ label: sv ? 'Från' : 'From', val: fm(f.from), dec: () => setW(f.from - 15, f.to), inc: () => setW(f.from + 15, f.to) }, { label: sv ? 'Till' : 'To', val: fm(f.to), dec: () => setW(f.from, f.to - 15), inc: () => setW(f.from, f.to + 15) }],
+            toGapsTxt: sv ? 'Bara där det saknas nu' : 'Only where it is short now', toGaps: () => { const w = mod.subWindow(S, f); ctl.touch(st => mod.setFreeWindow(st, f.id, w.from, w.to)); },
+            toFullTxt: sv ? 'Hela passet' : 'Whole shift', toFull: () => ctl.touch(st => mod.setFreeWindow(st, f.id, full.from, full.to)),
+            winNote: sv ? 'Kan personalen täcka början eller slutet av dagen? Flytta dem i schemat och tryck sedan ”Bara där det saknas nu”. Kortaste pass för en vikarie: ' + hh(min) + ' (Inställningar › Vikarier).' : 'Can the staff cover the start or the end of the day? Move them in the schedule, then press “Only where it is short now”. Shortest shift for a substitute: ' + hh(min) + ' (Settings › Substitutes).' };
+          return { ...part, title: sv ? 'Ledigt pass' : 'Free shift', unit: g.name, ...u, time: fm(f.from) + '–' + fm(f.to), replaces: (sv ? 'Ersätter ' : 'Replaces ') + nm(f.staff) + (sv ? ' (sjuk). Vikarier ser bara ”ledigt pass”.' : ' (sick). Substitutes only see “free shift”.'),
             tags: [...(f.needs.open ? [{ t: sv ? 'Öppnar' : 'Opens' }] : []), ...(f.needs.close ? [{ t: sv ? 'Stänger' : 'Closes' }] : []), ...(f.needs.sn ? [{ t: sv ? 'Utbildad för särskilt stöd' : 'Special needs trained' }] : [])],
             steps: [sv ? 'Erbjudet' : 'Offered', sv ? 'Accepterat' : 'Accepted', sv ? 'Bekräftat' : 'Confirmed'].map((n, k) => ({ name: n, bar: k <= idx ? (f.status === 'nobody' ? '#E5534B' : '#1F7D97') : '#E3EAF0', fw: k === idx ? 700 : 500, fg: k === idx ? '#1F2D3A' : '#8796A5' })),
             statusLine, log: f.log.map(l => ({ t: fm(l.t), text: LOG(l) })), ex, hasEx: ex.length > 0, exTitle: sv ? 'Kan inte ta passet' : 'Cannot take the shift',

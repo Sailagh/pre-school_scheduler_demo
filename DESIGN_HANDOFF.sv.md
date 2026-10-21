@@ -72,6 +72,9 @@ Fliken **▦ Schemarader** bredvid veckodagarna visar schemat så som Medvind vi
 - **Importera från Medvind…** läser en export från Medvind. Tider skrivna på olika sätt (06.00-13.00, 8-16.30, 0630-1030, 9-19) går bra. En felskrivning som går att förstå (6.3014.0) läses men markeras gul; det som inte går att läsa markeras rött och tas inte med; en schemarad utan avdelningsnummer markeras. Filen läses av demons server på datorn och sparas bara i webbläsaren.
 - Under rutnätet finns en **kontroll mot reglerna**: arbetstid i snitt över rotationen, dygnsvila (också från sista veckan till första) och raster. Exporten visar inte rasterna, så schemat säger hur många raster varje dag behöver (två på dagar över 10,5 timmar) i stället för att godkänna dem.
 
+## Vikarie för en del av dagen
+När någon är sjuk visar kortet under *Sjuk och vikarier* **var det saknas vuxna nu**, per avdelning och tid. Vikarien erbjuds bara den delen av passet: från första till sista luckan, men aldrig kortare än **kortaste pass för en vikarie** (Inställningar › Vikarier, 3 timmar från början) och aldrig utanför passet. Den som planerar kan flytta tiden, välja *Hela passet*, eller flytta kollegor i schemat och sedan trycka *Bara där det saknas nu*. Kortet säger om resten av passet redan täcks av personalen eller måste täckas. Vikarien får bara den delen, som barntid.
+
 ## Telefonen: knappen Jag
 Mellan *Mitt schema* och *Vem arbetar* längst ned finns en rund knapp på en liten vit kulle, med en enkel personikon. Den öppnar en sida för den anställda:
 - **Överst:** namn, hemavdelning, avtalade timmar i veckan och procent, och vad personen får göra (öppna, stänga, utbildad för särskilt stöd) och fasta lediga dagar eller tider.

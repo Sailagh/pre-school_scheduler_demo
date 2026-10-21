@@ -79,6 +79,13 @@ The ratio check (adults needed per unit per 15-minute slot = ceil(children/ratio
 5. First to press **Ta passet** → `accepted`; shifts are reassigned (`was` keeps the original owner). Principal **Bekräfta** → `confirmed`; the substitute gets an inbox note.
 6. **Privacy:** colleagues see "Frånvarande", substitutes see "Ledigt pass". Only the person and the principal see "Sjuk".
 
+### Partial cover: a substitute only where it is short
+A sick day does not always need a substitute for the whole shift: colleagues often cover the start or the end, and the gap is a busy middle of the day.
+- The free-shift card shows **where adults are missing now** (`shortfall`): per unit, and for the whole preschool while units are merged, as time ranges with how many are missing. It updates as the planner moves people.
+- The substitute is offered a **window** (`subWindow`): from the first to the last gap in the sick person's unit inside their shift, at least the **shortest substitute shift** (Settings › Substitutes, default 3 h), never outside the shift. The card says what the rest of the shift needs ("already covered by the staff" or "must be covered – adults are missing there now").
+- The planner can move the window (±15 min), choose **Whole shift**, or **Only where it is short now**, which works the window out again after colleagues have been moved. Who can take it is worked out again (`setFreeWindow`); opening/closing is only required if the window starts/ends the shift.
+- When a substitute accepts, only the part inside the window becomes theirs, as time with the children (`acceptFree`); the rest stays uncovered for colleagues. Taking the sick report back restores the day.
+
 ### Cover part of a shift (internal)
 Staff picks a from/to range inside their shift and a reason, which only the principal sees. `coverCands()` sends it to colleagues who are present, available, not working then, and would not break R1–R4. The first yes → `matched`. The principal approves under **Notiser** → the shift is split, the colleague gets the covered piece (`cover` = original staff), and hours are recounted.
 

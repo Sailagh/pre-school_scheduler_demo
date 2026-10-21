@@ -91,6 +91,18 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     assert.match(t, /Keep them and fill in around them/); assert.match(t, /Start over: replace the whole week/);
     await btn('Close', true).click();
   });
+  await step('sick cover: shows where adults are missing and offers the substitute only part of the shift', async () => {
+    await p.locator('[data-row="p8"]').first().click({ position: { x: 60, y: 20 } }).catch(() => {}); await p.getByText('Ahmed Karimi').first().click(); await p.waitForTimeout(300);
+    await btn(/Mark sick today/).click(); await p.waitForTimeout(400); await btn(/Sick cover/).click(); await p.waitForTimeout(600);
+    let t = await body();
+    assert.match(t, /Where adults are missing now/); assert.match(t, /Avd 2 \d\d:\d\d–\d\d:\d\d: 1 too few/);
+    assert.match(t, /The substitute is needed 07:15–13:30 \(6\.3 h\) of the shift 06:00–13:30\. The rest \(06:00–07:15\) is already covered by the staff\./);
+    await btn('Whole shift', true).click(); await p.waitForTimeout(300);
+    assert.match(await body(), /The substitute is needed 06:00–13:30 \(7\.5 h\) – the whole shift\./);
+    await btn('Only where it is short now', true).click(); await p.waitForTimeout(300);
+    assert.match(await body(), /needed 07:15–13:30/);
+    await btn(/Sick cover/).click(); await p.waitForTimeout(300);
+  });
   await step('Copy last week appears once the week before has a schedule', async () => {
     for (let i = 0; i < 2; i++) await btn('›').click(); await p.waitForTimeout(300);
     await btn(/Copy week 43/).click(); await p.waitForTimeout(300);

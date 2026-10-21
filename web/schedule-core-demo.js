@@ -458,8 +458,10 @@ function restIssue(s, p, w, d, a, b, lang) {
   return r < R.h * 60 ? R.code + ' · ' + S2(lang, 'bara ' + hrs(r, lang) + ' vila mellan passen', 'only ' + hrs(r, lang) + ' rest between shifts') : null;
 }
 export function freeNeeds(s, pid, w, d, from, to, group) {
-  const r = s.roles[w + '-' + d] || {}, p = person(pid) || {};
-  return { open: r.open === pid, close: r.close === pid, sn: !!p.sn && (s.snKids || []).some(k => k.unit === group && k.days.includes(d) && k.from < to && k.to > from) };
+  // Opening and closing are only the substitute's job if their part of the day starts or ends the shift.
+  const r = s.roles[w + '-' + d] || {}, p = person(pid) || {}, sh = dayShifts(s, pid, w, d).filter(x => !x.was);
+  const first = sh.length ? sh[0].start : from, last = sh.length ? Math.max(...sh.map(x => x.end)) : to;
+  return { open: r.open === pid && from <= first, close: r.close === pid && to >= last, sn: !!p.sn && (s.snKids || []).some(k => k.unit === group && k.days.includes(d) && k.from < to && k.to > from) };
 }
 export function subCands(s, f, lang) {
   return SUBS.map(p => {
@@ -484,13 +486,52 @@ function route(st, f, first) {
   else if (ok.length) { f.stage = 'all'; f.offered = ok.map(c => c.id); f.log.push({ t: f.clock, k: 'offerAll', ids: f.offered.slice() }); }
   else { f.stage = 'all'; f.offered = []; f.status = 'nobody'; f.log.push({ t: f.clock, k: 'nobody' }); }
 }
+// Where a day is short of adults right now, as time ranges: per unit, and for the whole preschool while the units
+// are merged in the morning and evening. Shifts of people who are away do not count. [{ group|null, from, to, n }]
+export function shortfall(s, w, d) {
+  const sw = { ...s, week: w, slot: 15 }, abs = s.absences.filter(z => z.week === w && z.day === d);
+  const uncov = new Set(s.shifts.filter(x => x.week === w && x.day === d && (abs.some(z => z.staff === x.staff && z.from < x.end && z.to > x.start) || (() => { const p = person(x.staff); return p && !p.sub && onLeave(p, w, d); })())).map(x => x.id));
+  const out = [], add = (group, t, n) => { const l = out.find(r => r.group === group && r.to === t); if (l) { l.to = t + 15; l.n = Math.max(l.n, n); } else out.push({ group, from: t, to: t + 15, n }); };
+  for (const x of slotsFor(sw, d, uncov)) {
+    if (x.merged) { if (x.have < x.need) add(null, x.t, x.need - x.have); }
+    else for (const g of x.groups) if (g.have < g.need) add(g.id, x.t, g.need - g.have);
+  }
+  return out;
+}
+// The part of a free shift a substitute is needed for: from the first to the last gap in the sick person's unit
+// (or while the units are merged) inside their shift, at least `subMin` minutes (Settings › Substitutes) and never
+// outside the shift. With no gap at all, the whole shift.
+export const SUB_MIN = 180;
+export function subWindow(s, f) {
+  const min = (s.prefs || {}).subMin ?? SUB_MIN, a0 = f.full ? f.full.from : f.from, b0 = f.full ? f.full.to : f.to;
+  const gaps = shortfall(s, f.week, f.day).filter(r => (r.group === f.group || r.group === null) && r.from < b0 && r.to > a0);
+  if (!gaps.length || b0 - a0 <= min) return { from: a0, to: b0 };
+  let a = Math.max(a0, Math.min(...gaps.map(r => r.from))), b = Math.min(b0, Math.max(...gaps.map(r => r.to)));
+  while (b - a < min) { if (a > a0) a -= 15; if (b - a < min && b < b0) b += 15; }
+  return { from: a, to: b };
+}
 export function makeFree(st, pid, w, d, t) {
   st.free = st.free || [];
   if (st.free.some(f => f.staff === pid && f.week === w && f.day === d)) return null;
   const sh = dayShifts(st, pid, w, d); if (!sh.length) return null;
   const from = sh[0].start, to = sh[sh.length - 1].end, c = sh.find(x => x.type === 'contact') || sh[0];
-  const f = { id: 'f' + Date.now(), staff: pid, week: w, day: d, from, to, group: c.group, needs: freeNeeds(st, pid, w, d, from, to, c.group), status: 'offered', stage: 'preferred', offered: [], declined: [], by: null, clock: t, log: [{ t, k: 'sick' }] };
+  const f = { id: 'f' + Date.now(), staff: pid, week: w, day: d, from, to, full: { from, to }, group: c.group, status: 'offered', stage: 'preferred', offered: [], declined: [], by: null, clock: t, log: [{ t, k: 'sick' }] };
+  Object.assign(f, subWindow(st, f)); f.needs = freeNeeds(st, pid, w, d, f.from, f.to, c.group);
   route(st, f, true); st.free.push(f); return f;
+}
+// The planner changes the part a substitute is offered (inside the sick person's shift). Who can take it is worked
+// out again; someone who already said no is not asked again.
+export function setFreeWindow(st, id, from, to) {
+  const f = freeById(st, id); if (!f || !(f.status === 'offered' || f.status === 'nobody')) return;
+  const full = f.full || { from: f.from, to: f.to }; f.full = full;
+  f.from = Math.max(full.from, Math.min(from, full.to - 15)); f.to = Math.min(full.to, Math.max(to, f.from + 15));
+  f.needs = freeNeeds(st, f.staff, f.week, f.day, f.from, f.to, f.group);
+  const ok = subCands(st, f, 'en').filter(c => c.ok).map(c => c.id);
+  const l = f.log[f.log.length - 1];
+  if (l && l.k === 'window') Object.assign(l, { from: f.from, to: f.to }); else f.log.push({ t: f.clock, k: 'window', from: f.from, to: f.to });
+  if (!ok.length) { f.status = 'nobody'; f.offered = []; }
+  else if (f.status === 'nobody') { f.status = 'offered'; f.stage = 'all'; f.offered = ok; }
+  else f.offered = f.stage === 'preferred' && f.offered.some(x => ok.includes(x)) ? f.offered.filter(x => ok.includes(x)) : ok;
 }
 const freeById = (st, id) => (st.free || []).find(x => x.id === id);
 export function skipFree(st, id) {
@@ -502,7 +543,17 @@ export function skipFree(st, id) {
 export function acceptFree(st, id, subId) {
   const f = freeById(st, id); if (!f || f.status !== 'offered' || !f.offered.includes(subId)) return false;
   f.status = 'accepted'; f.by = subId; f.clock += 6; f.log.push({ t: f.clock, k: 'accepted', by: subId });
-  st.shifts.forEach(x => { if (x.staff === f.staff && x.week === f.week && x.day === f.day) { x.was = x.staff; x.staff = subId; } });
+  // The substitute takes the part of the day inside the window, as time with the children; the rest of the
+  // sick person's day stays uncovered, for colleagues to cover.
+  st.shifts = st.shifts.flatMap(x => {
+    if (x.staff !== f.staff || x.week !== f.week || x.day !== f.day || x.end <= f.from || x.start >= f.to) return [x];
+    const out = [];
+    if (x.start < f.from) out.push({ ...x, end: f.from });
+    if (x.end > f.to) out.push({ ...x, id: 'h' + (++st.nid), start: f.to });
+    const mid = { ...x, id: x.start < f.from ? 'h' + (++st.nid) : x.id, start: Math.max(x.start, f.from), end: Math.min(x.end, f.to), was: x.staff, staff: subId };
+    if (mid.type !== 'contact' && mid.type !== 'break') { mid.wasType = mid.type; mid.type = 'contact'; }
+    return [...out, mid];
+  });
   return true;
 }
 export function declineFree(st, id, subId) {
@@ -517,7 +568,7 @@ export function confirmFree(st, id) {
 }
 export function removeFree(st, pid, w, d) {
   const f = (st.free || []).find(x => x.staff === pid && x.week === w && x.day === d); if (!f) return;
-  st.shifts.forEach(x => { if (x.was === pid && x.week === w && x.day === d) { x.staff = pid; delete x.was; } });
+  st.shifts.forEach(x => { if (x.was === pid && x.week === w && x.day === d) { x.staff = pid; delete x.was; if (x.wasType) { x.type = x.wasType; delete x.wasType; } } });
   st.free = st.free.filter(x => x !== f);
 }
 export function nonChildTarget(s, p, w) {
