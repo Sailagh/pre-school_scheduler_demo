@@ -11,10 +11,18 @@ const clone = x => JSON.parse(JSON.stringify(x));
 const tf = (s, v = {}) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
 
 export const GROUPS = [
-  { id: 'g1', name: 'Blåbär', ages: '1–3', open: 390, close: 1050, ratio: 5, max: 20, sn: 0 },
-  { id: 'g2', name: 'Lingon', ages: '3–4', open: 375, close: 1080, ratio: 7, max: 28, sn: 1 },
-  { id: 'g3', name: 'Hjortron', ages: '4–5', open: 360, close: 1110, ratio: 10, max: 40, sn: 0 },
+  { id: 'g1', name: 'Avd 1', ages: '1–3', open: 390, close: 1050, ratio: 5, max: 20, sn: 0 },
+  { id: 'g2', name: 'Avd 2', ages: '3–4', open: 375, close: 1080, ratio: 7, max: 28, sn: 1 },
+  { id: 'g3', name: 'Avd 3', ages: '4–5', open: 360, close: 1110, ratio: 10, max: 40, sn: 0 },
 ];
+// Unit names can be changed in Settings (to match Edlevo's departments). Earlier versions of the demo called the
+// units Blåbär, Lingon and Hjortron; a browser that saved those default names gets the new ones.
+const OLD_NAMES = { g1: 'Blåbär', g2: 'Lingon', g3: 'Hjortron' };
+// A unit's badge: its colours, and a letter from its name ("Avd 2" -> "2", "Jupiter" -> "J").
+const BADGE = { g1: { ub: '#C9DDF5', uf: '#1E3F73' }, g2: { ub: '#FFD3D0', uf: '#8E2A27' }, g3: { ub: '#FFE3B8', uf: '#7A4A0C' } };
+export const unitLetter = name => { const n = String(name || '').trim(), m = n.match(/(\d+)\s*$/); return m ? m[1] : (n[0] || '?').toUpperCase(); };
+export const unitBadge = id => { const g = GROUPS.find(x => x.id === id); return { letter: g ? unitLetter(g.name) : '', ...(BADGE[id] || { ub: '#EEF3F6', uf: '#3C4B5A' }) }; };
+export const UNITS = new Proxy({}, { get: (_, id) => unitBadge(id) });
 export const STAFF = [
   { id: 'p1', name: 'Anna Lindqvist', pct: 100, hours: 40, group: 'g3', open: true, close: true, sn: true, off: [] },
   { id: 'p2', name: 'Erik Johansson', pct: 75, hours: 30, group: 'g2', open: false, close: true, sn: false, off: [] },
@@ -685,7 +693,7 @@ export function controller(comp) {
   const load = () => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!j || !j.s) return null;
     j.staff.forEach(x => { const p = STAFF.find(y => y.id === x.id); if (p) Object.assign(p, x); else STAFF.push(x); });
     for (let i = STAFF.length - 1; i >= 0; i--) if (!j.staff.some(x => x.id === STAFF[i].id)) STAFF.splice(i, 1);
-    (j.groups || []).forEach(x => { const g = GROUPS.find(y => y.id === x.id); if (g) Object.assign(g, x); }); (j.subs || []).forEach(x => { const p = SUBS.find(y => y.id === x.id); if (p) Object.assign(p, x); }); if (!j.s.free) j.s.free = []; if (!j.s.requests) j.s.requests = []; if (!j.s.special) j.s.special = [];
+    (j.groups || []).forEach(x => { const g = GROUPS.find(y => y.id === x.id); if (g) Object.assign(g, x, x.name === OLD_NAMES[x.id] ? { name: g.name } : {}); }); (j.subs || []).forEach(x => { const p = SUBS.find(y => y.id === x.id); if (p) Object.assign(p, x); }); if (!j.s.free) j.s.free = []; if (!j.s.requests) j.s.requests = []; if (!j.s.special) j.s.special = [];
     (j.s.rules || []).filter(r => r.type === 'week').forEach(r => r.versions.forEach(v => { if (v.p.flex == null) v.p.flex = 2; })); if (!j.s.notes) j.s.notes = []; return j.s; } catch (e) { return null; } };
   const store = createStore(load() || seed());
   const me = Math.random().toString(36).slice(2); let syncing = false;
@@ -988,7 +996,7 @@ export function controller(comp) {
 // extra, staff?, cells: [week][day 0-6] -> { from, to, raw?, flag?, note? } | null }], flags: [...] }.
 // medvind/medvind.py reads and writes the Excel export; everything here works on this plain shape.
 export const ROT0 = { n: 6, start: W0 };
-// Our schedule as schedule lines: one line per person, numbered by unit like Medvind ("1, Blåbär"), for the
+// Our schedule as schedule lines: one line per person, numbered by unit like Medvind ("1, Avd 1"), for the
 // N calendar weeks from `start`. A day becomes one range from the first start to the last end, as in Medvind,
 // so breaks and planning inside it are not shown.
 export function rotationFromShifts(s, start = (s.rotation || ROT0).start, n = (s.rotation || ROT0).n) {

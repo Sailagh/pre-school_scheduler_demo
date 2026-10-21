@@ -27,9 +27,9 @@ Times are **minutes from midnight** (e.g. 390 = 06:30). Days are `0–4` = Mon�
 
 ```ts
 Unit (GROUPS)   { id, name, ages, open, close, ratio /*children per adult*/, max /*enrolled*/, sn /*special-needs kids*/ }
-  g1 Blåbär  1–3 yrs 06:30–17:30 ratio 5
-  g2 Lingon  3–4 yrs 06:15–18:00 ratio 7
-  g3 Hjortron 4–5 yrs 06:00–18:30 ratio 10
+  g1 Avd 1   1–3 yrs 06:30–17:30 ratio 5
+  g2 Avd 2   3–4 yrs 06:15–18:00 ratio 7
+  g3 Avd 3   4–5 yrs 06:00–18:30 ratio 10
 Staff           { id, name, pct /*employment %*/, hours, group /*home unit*/, open, close /*may open/close*/, sn /*trained for special needs*/,
                   off: day[] /*fixed days off*/, earliest?, latest? /*availability*/, end? /*last week*/,
                   changes: [{from: week, pct}] /*future % changes, e.g. 75% from w.47*/, leave: [{w1,d1,w2,d2,kind:'vacation'|'leave'}],
@@ -90,7 +90,7 @@ Staff picks a from/to range inside their shift and a reason, which only the prin
 Fixed 1440 px wide canvas, scaled to fit the viewport with no page scroll. Font **IBM Plex Sans** (UI) and **IBM Plex Mono** (times and numbers).
 
 - **Top bar** (height ~57 px, white, bottom border `#D3DDEA`): school name, week ‹ › with date range, Undo / Redo, Copy to next week, **▶ Demo**, **Sjuk och vikarier** (badge = active free shifts, `#D9A23A`), **Notiser** (badge), **Personalens telefon**, **Inställningar**, **SV/EN**. Buttons are 32 px tall, 6 px radius, 1 px `#C9D5E0` border, 13 px text.
-- **Day tabs** Mon–Fri, with **unit tabs** (Alla / Blåbär B / Lingon L / Hjortron H, each with a coloured letter chip).
+- **Day tabs** Mon–Fri, with **unit tabs** (Alla / Avd 1 / Avd 2 / Avd 3, each with a coloured chip; the chip shows the unit's number, or the first letter of a name).
 - **Warnings strip** "Att kontrollera" (`#EEF4F7` background, min-height 52 px): a count and a list of rule-coded warnings. Tapping one jumps to the shift. Show nothing extra when it is clear.
 - **Left: staff roster** (~300 px). A search box, a sort control (A–Ö / fill / contract), and a legend (Med barn / Utan barn / Sjuk). Each row has the name, a unit chip, hours/contract, and a **two-part fill bar**:
   - Left segment (width = A/C): children time, filling red→green (`color-mix(in oklch, #6CC24A p%, #F59A93)`, full = `#6CC24A`). Sick time shows as red stripes (`#F2A9A3/#FBE3E1` 45°).
@@ -119,7 +119,7 @@ Fixed 1440 px wide canvas, scaled to fit the viewport with no page scroll. Font 
   - Expanded, the card shows the needs tags, a 3-step progress bar (6 px), the status line, a timed log (mono times), "Kan inte ta passet" (name + reason in `#8E2A27`), and the buttons Bekräfta / ⏩ Skip 15 min / Visa i schemat.
 - **▶ Demo autoplay**, six captioned steps in a dark caption card (`#1F2D3A`) at the bottom-left:
   1. Anna Lindqvist reports sick at 06:40.
-  2. The shift becomes a free shift and is offered to the unit's preferred substitute (Karin for Hjortron).
+  2. The shift becomes a free shift and is offered to the unit's preferred substitute (Karin for Avd 3).
   3. No answer, so it goes to everyone eligible.
   4. Sara Ek takes the shift on her phone.
   5. Accepted: Sara is in the schedule.
@@ -184,7 +184,7 @@ Opened from **Personalens telefon** in the planner, with a person picker ("Telef
 
 **Shift types:** Barntid (contact) `#CDECEF` / `#134E5E` · Rast (break) `#FFDAD8` / `#7A2A26` · Planering (planning) `#D8F4C0` / `#2F5A17` · Möte (meeting) `#D3DDEA` / `#2A3A52`.
 
-**Units:** Blåbär B `#C9DDF5` / `#1E3F73` · Lingon L `#FFD3D0` / `#8E2A27` · Hjortron H `#FFE3B8` / `#7A4A0C`. Units must be data-driven; there will be more than three.
+**Units:** Avd 1 `#C9DDF5` / `#1E3F73` · Avd 2 `#FFD3D0` / `#8E2A27` · Avd 3 `#FFE3B8` / `#7A4A0C`. Names are editable in Settings › Children and units (so they can match Edlevo's departments); the chip shows the number at the end of the name, or its first letter (`unitBadge`). Units must be data-driven; there will be more than three.
 
 **Status:** ok `#E2F6D4` / `#2D6A1F` · under `#FFDAD8` / `#8E2A27` · over / warning `#FFF1CF` / `#6B5214` · error `#E5534B`, `#C2413D`, `#B33A35` · amber badge `#D9A23A`.
 

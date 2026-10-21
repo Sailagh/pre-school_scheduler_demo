@@ -85,7 +85,7 @@ class SolverTest(unittest.TestCase):
         (wk,) = solve_weeks("lingon", [42], self.tmp)
         self.assertEqual([w["text"] for w in wk["warnings"] if w["kind"] == "staffing"], [])
         helped = [i for i in wk["report"] if i["text"].startswith("Help in another unit")]
-        self.assertTrue(helped and any("→ Lingon" in x for x in helped[0]["more"]), wk["report"])
+        self.assertTrue(helped and any("→ Avd 2" in x for x in helped[0]["more"]), wk["report"])
 
     def test_children_counted_from_edlevo(self):
         (wk,) = solve_weeks("edlevo", [43], self.tmp)

@@ -524,7 +524,6 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:402,&quot;height&quot;:874},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;a&quot;,&quot;b&quot;],&quot;default&quot;:&quot;a&quot;,&quot;tsType&quot;:&quot;'a'|'b'&quot;},&quot;others&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;timeline&quot;,&quot;time&quot;,&quot;unit&quot;],&quot;default&quot;:&quot;timeline&quot;,&quot;tsType&quot;:&quot;'timeline'|'time'|'unit'&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;me&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;p1&quot;,&quot;p2&quot;,&quot;p5&quot;,&quot;p9&quot;],&quot;default&quot;:&quot;p1&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
-const UC = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
 const PAL = { contact: '#9FD8DE', break: '#F6B7B3', planning: '#B9E59A', meeting: '#AFC0D6' };
 const TODAY = (() => { const n = new Date(), base = new Date(2026, 9, 12); let diff = Math.floor((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - base) / 864e5), w = 42 + Math.floor(diff / 7), d = ((diff % 7) + 7) % 7; if (d > 4) { w++; d = 0; } if (w < 41 || w > 52) { w = 42; d = 1; } return { w, d }; })();
 const TW = TODAY.w, TD = TODAY.d;
@@ -541,6 +540,7 @@ class Component extends DCLogic {
   flash(msg) { clearTimeout(this._tt); this.setState({ toast: msg }); this._tt = setTimeout(() => this.setState({ toast: null }), 2400); }
   renderVals() {
     const ctl = this.props.ctl || this.ctl, mod = this.props.mod || this.mod; if (!ctl || !mod) return { ready: false };
+    const UC = mod.UNITS;  // unit badges: colour and a letter from the unit's name
     const lang = this.props.lang === 'sv' ? 'sv' : 'en', sv = lang === 'sv', t = (a, b) => sv ? a : b, V = this.props.variant === 'b' ? 'b' : 'a';
     const s = ctl.store.get(), me = this.props.me || 'p1', P = mod.person(me) || mod.STAFF[0], st = this.state, W = st.week, D = st.day;
     // Today's week may not be scheduled yet in the demo: then the planner's week (or the nearest scheduled one)

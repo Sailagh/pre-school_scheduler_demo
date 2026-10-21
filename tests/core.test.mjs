@@ -154,10 +154,10 @@ test('keeping hand-made shifts: those people are left out and what they cover is
 
 test('every unit needs its own adults: a gap in one unit is warned about even if the total is fine', () => {
   const s = solvedState();
-  // Move all of Lingon's Tuesday time with children to Hjortron: the total stays the same, Lingon is left empty.
+  // Move all of Avd 2's Tuesday time with children to Avd 3: the total stays the same, Avd 2 is left empty.
   s.shifts.filter(x => x.week === 42 && x.day === 1 && x.group === 'g2' && x.type === 'contact').forEach(x => { x.group = 'g3'; });
   const w = m.checkWeek(s, 42, 'sv').map(x => x.text);
-  assert.ok(w.some(t => /^För få vuxna i Lingon på tisdag/.test(t)), w.join('\n'));
+  assert.ok(w.some(t => /^För få vuxna i Avd 2 på tisdag/.test(t)), w.join('\n'));
   assert.ok(!w.some(t => /^För lite personal på tisdag/.test(t)), 'the preschool as a whole is still covered');
 });
 
@@ -179,7 +179,7 @@ test('children from Edlevo: only counts are accepted, and they replace the examp
   s.childCounts = doc; s.prefs.childSource = 'edlevo';
   const ed = m.solverProblem(s, [43]).weeks[0], at = (h, mm) => (h * 60 + mm - 360) / 15;
   // Monday 19 Oct 10:00: adults needed per unit from the counted children and each unit's children per adult.
-  const mon = doc.counts['2026-10-19'], want = Math.ceil(mon['Blåbär'][at(10, 0)] / 5 + mon['Lingon'][at(10, 0)] / 7 + mon['Hjortron'][at(10, 0)] / 10 - 1e-9);
+  const mon = doc.counts['2026-10-19'], want = Math.ceil(mon['Avd 1'][at(10, 0)] / 5 + mon['Avd 2'][at(10, 0)] / 7 + mon['Avd 3'][at(10, 0)] / 10 - 1e-9);
   assert.equal(ed.days[0].need[at(10, 0)], want);
   assert.notDeepEqual(ed.days[0].need, curve.days[0].need);
   assert.equal(m.childSource(s, 43, 0), 'edlevo');
@@ -215,11 +215,23 @@ test('a rotation of schedule lines: hours averaged over the cycle, rest, and bre
 test('our schedule as schedule lines, and repeating the rotation over later weeks', () => {
   const s = solvedState(), rot = m.rotationFromShifts(s, 42, 2);
   assert.equal(rot.weeks, 2); assert.equal(rot.lines.length, m.STAFF.length);
-  assert.match(rot.lines[0].label, /^1, Blåbär$/);
+  assert.match(rot.lines[0].label, /^1, Avd 1$/);
   const p = rot.lines[0].staff, mine = s.shifts.filter(x => x.staff === p && x.week === 42 && x.day === 0);
   assert.deepEqual(rot.lines[0].cells[0][0], { from: Math.min(...mine.map(x => x.start)), to: Math.max(...mine.map(x => x.end)) });
   const st = solvedState(), to = m.repeatRotation(st, 42, 2);
   assert.deepEqual(to, [44, 45, 46, 47, 48, 49, 50, 51, 52]);
   const same = (a, b) => st.shifts.filter(x => x.week === a).map(({ staff, day, start, end, type }) => [staff, day, start, end, type]).sort().join() === st.shifts.filter(x => x.week === b).map(({ staff, day, start, end, type }) => [staff, day, start, end, type]).sort().join();
   assert.ok(same(44, 42) && same(45, 43) && same(52, 42), 'weeks repeat the rotation');
+});
+
+test('units are called Avd 1-3, can be renamed, and Edlevo departments are matched by the new name', () => {
+  assert.deepEqual(m.GROUPS.map(g => g.name), ['Avd 1', 'Avd 2', 'Avd 3']);
+  assert.equal(m.unitBadge('g2').letter, '2');
+  const g = m.GROUPS[1], old = g.name;
+  try {
+    g.name = 'Jupiter'; assert.equal(m.UNITS.g2.letter, 'J');
+    const s = m.seedState(); s.childCounts = { period: { start: '2026-10-19', end: '2026-10-19' }, counts: { '2026-10-19': { ' jupiter ': Array(50).fill(14) } } }; s.prefs.childSource = 'edlevo';
+    const need = m.solverProblem(s, [43]).weeks[0].days[0].need;
+    assert.equal(need[20], 2, '14 children in Jupiter at 7 per adult; the other units have none that day');
+  } finally { g.name = old; }
 });

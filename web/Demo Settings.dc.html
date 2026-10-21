@@ -187,6 +187,8 @@
         </div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ k.secUnits }}</div>
+          <div style="font-size:13px;line-height:1.45;color:#5A6B7A;max-width:700px">{{ k.namesSub }}</div>
+          <sc-if value="{{ hasDupNames }}"><div style="font-size:13px;color:#8E2A27">{{ k.dupNames }}</div></sc-if>
           <div style="border:1px solid #D3DDEA;border-radius:8px;overflow-x:auto;overflow-y:hidden;display:flex;flex-direction:column">
             <div style="display:grid;grid-template-columns:minmax(160px,1fr) repeat(4,150px);min-width:820px;align-items:center;column-gap:16px;padding:0 16px;height:38px;background:#F7FAFB;font-size:12px;font-weight:600;color:#5A6B7A">
               <div>{{ k.colUnit }}</div><div>{{ k.colOpens }}</div><div>{{ k.colCloses }}</div><div>{{ k.colKids }}</div><div>{{ k.colRatio }}</div>
@@ -195,7 +197,7 @@
               <div style="display:grid;grid-template-columns:minmax(160px,1fr) repeat(4,150px);min-width:820px;align-items:center;column-gap:16px;padding:10px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
                 <div style="display:flex;align-items:center;gap:10px;min-width:0">
                   <span style="flex:none;width:20px;height:20px;border-radius:4px;background:{{ u.ub }};color:{{ u.uf }};font:700 10px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ u.letter }}</span>
-                  <div style="min-width:0"><div style="font-size:14px;font-weight:500">{{ u.name }}</div><div style="font-size:12px;color:#5A6B7A">{{ u.ages }}</div></div>
+                  <div style="min-width:0;display:flex;flex-direction:column;gap:2px"><input value="{{ u.name }}" onInput="{{ u.rename }}" onBlur="{{ u.done }}" aria-label="{{ k.colUnit }}" style="width:100%;max-width:200px;height:32px;box-sizing:border-box;border:1px solid #C9D5E0;border-radius:6px;padding:0 8px;font:inherit;font-size:14px;font-weight:500;color:#1F2D3A;outline-color:#1F7D97"><div style="font-size:12px;color:#5A6B7A">{{ u.ages }}</div></div>
                 </div>
                 <sc-for list="{{ u.rows }}" as="r">
                   <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff;width:fit-content">
@@ -279,7 +281,6 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;ctl&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;mod&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;section&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;general&quot;,&quot;io&quot;,&quot;staff&quot;,&quot;kids&quot;,&quot;rules&quot;],&quot;default&quot;:&quot;general&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;pid&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;rev&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onNav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(s:string)=&gt;void&quot;},&quot;onClose&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;},&quot;onShow&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(pid:string)=&gt;void&quot;},&quot;setLang&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(l:string)=&gt;void&quot;}}">
-const UC = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
 const mkP = (id, name, group, pct) => ({ id, name, pct, hours: 40 * pct / 100, group, open: false, close: false, sn: false, off: [], earliest: null, latest: null, end: null, changes: [], leave: [] });
 const seg = (a, name, pick) => ({ name, pick, bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#3C4B5A', fw: a ? 600 : 500, sh: a ? '0 1px 2px rgba(15,30,45,.12),0 0 0 1px #D3DDEA' : 'none' });
 const tog = (on, flip) => ({ tb: on ? '#1F7D97' : '#C9D5E0', kx: on ? '21px' : '3px', flip });
@@ -294,6 +295,7 @@ class Component extends DCLogic {
     const solo = !this.props.ctl, ctl = this.props.ctl || this._ctl, mod = this.props.mod || this._mod;
     const lang = solo ? this.state.lang : this.props.lang, sv = lang === 'sv', t = (a, b) => sv ? a : b;
     if (!ctl || !mod) return { ready: false };
+    const UC = mod.UNITS;  // unit badges: colour and a letter from the unit's name
     const s = ctl.store.get(), sec = (solo ? this.state.sec : this.props.section) || 'general', nav = k => solo ? this.setState({ sec: k }) : this.props.onNav && this.props.onNav(k);
     const setLang = l => solo ? this.setState({ lang: l }) : this.props.setLang && this.props.setLang(l);
     const P = s.prefs || {}, setP = (k, v) => ctl.touch(st => { st.prefs = { ...(st.prefs || {}), [k]: v }; });
@@ -305,7 +307,8 @@ class Component extends DCLogic {
       .map(([k, name, sub]) => ({ name, sub, ...tog(P[k], () => setP(k, !P[k])) }));
     const G = mod.GROUPS, fmt = mod.fmt, ch = (g, k, d, lo, hi) => ctl.touch(() => { g[k] = Math.max(lo, Math.min(hi, g[k] + d)); });
     const unitOpts = G.map(g => ({ v: g.id, name: g.name }));
-    const units = G.map(g => ({ ...UC[g.id], name: g.name, ages: g.ages + ' ' + t('år', 'years'), rows: [
+    const rename = (g, v) => ctl.touch(() => { g.name = v; });
+    const units = G.map((g, i) => ({ ...UC[g.id], name: g.name, rename: e => rename(g, e.target.value), done: () => { if (!g.name.trim()) rename(g, 'Avd ' + (i + 1)); else if (g.name !== g.name.trim()) rename(g, g.name.trim()); }, ages: g.ages + ' ' + t('år', 'years'), rows: [
       { val: fmt(g.open), dec: () => ch(g, 'open', -15, 360, g.close - 60), inc: () => ch(g, 'open', 15, 360, g.close - 60) },
       { val: fmt(g.close), dec: () => ch(g, 'close', -15, g.open + 60, 1110), inc: () => ch(g, 'close', 15, g.open + 60, 1110) },
       { val: g.max, dec: () => ch(g, 'max', -1, 1, 60), inc: () => ch(g, 'max', 1, 1, 60) },
@@ -340,7 +343,7 @@ class Component extends DCLogic {
         : t('En påhittad vanlig dag: inskrivna barn gånger en kurva med flest barn mitt på dagen och färre tidigt och sent, och 70 % på fredagar.', 'An invented typical day: children enrolled times a curve with most children in the middle of the day and fewer early and late, and 70% on Fridays.'),
       lines: !C ? [] : [
         { mark: '✓', fg: '#2D6A1F', t: t('Period ', 'Period ') + fmtD(C.period && C.period.start) + ' – ' + fmtD(C.period && C.period.end) + ' · ' + Object.keys(C.counts).length + t(' dagar med bokningar', ' days with bookings') + (inWeeks.length ? ' · ' + t('vecka ', 'weeks ') + inWeeks[0] + '–' + inWeeks[inWeeks.length - 1] : '') },
-        ...G.map(g => { const d = deps.find(x => x.departmentname.trim().toLowerCase() === g.name.toLowerCase()); return d ? { mark: '✓', fg: '#2D6A1F', t: g.name + ': ' + (d.children != null ? d.children + t(' barn med bokningar', ' children with bookings') : t('med i filen', 'in the file')) } : { mark: '!', fg: '#B5602B', t: g.name + ': ' + t('finns inte i filen, så avdelningen får inga barn de dagarna.', 'not in the file, so the unit has no children on those days.') }; }),
+        ...G.map(g => { const d = deps.find(x => x.departmentname.trim().toLowerCase() === g.name.toLowerCase()); return d ? { mark: '✓', fg: '#2D6A1F', t: g.name + ': ' + (d.children != null ? d.children + t(' barn med bokningar', ' children with bookings') : t('med i filen', 'in the file')) } : { mark: '!', fg: '#B5602B', t: g.name + ': ' + t('finns inte i filen, så avdelningen får inga barn de dagarna. Ge den samma namn som i Edlevo under Avdelningar nedan.', 'not in the file, so the unit has no children on those days. Give it the same name as in Edlevo under Units below.') }; }),
         ...deps.filter(x => !known.has(x.departmentname.trim().toLowerCase())).map(x => ({ mark: '!', fg: '#B5602B', t: x.departmentname + ': ' + t('finns inte som avdelning här och räknas inte.', 'is not a unit here and is not counted.') })),
         { mark: 'i', fg: '#1F7D97', t: (C.about || '') + (C.made ? ' ' + t('Sammanräknad ', 'Counted ') + C.made.slice(0, 10) + '.' : '') }],
       pick: t('Välj en annan fil med antal…', 'Choose another counts file…'),
@@ -360,7 +363,7 @@ class Component extends DCLogic {
         apply: () => { ctl.touch(() => { if (!mod.STAFF.some(p => p.id === 'p19')) mod.STAFF.push(mkP('p19', 'Alva Strand', 'g1', 100), mkP('p20', 'Kenan Demir', 'g3', 75)); }); setImp('staff', 'done'); } },
       { key: 'kids', title: t('Barn', 'Children'), sub: t('Antal barn per avdelning och vistelsetider från barnregistret. Inga namn importeras.', 'Number of children per unit and attendance times from the child register. No names are imported.'),
         file: 'barn_v' + s.week + '.csv', canApply: true,
-        result: t('84 barn: Blåbär 18, Lingon 28, Hjortron 38. 1 barn med särskilda behov i Lingon.', '84 children: Blåbär 18, Lingon 28, Hjortron 38. 1 child with special needs in Lingon.'),
+        result: t('84 barn: ' + G[0].name + ' 18, ' + G[1].name + ' 28, ' + G[2].name + ' 38. 1 barn med särskilda behov i ' + G[1].name + '.', '84 children: ' + G[0].name + ' 18, ' + G[1].name + ' 28, ' + G[2].name + ' 38. 1 child with special needs in ' + G[1].name + '.'),
         applyTxt: t('Använd de här siffrorna', 'Use these numbers'), doneTxt: t('Antalet barn är uppdaterat.', 'The number of children is updated.'),
         apply: () => { ctl.touch(() => { const m = { g1: 18, g2: 28, g3: 38 }; G.forEach(g => { if (m[g.id]) g.max = m[g.id]; }); }); setImp('kids', 'done'); } },
     ].map(x => { const st = imp[x.key]; return { ...x, idle: !st, preview: st === 'preview', done: st === 'done', subTxt: st === 'done' ? x.doneTxt : x.sub, subFg: st === 'done' ? '#2D6A1F' : '#5A6B7A', choose: () => setImp(x.key, 'preview'), cancel: () => setImp(x.key, null) }; });
@@ -402,12 +405,13 @@ class Component extends DCLogic {
         sec: t('Vikariepool', 'Substitute pool'), colName: t('Namn', 'Name'), colSkill: t('Utbildning och roller', 'Training and roles'), colDays: t('Kan arbeta', 'Can work'), colPref: t('Föredragen för', 'Preferred for'),
         note: t('Ett pass går bara till vikarier som har rätt utbildning för passet, inte redan arbetar då och får tillräcklig vila (R1). Vikarier ser aldrig vem som är sjuk eller varför, bara ”ledigt pass”.', 'A shift only goes to substitutes who have the training the shift needs, are not already working then and get enough rest (R1). Substitutes never see who is sick or why, only “free shift”.') },
       k: { title: t('Barn och avdelningar', 'Children and units'), sub: t('Antalet barn, öppettiderna och hur många barn varje vuxen kan ha avgör hur många vuxna som behövs.', 'The number of children, the opening hours and how many children each adult can have decide how many adults are needed.'),
-        secUnits: t('Avdelningar', 'Units'), colUnit: t('Avdelning', 'Unit'), colOpens: t('Öppnar', 'Opens'), colCloses: t('Stänger', 'Closes'), colKids: t('Inskrivna barn', 'Children enrolled'), colRatio: t('Barn per vuxen', 'Children per adult'),
+        secUnits: t('Avdelningar', 'Units'), namesSub: t('Namnen kan ändras. Används barnens tider från Edlevo måste namnen vara samma som avdelningarna där.', "The names can be changed. When children's times come from Edlevo, the names must be the same as the departments there."),
+        dupNames: t('Två avdelningar har samma namn. Ge dem olika namn.', 'Two units have the same name. Give them different names.'), colUnit: t('Avdelning', 'Unit'), colOpens: t('Öppnar', 'Opens'), colCloses: t('Stänger', 'Closes'), colKids: t('Inskrivna barn', 'Children enrolled'), colRatio: t('Barn per vuxen', 'Children per adult'),
         mTitle: t('Öppnings- och stängningsavdelning', 'Opening and closing unit'), mOn: t('Slå ihop avdelningarna morgon och kväll', 'Join the units in the morning and evening'),
         mSub: t('Alla barn är i en avdelning. Alla som arbetar räknas för hela gruppen, och behovet räknas på alla barn tillsammans.', 'All children are in one unit. Everyone working counts for the whole group, and the staff needed is worked out from all the children together.'), mWhere: t('Avdelning', 'Unit'),
         snTitle: t('Barn med särskilda behov', 'Children with special needs'), snSub: t('Bara antal och tider, inga namn. När barnet är på plats måste en vuxen utbildad för särskilt stöd arbeta på den avdelningen.', 'Only counts and times, no names. While the child is there, an adult trained in special needs must be working in that unit.'),
         colDays: t('Dagar', 'Days'), colFrom: t('Från', 'From'), colTo: t('Till', 'To'), add: t('Lägg till barn', 'Add a child'), remove: t('Ta bort', 'Remove') },
-      ed, units, unitOpts, kids, mg, addKid: () => ctl.touch(st => { st.snKids = [...(st.snKids || []), { id: 'k' + Date.now(), unit: 'g1', days: [0, 1, 2, 3, 4], from: 480, to: 840 }]; }),
+      hasDupNames: new Set(G.map(g => g.name.trim().toLowerCase())).size < G.length, ed, units, unitOpts, kids, mg, addKid: () => ctl.touch(st => { st.snKids = [...(st.snKids || []), { id: 'k' + Date.now(), unit: 'g1', days: [0, 1, 2, 3, 4], from: 480, to: 840 }]; }),
     };
   }
 }

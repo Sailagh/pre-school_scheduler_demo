@@ -122,7 +122,7 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     await btn(/Settings/).first().click(); await p.waitForTimeout(400); await btn('Children and units', true).click(); await p.waitForTimeout(300);
     await btn('From Edlevo (counted)', true).click(); await p.waitForTimeout(800);
     let t = await body();
-    assert.match(t, /Lingon: 18 children with bookings/); assert.match(t, /must run inside the municipality/);
+    assert.match(t, /Avd 2: 18 children with bookings/); assert.match(t, /must run inside the municipality/);
     await p.setInputFiles('input[type=file]', require('path').join(__dirname, '../edlevo/mock/svar-001.xml')); await p.waitForTimeout(400);
     assert.match(await body(), /has the children's ids \(raw Edlevo data\) and is not used/);
     await btn(/Back to the schedule/).click(); await p.waitForTimeout(400);
@@ -131,7 +131,7 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
   await step('schedule lines: our schedule as a rotation, export to Medvind, import a Medvind file with flagged cells', async () => {
     await p.goto(URL.replace(/\?solver=.*$/, '')); await p.waitForTimeout(2500);  // Excel goes through the demo's own server
     await btn(/Schedule lines/).click(); await p.waitForTimeout(800);
-    assert.match(await body(), /1, Blåbär/); assert.match(await body(), /Week 1 · w\.\d+/);
+    assert.match(await body(), /1, Avd 1/); assert.match(await body(), /Week 1 · w\.\d+/);
     const [dl] = await Promise.all([p.waitForEvent('download'), btn(/Export to Medvind/).click()]);
     assert.match(dl.suggestedFilename(), /^grundschema-v\d+-\d+\.xlsx$/);
     await p.setInputFiles('input[type=file]', require('path').join(__dirname, '../medvind/exempel-grundschema.xlsx')); await p.waitForTimeout(1500);

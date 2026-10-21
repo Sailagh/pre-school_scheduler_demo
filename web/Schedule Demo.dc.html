@@ -496,7 +496,7 @@ const L_ = (sv, a, b) => sv ? a : b;
 class Component extends DCLogic {
   // The language is remembered in this browser (the phone page uses the same key), so a reload keeps it.
   state = { ...(() => { try { const l = localStorage.getItem('schema-lang'); return l === 'sv' || l === 'en' ? { lang: l, langPicked: true } : { lang: 'en' }; } catch (e) { return { lang: 'en' }; } })(), sort: 'az', dir: 1, q: '', help: false, unit: 'all' };
-  U = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
+  get U() { return this.mod ? this.mod.UNITS : {}; }  // unit badges: colour and a letter from the unit's name
   pal = {
     contact: { bg: '#CDECEF', fg: '#134e5e' }, break: { bg: '#FFDAD8', fg: '#7a2a26' }, planning: { bg: '#D8F4C0', fg: '#2f5a17' }, meeting: { bg: '#D3DDEA', fg: '#2a3a52' },
     under: '#FFDAD8', underFg: '#8E2A27', over: '#FFF1CF', overFg: '#6B5214', ok: '#E2F6D4', okFg: '#3B7A22',

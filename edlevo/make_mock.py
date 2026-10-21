@@ -24,7 +24,7 @@ FIRST, LAST = date(2026, 10, 5), date(2026, 12, 25)  # weeks 41-52
 CLOSED = {date(2026, 12, 24), date(2026, 12, 25)}
 UNIT = "Förskolan Solrosen"
 # Department name (as the units are called in the demo), number of children, share with 15-hour days.
-DEPARTMENTS = [("Blåbär", 16, 0.0), ("Lingon", 18, 0.15), ("Hjortron", 20, 0.25)]
+DEPARTMENTS = [("Avd 1", 16, 0.0), ("Avd 2", 18, 0.15), ("Avd 3", 20, 0.25)]
 
 rng = random.Random(20261021)
 guid = lambda: "{" + str(uuid.UUID(int=rng.getrandbits(128), version=4)) + "}"

@@ -27,13 +27,13 @@ const SCENARIOS = {
     s.roles['42-0'] = { open: 'p3' };
   },
   holiday: s => { s.special = [{ id: 'h', week: 52, days: [3, 4], kind: 'closed', note: 'Jul' }]; },
-  // Two of Lingon's six away all of week 42: people from the other units have to help there.
+  // Two of Avd 2's six away all of week 42: people from the other units have to help there.
   lingon: s => {
     for (const id of ['p8', 'p10']) s.absences.push(...[0, 1, 2, 3, 4].map(day => ({ staff: id, week: 42, day, from: 0, to: 1440, reason: 'leave' })));
   },
   // The number of children comes from the counted Edlevo bookings (web/edlevo-counts.json) instead of the curve.
   edlevo: s => { s.childCounts = m.checkCounts(readFileSync(new URL('../web/edlevo-counts.json', import.meta.url), 'utf8')).doc; s.prefs.childSource = 'edlevo'; },
-  // Three Blåbär staff away in week 42: the others have to cover, using the flexible week.
+  // Three Avd 1 staff away in week 42: the others have to cover, using the flexible week.
   short: s => {
     for (const id of ['p3', 'p11', 'p14']) s.absences.push(...[0, 1, 2, 3, 4].map(day => ({ staff: id, week: 42, day, from: 0, to: 1440, reason: 'leave' })));
   },
