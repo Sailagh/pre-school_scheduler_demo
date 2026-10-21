@@ -107,6 +107,17 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
       assert.equal(await btn('Sick', true).count(), 1, 'today is not treated as past');
     } finally { await btn('Close', true).click(); }
   });
+  await step('the round Me button shows hours for the week and month, and settings that are kept', async () => {
+    await btn("Staff's phone", true).click(); await p.waitForTimeout(800);
+    try {
+      await btn(/Me: overview and settings/).click(); await p.waitForTimeout(400);
+      assert.equal(await p.getByText('October 2026', { exact: true }).count(), 1);
+      assert.equal(await p.getByText(/^\d+(\.\d)? h$/).first().count(), 1, 'the week shows hours');
+      await btn(/Requests to cover a shift/).click(); await p.waitForTimeout(500);
+      const prefs = await p.evaluate(() => JSON.parse(localStorage.getItem('schema-demo-v5')).s.phonePrefs);
+      assert.equal(prefs.p1.offers, false);
+    } finally { await btn('Close', true).click(); }
+  });
   await step('the demo runs on week 42', async () => {
     await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.goto(URL); await p.waitForTimeout(3000);
     await btn('▶ Demo').click(); await p.waitForTimeout(3000);

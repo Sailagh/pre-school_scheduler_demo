@@ -160,3 +160,12 @@ test('every unit needs its own adults: a gap in one unit is warned about even if
   assert.ok(w.some(t => /^För få vuxna i Lingon på tisdag/.test(t)), w.join('\n'));
   assert.ok(!w.some(t => /^För lite personal på tisdag/.test(t)), 'the preschool as a whole is still covered');
 });
+
+test('someone who switched off cover requests on their phone is not asked', () => {
+  const s = solvedState(), r = { staff: 'p1', week: 42, day: 1, from: 780, to: 840 };
+  const free = m.coverCands(s, r, 'en').find(c => c.ok);
+  assert.ok(free, 'someone can be asked');
+  s.phonePrefs = { [free.id]: { offers: false } };
+  const now = m.coverCands(s, r, 'en').find(c => c.id === free.id);
+  assert.equal(now.why, 'Does not want requests'); assert.equal(now.ok, false);
+});

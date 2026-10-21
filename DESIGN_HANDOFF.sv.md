@@ -59,6 +59,13 @@ Högst 40 timmar per vecka, eller upp till `flex` timmar till (standard 2, går 
 ## Flytta rast och planering
 En rast, planering eller ett möte kan dras var som helst inom personens arbetsdag. Bara barntiden flyttar sig runt blocket; andra raster och planeringar står kvar, och dagen behåller sin början, sitt slut och sina minuter av varje slag. Släpps blocket på ett annat block hamnar det precis bredvid.
 
+## Telefonen: knappen Jag
+Mellan *Mitt schema* och *Vem arbetar* längst ned finns en rund knapp på en liten vit kulle, med en enkel personikon. Den öppnar en sida för den anställda:
+- **Överst:** namn, hemavdelning, avtalade timmar i veckan och procent, och vad personen får göra (öppna, stänga, utbildad för särskilt stöd) och fasta lediga dagar eller tider.
+- **Veckan** (‹ › byter vecka): schemalagda timmar av veckans mål (avtalet, minus extra timmar veckan innan), en stapel, en mening i klartext (precis enligt avtalet, X mer och nästa vecka blir lika mycket kortare, X färre, inget schema ännu), timmar per dag och fördelningen: med barnen, planering (av planeringsmålet), möte, rast.
+- **Månaden:** varje vecka med timmar av målet, eller "Inget schema ännu", summan hittills och dagar sjuk, på semester eller ledig.
+- **Inställningar**, sparade per person: förfrågningar om att täcka pass (avstängt betyder att personen inte tillfrågas), ändringar i mitt schema och påminnelse kvällen före. Avtal, avdelning och tider ändras av den som planerar.
+
 ## Det här gör inte demon
 Det är en demo och en guide, inte en produkt:
 - ingen inloggning eller roller; den som öppnar den ser allt, även orsaker till sjukfrånvaro;

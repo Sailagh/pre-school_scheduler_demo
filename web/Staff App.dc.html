@@ -118,6 +118,7 @@
 
 <sc-if value="{{ isB }}">
   <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;background:#fff">
+    <sc-if value="{{ notProf }}">
     <div style="background:#1F2D3A;color:#fff;padding:62px 16px 16px;display:flex;flex-direction:column;gap:14px">
       <div style="display:flex;align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0">
@@ -141,6 +142,66 @@
       </div>
     </div>
     <sc-if value="{{ hasOfferBanner }}"><button onClick="{{ openInbox }}" style="display:flex;align-items:center;gap:10px;margin:14px 16px 0;padding:12px 14px;border:1px solid #9FCFDB;border-radius:10px;background:#EAF6F8;font:inherit;color:#1F2D3A;text-align:left;cursor:pointer;width:calc(100% - 32px);box-sizing:border-box"><span style="flex:1;font-size:14px;font-weight:600">{{ offerBanner }}</span><span style="font-size:13px;font-weight:600;color:#1F7D97">{{ tx.show }} ›</span></button></sc-if>
+    </sc-if>
+    <sc-if value="{{ showProf }}">
+      <div style="background:#1F2D3A;color:#fff;padding:62px 16px 18px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="flex:none;width:48px;height:48px;border-radius:50%;background:#9FD8DE;color:#1F2D3A;font-size:17px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">{{ prof.initials }}</span>
+          <div style="flex:1;min-width:0"><div style="font-size:20px;font-weight:600;letter-spacing:-.01em">{{ prof.name }}</div><div style="font-size:13px;color:#A9B9C8;margin-top:2px">{{ prof.meta }}</div></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ prof.tags }}" as="tg"><span style="font-size:12px;font-weight:500;padding:4px 8px;border-radius:6px;background:#2C3B4A;color:#DCE6EE">{{ tg.t }}</span></sc-for></div>
+      </div>
+      <div style="padding:18px 16px 0;display:flex;flex-direction:column;gap:14px">
+        <div style="border:1px solid #E3EAF0;border-radius:12px;padding:14px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:600">{{ prof.weekTitle }}</div><div style="font-size:13px;color:#5A6B7A">{{ prof.weekRange }}</div></div>
+            <button onClick="{{ prof.prev }}" aria-label="‹" style="width:36px;height:36px;border:1px solid #D3DDEA;border-radius:8px;background:#fff;color:{{ prof.prevFg }};font-size:16px;cursor:pointer;padding:0">‹</button>
+            <button onClick="{{ prof.next }}" aria-label="›" style="width:36px;height:36px;border:1px solid #D3DDEA;border-radius:8px;background:#fff;color:{{ prof.nextFg }};font-size:16px;cursor:pointer;padding:0">›</button>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-size:30px;font-weight:600;letter-spacing:-.02em">{{ prof.worked }}</span><span style="font-size:15px;color:#5A6B7A">{{ prof.goal }}</span></div>
+          <div style="height:8px;border-radius:4px;background:#EEF3F6;overflow:hidden;margin-top:8px"><div style="height:100%;width:{{ prof.fill }};background:{{ prof.fillBg }}"></div></div>
+          <div style="font-size:13px;line-height:1.45;color:#3C4B5A;margin-top:8px">{{ prof.weekNote }}</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px">
+            <sc-for list="{{ prof.days }}" as="d">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+                <span style="position:relative;width:14px;height:54px;border-radius:3px;background:#EEF3F6;overflow:hidden"><span style="position:absolute;left:0;right:0;bottom:0;height:{{ d.h }};background:#9FD8DE"></span></span>
+                <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#5A6B7A">{{ d.short }}</span>
+                <span style="font-size:12px;font-weight:500;color:{{ d.fg }}">{{ d.val }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:12px;border-top:1px solid #EEF3F6">
+            <sc-for list="{{ prof.parts }}" as="x"><div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #EEF3F6"><span style="width:10px;height:10px;border-radius:2px;background:{{ x.sw }}"></span><span style="flex:1;font-size:14px">{{ x.name }}</span><span style="font-size:14px;font-weight:500">{{ x.val }}</span></div></sc-for>
+          </div>
+        </div>
+        <div style="border:1px solid #E3EAF0;border-radius:12px;padding:14px">
+          <div style="font-size:16px;font-weight:600">{{ prof.monthTitle }}</div>
+          <div style="display:flex;flex-direction:column;margin-top:8px">
+            <sc-for list="{{ prof.monthRows }}" as="r">
+              <button onClick="{{ r.pick }}" style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;column-gap:10px;padding:8px 0;border:0;border-bottom:1px solid #EEF3F6;background:transparent;font:inherit;color:#1F2D3A;text-align:left;cursor:pointer">
+                <span style="font-size:13px;font-weight:{{ r.fw }}">{{ r.label }}</span>
+                <span style="height:6px;border-radius:3px;background:#EEF3F6;overflow:hidden"><span style="display:block;height:100%;width:{{ r.fill }};background:{{ r.fillBg }}"></span></span>
+                <span style="font-size:13px;color:{{ r.valFg }};white-space:nowrap">{{ r.val }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:10px"><span style="flex:1;font-size:13px;color:#5A6B7A">{{ prof.monthSumLbl }}</span><span style="font-size:15px;font-weight:600">{{ prof.monthSum }}</span></div>
+          <sc-if value="{{ prof.hasAway }}"><div style="font-size:13px;color:#5A6B7A;margin-top:4px">{{ prof.monthAway }}</div></sc-if>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;padding:4px 4px 8px">{{ tx.settings }}</div>
+          <div style="border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+            <sc-for list="{{ prof.prefs }}" as="x">
+              <button onClick="{{ x.toggle }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border:0;border-bottom:1px solid #EEF3F6;background:#fff;font:inherit;color:#1F2D3A;text-align:left;cursor:pointer">
+                <span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:500">{{ x.name }}</span><span style="display:block;font-size:12px;color:#5A6B7A;margin-top:2px">{{ x.sub }}</span></span>
+                <span style="position:relative;flex:none;width:44px;height:26px;border-radius:13px;background:{{ x.track }}"><span style="position:absolute;top:2px;left:{{ x.knob }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)"></span></span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font-size:12px;line-height:1.45;color:#5A6B7A;padding:8px 4px 0">{{ tx.setNote }}</div>
+        </div>
+      </div>
+    </sc-if>
     <sc-if value="{{ showMe }}">
     <div style="padding:20px 16px 8px;display:flex;flex-direction:column;gap:4px">
       <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-size:13px;color:#5A6B7A">{{ sel.long }} {{ sel.date }}</div><sc-if value="{{ sel.hasStatus }}"><span style="font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:{{ sel.sBg }};color:{{ sel.sFg }};white-space:nowrap">{{ sel.status }}</span></sc-if></div>
@@ -235,10 +296,16 @@
     <div style="height:40px"></div>
   </div>
   <sc-if value="{{ isSplit }}">
-    <div style="flex:none;display:grid;grid-template-columns:repeat(2,1fr);background:#fff;border-top:1px solid #E3EAF0;padding:4px 8px 28px">
+    <div style="position:relative;flex:none;display:grid;grid-template-columns:1fr 84px 1fr;background:#fff;border-top:1px solid #E3EAF0;padding:4px 8px 28px">
       <sc-for list="{{ bTabs }}" as="tb">
-        <button onClick="{{ tb.pick }}" style="height:52px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:{{ tb.fw }};color:{{ tb.fg }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px"><span style="width:20px;height:3px;border-radius:2px;background:{{ tb.bar }}"></span>{{ tb.name }}</button>
+        <button onClick="{{ tb.pick }}" style="grid-column:{{ tb.col }};grid-row:1;height:52px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:{{ tb.fw }};color:{{ tb.fg }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px"><span style="width:20px;height:3px;border-radius:2px;background:{{ tb.bar }}"></span>{{ tb.name }}</button>
       </sc-for>
+      <div style="grid-column:2;grid-row:1;position:relative">
+        <div style="position:absolute;left:50%;top:-30px;width:84px;height:42px;margin-left:-42px;box-sizing:border-box;border:1px solid #E3EAF0;border-bottom:0;border-radius:42px 42px 0 0;background:#fff"></div>
+        <button onClick="{{ pickProf }}" aria-label="{{ profLabel }}" title="{{ profLabel }}" style="position:absolute;left:50%;top:-22px;width:60px;height:60px;margin-left:-30px;border:0;border-radius:50%;background:{{ profBg }};box-shadow:{{ profRing }};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><circle cx="12" cy="7.5" r="4"></circle><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"></path></svg>
+        </button>
+      </div>
     </div>
   </sc-if>
   <sc-if value="{{ inbox }}">
@@ -600,6 +667,45 @@ class Component extends DCLogic {
     const tabs = [['sched', t('Schema', 'Schedule'), 0], ['req', t('Förfrågningar', 'Requests'), pendingCount], ['notes', t('Meddelanden', 'Messages'), unread]].map(([k, name, b]) => {
       const a = st.tab === k; return { name, fw: a ? 600 : 500, fg: a ? '#1F7D97' : '#5A6B7A', bar: a ? '#1F7D97' : 'transparent', hasBadge: k === 'notes' && b > 0, badge: b, pick: () => { this.setState({ tab: k }); if (k === 'notes') markRead(); } };
     });
+    // "Me": the worker's own overview (week, month, hours) and a few settings.
+    const fmtH = m => { const v = Math.round(m / 6) / 10; return (sv ? String(v).replace('.', ',') : String(v)) + ' h'; };
+    const days = n => n + ' ' + (n === 1 ? t('dag', 'day') : t('dagar', 'days'));
+    const PW = Math.max(mod.W0, Math.min(mod.W1, st.pWeek ?? W)), pw = mod.personWeek(s, me, PW), wt = isSubMe ? null : mod.weekTarget(s, P, PW);
+    const goal = wt ? wt.target : 0, bar = (a, b) => (b ? Math.min(100, Math.round(a / b * 100)) : 0) + '%';
+    const weekNote = !pw.worked ? t('Inget schema ännu för den här veckan.', 'No schedule for this week yet.')
+      : wt && wt.owe > 15 ? t('Förra veckan blev ' + fmtH(wt.owe) + ' längre, så den här veckan är lika mycket kortare.', 'Last week was ' + fmtH(wt.owe) + ' longer, so this week is that much shorter.')
+      : pw.worked > goal + 15 ? t(fmtH(pw.worked - goal) + ' mer än ditt avtal. Nästa vecka blir lika mycket kortare.', fmtH(pw.worked - goal) + ' more than your contract. Next week is that much shorter.')
+      : pw.worked < goal - 15 ? t(fmtH(goal - pw.worked) + ' färre än ditt avtal.', fmtH(goal - pw.worked) + ' fewer than your contract.')
+      : t('Precis enligt ditt avtal.', 'Exactly your contract.');
+    const ST = { sick: t('Sjuk', 'Sick'), vacation: t('Semester', 'Holiday'), leave: t('Ledig', 'Away'), off: t('Ledig', 'Off'), none: '–' };
+    const monthOf = w => dt(w, 3).getMonth(), MONTHS = sv ? ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'] : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const mWeeks = []; for (let w = mod.W0; w <= mod.W1; w++) if (monthOf(w) === monthOf(PW)) mWeeks.push(w);
+    const mRows = mWeeks.map(w => { const q = mod.personWeek(s, me, w), g = isSubMe ? 0 : mod.weekTarget(s, P, w).target; return { w, q, g }; });
+    const sched = mRows.filter(r => r.q.worked), mSum = sched.reduce((a, r) => a + r.q.worked, 0), mGoal = sched.reduce((a, r) => a + r.g, 0);
+    const mAway = ['sickDays', 'vac', 'leave'].map((k, i) => [mRows.reduce((a, r) => a + r.q[k], 0), [t('Sjuk', 'Sick'), t('Semester', 'Holiday'), t('Ledig', 'Away')][i]]).filter(x => x[0]).map(x => x[1] + ' ' + days(x[0]));
+    const PREF = { offers: true, changes: true, remind: false, ...((s.phonePrefs || {})[me] || {}) };
+    const G0 = G(P.group), offDays = (P.off || []).map(d => lc(LD(d)));
+    const prof = {
+      initials: P.name.split(' ').map(x => x[0]).join('').slice(0, 2), name: P.name, 
+      meta: isSubMe ? t('Vikarie', 'Substitute') : (G0 ? G0.name + ' · ' : '') + fmtH(mod.contractH(P, PW) * 60) + t(' i veckan', ' a week') + ' (' + mod.contractPct(P, PW) + ' %)',
+      tags: [P.open && t('Får öppna', 'May open'), P.close && t('Får stänga', 'May close'), P.sn && t('Utbildad för särskilt stöd', 'Trained for special needs'), offDays.length && t('Ledig ', 'Off on ') + offDays.join(', '),
+        P.earliest != null && t('Tidigast ', 'Not before ') + mod.fmt(P.earliest), P.latest != null && t('Senast ', 'Not after ') + mod.fmt(P.latest)].filter(Boolean).map(x => ({ t: x })),
+      weekTitle: t('Vecka ', 'Week ') + PW, weekRange: wkRange(PW), prevFg: PW > mod.W0 ? '#1F2D3A' : '#C9D5E0', nextFg: PW < mod.W1 ? '#1F2D3A' : '#C9D5E0',
+      prev: () => this.setState({ pWeek: Math.max(mod.W0, PW - 1) }), next: () => this.setState({ pWeek: Math.min(mod.W1, PW + 1) }),
+      worked: fmtH(pw.worked), goal: isSubMe ? '' : t('av ', 'of ') + fmtH(goal), fill: bar(pw.worked, goal || pw.worked), fillBg: pw.worked > goal + 15 && !isSubMe ? '#E0A93B' : '#1F7D97', weekNote,
+      parts: [['contact', t('Med barnen', 'With children')], ['planning', t('Planering', 'Planning')], ['meeting', t('Möte', 'Meeting')], ['break', t('Rast', 'Break')]]
+        .filter(([k]) => pw[k] || k !== 'meeting').map(([k, name]) => ({ name, sw: PAL[k], val: fmtH(pw[k]) + (k === 'planning' && pw.N ? ' ' + t('av ', 'of ') + fmtH(pw.N) : '') })),
+      days: pw.days.map(x => { const m = x.child + x.non; return { short: SD[x.d], h: Math.round(Math.min(1, m / 540) * 100) + '%', val: m ? fmtH(m).replace(' h', '') : ST[x.st], fg: m ? '#1F2D3A' : x.st === 'sick' ? '#C2413D' : '#8796A5' }; }),
+      monthTitle: MONTHS[monthOf(PW)][0].toUpperCase() + MONTHS[monthOf(PW)].slice(1) + ' ' + dt(PW, 3).getFullYear(),
+      monthRows: mRows.map(r => ({ label: t('v.', 'w.') + r.w, fw: r.w === PW ? 600 : 500, val: r.q.worked ? fmtH(r.q.worked) + (isSubMe ? '' : ' ' + t('av ', 'of ') + fmtH(r.g)) : t('Inget schema ännu', 'Not scheduled yet'),
+        valFg: r.q.worked ? '#1F2D3A' : '#8796A5', fill: bar(r.q.worked, r.g || r.q.worked), fillBg: !isSubMe && r.q.worked > r.g + 15 ? '#E0A93B' : '#9FD8DE', pick: () => this.setState({ pWeek: r.w }) })),
+      monthSum: sched.length ? fmtH(mSum) + (isSubMe ? '' : ' ' + t('av ', 'of ') + fmtH(mGoal)) : '–', monthSumLbl: sched.length < mRows.length ? t('Hittills (schemalagda veckor)', 'So far (scheduled weeks)') : t('Hela månaden', 'Whole month'),
+      monthAway: mAway.join(' · '), hasAway: mAway.length > 0,
+      prefs: [['offers', t('Förfrågningar om att täcka pass', 'Requests to cover a shift'), t('När en kollega behöver hjälp', 'When a colleague needs help')],
+        ['changes', t('Ändringar i mitt schema', 'Changes to my schedule'), t('När den som planerar ändrar dina pass', 'When the planner changes your shifts')],
+        ['remind', t('Påminnelse kvällen före', 'Reminder the evening before'), t('Dina tider för nästa dag', 'Your times for the next day')]]
+        .map(([k, name, sub]) => { const on = PREF[k]; return { name, sub, track: on ? '#1F7D97' : '#C9D5E0', knob: on ? '20px' : '2px', toggle: () => ctl.touch(x => { x.phonePrefs = x.phonePrefs || {}; x.phonePrefs[me] = { ...PREF, [k]: !on }; }) }; }),
+    };
     return {
       ready: true, isA: V === 'a' && !isSubMe, isB: V === 'b' && !isSubMe, isSubV: isSubMe, subMeta: t('Vikarie · ', 'Substitute · ') + ((s.prefs || {}).school || 'Förskolan Solrosen'),
       subOffers, noSubOffers: !subOffers.length, subDays, noSubDays: !subDays.length, offers, hasOffers: offers.length > 0, hasOfferBanner: openOffers > 0 && !st.inbox,
@@ -620,7 +726,10 @@ class Component extends DCLogic {
       axis: [360, 540, 720, 900, 1080].map(m => ({ left: pc(m) + '%', label: String(m / 60).padStart(2, '0') })),
       workingTitle: t('Arbetar ', 'Working on ') + lc(sel.long), workingCount: working + ' ' + t('av ', 'of ') + mod.STAFF.length,
       isSplit: !!this.props.split, showMe: !this.props.split || st.bTab === 'me', showAll: !this.props.split || st.bTab === 'all', showDivider: !this.props.split,
-      bTabs: [['me', t('Mitt schema', 'My schedule')], ['all', t('Vem arbetar', "Who's working")]].map(([k, name]) => { const a = st.bTab === k; return { name, fw: a ? 600 : 500, fg: a ? '#1F7D97' : '#5A6B7A', bar: a ? '#1F7D97' : 'transparent', pick: () => this.setState({ bTab: k }) }; }),
+      showProf: !!this.props.split && st.bTab === 'prof', notProf: !this.props.split || st.bTab !== 'prof', prof,
+      bTabs: [['me', t('Mitt schema', 'My schedule')], ['all', t('Vem arbetar', "Who's working")]].map(([k, name]) => { const a = st.bTab === k; return { name, fw: a ? 600 : 500, fg: a ? '#1F7D97' : '#5A6B7A', bar: a ? '#1F7D97' : 'transparent', col: k === 'me' ? 1 : 3, pick: () => this.setState({ bTab: k }) }; }),
+      profBg: st.bTab === 'prof' ? '#1F2D3A' : '#1F7D97', profRing: st.bTab === 'prof' ? '0 0 0 3px #9FD8DE' : '0 2px 6px rgba(31,45,58,.25)', profLabel: t('Jag: översikt och inställningar', 'Me: overview and settings'),
+      pickProf: () => this.setState({ bTab: 'prof', pWeek: W }),
       oTimeline: O === 'timeline', oTime: O === 'time', oUnit: O === 'unit', byTime, offList, hasOff: offList.length > 0, offTitle: t('Arbetar inte', 'Not working'), unitCards,
       selSick: () => open('sick', W, D), selSwap: () => open('swap', W, D), selUn: () => open('un', W, D),
       myReqs, hasReqs: myReqs.length > 0, noReqs: !myReqs.length, myNotes, hasNotes: myNotes.length > 0, noNotes: !myNotes.length,
@@ -644,6 +753,7 @@ class Component extends DCLogic {
         subOffers: t('Erbjudanden', 'Offers'), noSubOffers: t('Inga lediga pass just nu. Du får ett meddelande när ett pass erbjuds dig.', 'No free shifts right now. You get a message when one is offered to you.'), freeShift: t('Ledigt pass', 'Free shift'),
         taken: t('Passet är tillsatt.', 'The shift has been taken.'), myShifts: t('Mina pass', 'My shifts'), noSubDays: t('Du har inga bokade pass.', 'You have no booked shifts.'), mates: t('Du arbetar med', 'You work with'), bUn: t('Kan inte', "Can't work"),
         aSick: t('Sjukanmäl dig', 'Report sick'), aSwap: t('Be om att byta pass', 'Ask to swap'), aUn: t('Säg att du inte kan arbeta', "Say you can't work"),
+        settings: t('Inställningar', 'Settings'), setNote: t('Avtal, hemavdelning och tider ändras av den som planerar. Säg till om något är fel.', 'Contract, home unit and times are changed by the planner. Tell them if something is wrong.'),
         sendSick: t('Sjukanmäl', 'Report sick'), sendReq: t('Skicka förfrågan', 'Send request'), cancel: t('Avbryt', 'Cancel') },
     };
   }

@@ -158,6 +158,12 @@ Opened from **Personalens telefon** in the planner, with a person picker ("Telef
   - Today's times, shift parts and unit.
   - Action grid (2×2, 44 px buttons): **Sjuk** (red outline `#E8B4B1` / `#C2413D`), **Byt pass**, **Täck del av pass**, **Kan inte arbeta**.
   - A banner when colleagues ask for help.
+- **Bottom bar:** *Mitt schema* and *Vem arbetar* with a round 60 px button between them, raised on a small white hill above the bar, with a simple person icon (round head, torso). It is teal; dark `#1F2D3A` with a light ring while its page is open.
+- **Jag (the round button): overview and settings for the worker.**
+  - Header: initials avatar, name, home unit, contract hours a week and %, and tags: may open, may close, trained for special needs, fixed days off, earliest/latest time.
+  - **Week card** with ‹ › to move between weeks: hours scheduled of the week's target (the contract, less any extra hours from the week before), a progress bar (amber when over), a plain sentence (exactly your contract / X more, next week is that much shorter / X fewer / last week was longer so this one is shorter / no schedule yet), a mini bar per weekday with hours or Sick/Holiday/Off, and the split: with children, planning (of the planning target), meeting, break.
+  - **Month card** (weeks whose Thursday is in the month): each week's hours of target with a bar, or "Not scheduled yet"; tapping a week shows it above. Total so far, and days sick / on holiday / away.
+  - **Settings**, kept per person (`state.phonePrefs[id]`): requests to cover a shift (when off, `coverCands()` skips the person with "Does not want requests"), changes to my schedule, reminder the evening before. A note says the contract, unit and times are changed by the planner.
 - **Vem arbetar:** everyone working that day grouped by unit, own unit first. Off and away people are listed at the bottom. Others' sickness shows as "Frånvarande".
 - **Täck del av pass sheet:** From/To steppers (±15 min, clamped to own shift), reason chips (Läkarbesök / Tandläkare / Hämta barn / Annat) plus free text marked "Syns bara för rektor", a preview of who it goes to with rule explanation, and Skicka.
 - **Inkorg:** "Kan du ta över?" offers with **Ta passet** / **Avböj**, then the status (waiting for principal / approved / declined). Below are notes (published weeks, changed shifts, approvals) and the person's own requests with their status.

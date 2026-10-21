@@ -517,6 +517,7 @@ export function coverCands(s, r, lang) {
   return STAFF.filter(p => p.id !== r.staff).map(p => {
     let why = null; const mine = dayShifts(s, p.id, w, d);
     if ((r.declined || []).includes(p.id)) why = S2(lang, 'Tackade nej', 'Declined');
+    else if (((s.phonePrefs || {})[p.id] || {}).offers === false) why = S2(lang, 'Vill inte få förfrågningar', 'Does not want requests');
     else if (isAbsent(s, p.id, w, d)) why = S2(lang, 'Frånvarande', 'Away');
     else if ((p.end && w > p.end) || (p.off || []).includes(d) || (p.earliest != null && a < p.earliest) || (p.latest != null && b > p.latest)) why = S2(lang, 'Inte tillgänglig då', 'Not available then');
     else if (mine.some(x => x.start < b && x.end > a)) why = S2(lang, 'Arbetar redan då', 'Already working then');
