@@ -791,8 +791,8 @@ class Component extends DCLogic {
       { head: t('Regler', 'Rules'), lines: [...rules, t('Ett pass är 4–9 timmar, med rast mitt i.', 'A shift is 4–9 hours, with a break inside it.')], link: t('Ändra regler', 'Change rules'), go: goSet('rules') },
       { head: t('Om allt inte går ihop', 'If not everything fits'), lines: [t('1. Tillräckligt många vuxna med barnen på varje avdelning, och en utbildad vuxen för barn i behov av särskilt stöd. Personal kan hjälpa till på en annan avdelning när det behövs.', '1. Enough adults with the children in every unit, and a trained adult for children who need special support. Staff can help in another unit when needed.'), t('2. Allas avtalade timmar. Över veckogränsen bara om barnen behöver det, eftersom det tröttar.', "2. Everyone's contract hours. Over the weekly limit only if the children need it, because it is tiring."), t('3. Önskemål som att sluta tidigt.', '3. Wishes such as finishing early.'), t('4. Planeringstid.', '4. Planning time.'), t('Det som inte går visas efteråt, med förklaring.', 'Anything that does not fit is shown afterwards, with the reason.')], link: '', go: null },
     ].map(x => ({ ...x, lines: x.lines.map(t => ({ t })), hasLink: !!x.go }));
-    const secs = n * 25;
-    out.gRunTxt = t('Skapa schema för ', 'Make schedule for ') + rangeTxt; out.gRunNote = t('Tar ungefär ' + (secs < 60 ? secs + ' sekunder' : Math.round(secs / 60) + ' minuter') + '.', 'Takes about ' + (secs < 60 ? secs + ' seconds' : Math.round(secs / 60) + ' minutes') + '.');
+    const secs = n * 40;
+    out.gRunTxt = t('Skapa schema för ', 'Make schedule for ') + rangeTxt; out.gRunNote = t('Tar ungefär ' + (secs < 60 ? secs + ' sekunder' : Math.round(secs / 60) + ' minuter') + ', längre på en långsammare dator.', 'Takes about ' + (secs < 60 ? secs + ' seconds' : Math.round(secs / 60) + ' minutes') + ', longer on a slower computer.');
     out.gRun = async () => {
       if (G.add) return;
       this.setState({ gen: { ...G, running: { i: 0, n, w } } });

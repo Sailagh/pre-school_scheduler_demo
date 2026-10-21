@@ -27,7 +27,7 @@ Knappen **Skapa schema** i övre raden öppnar samma formulär när som helst.
    3. önskemål som att sluta tidigt;
    4. planeringstid.
 
-Knappen längst ned säger vad som kommer att hända ("Skapa schema för vecka 42–43") och ungefär hur lång tid det tar (cirka 20 sekunder per vecka). Medan det pågår visar en förloppsindikator vilken vecka som görs, och schemat går inte att ändra.
+Knappen längst ned säger vad som kommer att hända ("Skapa schema för vecka 42–43") och ungefär hur lång tid det tar (cirka 40 sekunder per vecka; längre på en långsammare dator). Medan det pågår visar en förloppsindikator vilken vecka som görs, och schemat går inte att ändra.
 
 ## Rapporten
 När schemat är klart visar panelen för varje vecka, med ✓ eller !:
@@ -51,7 +51,8 @@ Högst 40 timmar per vecka, eller upp till `flex` timmar till (standard 2, går 
 - `solverProblem(state, weeks)` i `schedule-core-demo.js` gör om appens data till ett fristående problem per vecka. Per person: hemavdelning, får öppna/stänga, utbildad för särskilt stöd, avtalade minuter och planeringsminuter, tillgängliga dagar, tidigaste/senaste tid, veckotaket. Per dag och kvart: hur många vuxna som behövs (från samma barnprognos och barn per vuxen som schemat visar, justerat för särskilda dagar och regeln *minst antal vuxna*), stängningstiden, sluta-senast-tiden och de kvartar då en utbildad vuxen måste finnas på en avdelning. Reglerna från Inställningar som är på skickas med.
 - **Inga namn, telefonnummer, orsaker till frånvaro eller anteckningar skickas.** Personer är id:n (`p1`); frånvaro är bara "inte tillgänglig den dagen".
 - `solver/schedule_solver.py` (OR-Tools CP-SAT) delar varje persons dag i kvartar med barntid, rast eller planering. Måste gälla: ett sammanhängande pass på 4–9 timmar inom tillgängligheten, raster av regelns längd inne i passet (fler om regeln *raster* kräver det), högst regelns timmar utan rast, den valfria dagsgränsen, vila mellan dagar, planering i ett block på minst 30 minuter, veckotaket, en öppnare vid öppning och en stängare vid stängning (eller vid tidig stängning). Varje arbetsdag är en person på en avdelning, sin egen eller en annan; att hjälpa till någon annanstans kostar lite, så det sker bara när en avdelning annars skulle ha för få. Varje avdelnings behov (utom när avdelningarna är sammanslagna morgon och kväll) räknas lika strikt som helheten. Allt annat är en viktad kostnad, i prioritetsordningen ovan.
-- Den löser först varje dag för sig med en jämn andel av veckans timmar (en dag tar 2–3 sekunder), sedan hela veckan med det som startpunkt så att timmar kan flyttas mellan dagar.
+- Den löser först varje dag för sig med en jämn andel av veckans timmar, sedan hela veckan med det som startpunkt så att timmar kan flyttas mellan dagar; veckan behålls bara om den är bättre än dagarna tillsammans.
+- Varje steg får en bestämd mängd arbete (CP-SAT:s deterministiska tid), inte ett antal sekunder, så en långsam dator når samma kvalitet och tar bara längre tid, med en generös tidsgräns som skyddsnät. Med en gräns i sekunder fick en långsam dator mycket sämre scheman.
 - `solver/server.py` tar emot `POST /solve`. Sidan anropar `http://localhost:8000` (eller `?solver=…`).
 - Varje resultat kontrolleras med schemats egen regelmotor i testerna (`tests/`); det sparade schemat för vecka 41–52 har inga varningar och alla får sina avtalade timmar.
 

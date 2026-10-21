@@ -6,7 +6,7 @@
     GET  /health  returns: {"ok": true}
 
 Run:  python solver/server.py [port] [--lan]   (default port 8000; set SOLVER_TIME_LIMIT to change the
-seconds spent per week, default 20). It listens on this computer only; --lan also lets other devices
+work per week, as seconds on a typical computer, default 20; a slower computer takes longer). It listens on this computer only; --lan also lets other devices
 on the same network reach it (e.g. to try the phone app on a phone). Any origin may call /solve, so the
 web demo can also be served from elsewhere.
 """

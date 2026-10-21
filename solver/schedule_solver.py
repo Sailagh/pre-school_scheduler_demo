@@ -23,7 +23,6 @@ than needed, and not going over the weekly limit (people get tired, more so past
 """
 
 import os
-import time
 from concurrent.futures import ThreadPoolExecutor
 
 from ortools.sat.python import cp_model
@@ -37,6 +36,12 @@ W_HOURS, W_PLAN, W_OVER, W_LONE, W_FINISH = 60, 20, 4, 40, 25
 W_GROUP = W_SHORT  # every unit needs its own adults, as strictly as the preschool as a whole
 W_AWAY = 120  # a day helping in another unit than one's own: fine when needed, not for nothing
 W_TIRED = 30  # per slot over the weekly limit, and again per slot more than an hour over it
+
+# How long to search is measured in OR-Tools' "deterministic time": work done, not seconds, so a slow
+# computer gets the same schedule as a fast one and just takes longer. A typical laptop does about this
+# much work per second; `time_limit` is the seconds per week it would take there.
+WORK_PER_SECOND = 0.6
+PATIENCE = 15  # a stage stops after this many times its usual seconds even if the work is not done
 
 
 def _build(problem, wk, days, targets, caps=None, away=True):
@@ -218,9 +223,11 @@ def _split(total, caps, unit):
     return out
 
 
-def _solve(model, time_limit, workers, hint=None):
+def _solve(model, seconds, workers, hint=None):
+    """Searches for as much work as `seconds` on a typical computer (longer on a slow one, within reason)."""
     solver = cp_model.CpSolver()
-    solver.parameters.max_time_in_seconds = time_limit
+    solver.parameters.max_deterministic_time = seconds * WORK_PER_SECOND
+    solver.parameters.max_time_in_seconds = seconds * PATIENCE
     solver.parameters.num_workers = workers
     if hint:
         model.clear_hints()
@@ -244,8 +251,8 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
         # the whole-week stage can start from them.
         cap_share = _split(p.get("maxSlots", 999), caps, 1)
         share[p["id"]] = {d: (hours[i], planning[i], cap_share[i]) for i, d in enumerate(on)}
-    # A day usually reaches its best answer in 2-3 s and then stops; the week gets the time that is left.
-    started, hint = time.monotonic(), {}
+    # A day usually reaches its best answer in 2-3 s and then stops; the week gets the rest of the time.
+    hint = {}
     for d in range(5):
         day = {pid: s.get(d, (0, 0, 0)) for pid, s in share.items()}
         # Days stay in their home units first (small and fast). A day that leaves some unit short is
@@ -254,8 +261,10 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
         best = None
         for away in (False, True):
             m, *vars_ = _build(*args, away=away)
-            solver, status = _solve(m, time_limit * (0.2 if not away else 0.3), workers)
-            if status == cp_model.UNKNOWN:  # a slow computer: keep going until the day has a schedule
+            # With helpers, start from the home-units answer: it is still valid, just with nobody helping.
+            start = [(v, best[1][k]) for k, v in _all_vars(vars_, m).items() if k in best[1]] if best else None
+            solver, status = _solve(m, time_limit * (0.2 if not away else 0.3), workers, start)
+            if status == cp_model.UNKNOWN:  # nothing found yet: keep going until the day has a schedule
                 solver, status = _solve(m, time_limit, workers)
             ok = status in (cp_model.OPTIMAL, cp_model.FEASIBLE)
             if ok and (best is None or solver.objective_value < best[0]):
@@ -267,18 +276,20 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
     targets = {p["id"]: (round(p["target"] / slot), round(p["planning"] / slot)) for p in wk["staff"]}
     m, contact, brk, plan, work, opener, closer = _build(problem, wk, range(5), targets)
     full = _all_vars((contact, brk, plan, work, opener, closer), m)
-    left = max(time_limit * 0.3, time_limit - (time.monotonic() - started))
     hints = [(v, hint[k]) for k, v in full.items() if k in hint]
-    solver, status = _solve(m, left, workers, hints)
-    if status == cp_model.UNKNOWN and all(k in hint for k in full if k[0] != "unit_contact" and k[0] != "unit"):
-        # No week schedule found in the time: the days found one together, so take that.
+    days = None
+    if all(k in hint for k in full if k[0] not in ("unit_contact", "unit")):
+        # The days together are a whole week's schedule: that is the one to beat.
+        fixed = m.clone()
         for v, val in hints:
-            m.add(v == val)
-        solver, status = _solve(m, 10, workers)
-    if status == cp_model.UNKNOWN:
-        # A slow computer may not find any schedule in the time; keep going rather than give up.
-        m.clear_hints()
-        solver, status = _solve(m, 60, workers, hints)
+            fixed.add(v == val)
+        days = _solve(fixed, time_limit, workers)
+        if days[1] not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+            days = None
+    # The whole week, starting from the days, can move hours between days. Kept only if it is better.
+    solver, status = _solve(m, time_limit * (0.5 if days else 3), workers, hints)
+    if days and (status not in (cp_model.OPTIMAL, cp_model.FEASIBLE) or solver.objective_value > days[0].objective_value):
+        solver, status = days
     if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
         raise RuntimeError(f"No schedule found for week {wk['week']} ({solver.status_name(status)})")
 

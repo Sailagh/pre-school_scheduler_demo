@@ -249,7 +249,7 @@ The **Make schedule** button in the top bar opens the same form at any time.
    3. wishes such as finishing early;
    4. planning time.
 
-The footer button says what will happen (“Make schedule for weeks 42–43”) and roughly how long it takes (about 20 s per week). While it runs, a progress bar shows which week is being made and the schedule cannot be edited.
+The footer button says what will happen (“Make schedule for weeks 42–43”) and roughly how long it takes (about 40 s per week; longer on a slower computer). While it runs, a progress bar shows which week is being made and the schedule cannot be edited.
 
 ### The report
 After solving, the drawer shows per week, with ✓ or !:
@@ -273,7 +273,8 @@ No more than 40 hours in a week, or up to `flex` hours more (default 2, settable
 - `solverProblem(state, weeks)` in `schedule-core-demo.js` turns the app's data into one self-contained problem per week. Per person: home unit, may open/close, trained for special needs, contract and planning minutes, available days, earliest/latest time, the weekly cap. Per day and 15-minute slot: adults needed (from the same children forecast and ratios the planner shows, adjusted for special days and the *minimum adults* rule), the closing slot, the finish-by slot, and the slots where a trained adult must be in a unit. The rules from Settings that are on are passed along.
 - **No names, phone numbers, reasons for absence or notes are sent.** People are ids (`p1`); absences are only “not available that day”.
 - `solver/schedule_solver.py` (OR-Tools CP-SAT) models every person-day as 15-minute slots of time with children, break or planning. Hard: one continuous shift of 4–9 h inside availability, breaks of the rule's length inside the shift (more if the *breaks* rule asks), no more than the rule's hours without a break, the optional daily limit, rest between days, planning in one block of at least 30 min, the weekly cap, an opener at opening and a closer at closing (or at an early closing). Each working day a person is in one unit, their own or another; helping elsewhere costs a little, so it happens only when a unit would otherwise be short. Every unit's need (outside the merged opening and closing hours) counts as strictly as the total. Everything else is a weighted cost, in the priority order above.
-- It solves each day first with an even share of the week's hours (a day takes 2–3 s), then the whole week from that starting point so hours can move between days.
+- It solves each day first with an even share of the week's hours, then the whole week from that starting point so hours can move between days; the week is kept only if it is better than the days put together.
+- Each step gets a fixed amount of work (CP-SAT's deterministic time), not a number of seconds, so a slow computer reaches the same quality and just takes longer, with a generous clock limit as a safety net. With a seconds limit, a slow computer got much worse schedules.
 - `solver/server.py` serves `POST /solve`. The page calls `http://localhost:8000` (or `?solver=…`).
 - Every result is checked with the planner's own rule engine in the tests (`tests/`); the saved schedule for weeks 41–52 has no warnings and everyone gets their contract hours.
 

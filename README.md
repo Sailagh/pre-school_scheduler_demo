@@ -64,7 +64,7 @@ Run the solver by hand (what `start.py` does):
     python3 -m venv .venv && .venv/bin/pip install -r solver/requirements.txt
     .venv/bin/python solver/server.py          # http://localhost:8000
 
-A week takes about 20 seconds (`SOLVER_TIME_LIMIT` sets the seconds per week).
+A week takes about 40 seconds on a typical computer. The solver's limit is an amount of work, not seconds, so a slower computer takes longer but gives an equally good schedule (`SOLVER_TIME_LIMIT` scales the work per week; default 20).
 
 Rebuild `web/solved-schedule.json` after changing the demo data or the solver (about 8 minutes; weeks are solved in order), then check it with the planner's own rules:
 
