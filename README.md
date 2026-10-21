@@ -75,9 +75,14 @@ Rebuild `web/solved-schedule.json` after changing the demo data or the solver (a
 
 The number of children per unit every 15 minutes can come from booked times in Edlevo instead of the example curve (Inställningar › Barn och avdelningar). `edlevo/aggregate.py` reads Tieto Education Calendar API v2 responses and writes only counts, without child ids; it is meant to run inside the municipality. `edlevo/mock/` holds invented responses in the API's exact shape. See [edlevo/README.md](edlevo/README.md).
 
+## Medvind: schedule lines, rotation, import and export
+
+**▦ Schemarader** (next to the weekdays) shows the schedule the way Medvind shows a base schedule: one row per schedule line, one time range per day, in a rotation of N weeks that can be repeated over the following weeks. It reads and writes Medvind's Excel export, tolerating hand-typed times and flagging cells it cannot read, and checks the rotation against the rules. See [medvind/README.md](medvind/README.md).
+
 ## Tests
 
     node --test tests/core.test.mjs                    # shared logic, rules, saved schedule (seconds)
+    .venv/bin/python -m unittest tests/test_medvind.py tests/test_edlevo.py   # Medvind files and Edlevo counting (seconds)
     .venv/bin/python -m unittest discover -s tests     # solver scenarios and the Edlevo counting, checked with the planner's rules (~10 min)
     BASE=http://localhost:8000 node tests/e2e.cjs      # browser walkthrough; needs the demo running and Playwright
 

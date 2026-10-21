@@ -981,3 +981,69 @@ export function controller(comp) {
   };
   return { store, ui, view, up, touch, resetDemo, generate };
 }
+
+// ---------- Medvind base schedule: schedule lines in an N-week rotation ----------
+// A rotation is what Medvind calls a grundschema: N weeks that repeat, one row (schemarad) per line, one time
+// range per weekday. rotation = { weeks: N, start: k (Medvind's "Startvecka", 1..N), lines: [{ label, unit,
+// extra, staff?, cells: [week][day 0-6] -> { from, to, raw?, flag?, note? } | null }], flags: [...] }.
+// medvind/medvind.py reads and writes the Excel export; everything here works on this plain shape.
+export const ROT0 = { n: 6, start: W0 };
+// Our schedule as schedule lines: one line per person, numbered by unit like Medvind ("1, Blåbär"), for the
+// N calendar weeks from `start`. A day becomes one range from the first start to the last end, as in Medvind,
+// so breaks and planning inside it are not shown.
+export function rotationFromShifts(s, start = (s.rotation || ROT0).start, n = (s.rotation || ROT0).n) {
+  let no = 0;
+  const lines = GROUPS.flatMap(g => STAFF.filter(p => p.group === g.id).map(p => ({
+    label: ++no + ', ' + g.name, unit: g.name, extra: false, staff: p.id, name: p.name,
+    cells: [...Array(n).keys()].map(k => [...Array(7).keys()].map(d => { const l = d < 5 ? dayShifts(s, p.id, start + k, d) : []; return l.length ? { from: l[0].start, to: Math.max(...l.map(x => x.end)) } : null; })),
+  })));
+  return { weeks: n, start: 1, first: start, lines, flags: [] };
+}
+// Repeats weeks start..start+n-1 over the following weeks up to the last week of the demo (shifts and openers/closers).
+export function repeatRotation(st, start, n) {
+  const to = [];
+  for (let w = start + n; w <= W1; w++) {
+    const from = start + (w - start) % n; to.push(w);
+    st.shifts = st.shifts.filter(x => x.week !== w).concat(st.shifts.filter(x => x.week === from).map(x => ({ ...x, id: 'h' + (++st.nid), week: w })));
+    for (let d = 0; d < 5; d++) st.roles[w + '-' + d] = { ...(st.roles[from + '-' + d] || {}) };
+  }
+  return to;
+}
+// Checks a rotation against the rules in Settings, the way they apply to a base schedule:
+//   avg    – hours worked per week averaged over the whole cycle, at most the limit (R3, 40 h)
+//   rest   – at least the rule's hours (R1, 11 h) between two working days, also from the last week back to the first
+//   breaks – no more than the rule's hours (R4, 5 h) without a break. A Medvind export has one range per day and
+//            no breaks, so this is checked as "how many breaks the day needs", not whether they are there.
+// Worked time is the range less the breaks the day needs, each as long as the break rule's longest break (30 min),
+// since breaks are unpaid; the result says so.
+export function checkRotation(rot, s, lang = 'sv') {
+  const sv = lang === 'sv', w0 = s.week || W0, R = { avg: rp(s, 'avg', w0), rest: rp(s, 'rest', w0), cont: rp(s, 'cont', w0), brk: rp(s, 'breakLen', w0) };
+  const runMax = (R.cont ? R.cont.h : 5) * 60, brk = R.brk ? R.brk.b : 30, N = rot.weeks;
+  const needBreaks = span => span > runMax ? Math.ceil((span - runMax) / (runMax + brk)) : 0;
+  const DN = sv ? ['måndag', 'tisdag', 'onsdag', 'torsdag', 'fredag', 'lördag', 'söndag'] : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const where = (n, d) => (sv ? 'vecka ' : 'week ') + (n + 1) + ' ' + DN[d], H = m => hrs(m, lang), rng = x => fmt(x.from) + '–' + fmt(x.to);
+  const lines = rot.lines.map(line => {
+    const issues = [], days = [];
+    line.cells.forEach((wk, n) => wk.forEach((x, d) => { if (x) days.push({ n, d, x, at: (n * 7 + d) * 1440 }); }));
+    const span = line.cells.map(wk => wk.reduce((a, x) => a + (x ? x.to - x.from : 0), 0));
+    const work = line.cells.map(wk => wk.reduce((a, x) => a + (x ? x.to - x.from - needBreaks(x.to - x.from) * brk : 0), 0));
+    const avgSpan = span.reduce((a, b) => a + b, 0) / N, avgWork = work.reduce((a, b) => a + b, 0) / N;
+    if (R.avg && avgWork > R.avg.h * 60) issues.push({ rule: 'avg', code: R.avg.code, text: sv ? 'I snitt ' + H(avgWork) + ' arbetad tid per vecka över ' + N + ' veckor (' + H(avgSpan) + ' med raster). Gränsen är ' + H(R.avg.h * 60) + '.' : 'On average ' + H(avgWork) + ' worked per week over ' + N + ' weeks (' + H(avgSpan) + ' with breaks). The limit is ' + H(R.avg.h * 60) + '.' });
+    if (R.rest) days.forEach((a, i) => {
+      if (days.length < 2) return; const b = days[(i + 1) % days.length], gap = (b.at + b.x.from + (i + 1 === days.length ? N * 7 * 1440 : 0)) - (a.at + a.x.to);
+      if (gap < R.rest.h * 60) issues.push({ rule: 'rest', code: R.rest.code, week: a.n + 1, day: a.d, text: (sv ? 'Bara ' : 'Only ') + H(gap) + (sv ? ' vila mellan ' : ' rest between ') + where(a.n, a.d) + ' (' + rng(a.x) + ')' + (sv ? ' och ' : ' and ') + where(b.n, b.d) + ' (' + rng(b.x) + ').' });
+    });
+    if (R.cont) days.forEach(({ n, d, x }) => { const k = needBreaks(x.to - x.from); if (k) issues.push({ rule: 'breaks', code: R.cont.code, week: n + 1, day: d, need: k, text: where(n, d)[0].toUpperCase() + where(n, d).slice(1) + ' ' + rng(x) + ' (' + H(x.to - x.from) + (sv ? ') behöver ' : ') needs ') + (k === 1 ? (sv ? 'en rast' : 'a break') : k + (sv ? ' raster' : ' breaks')) + (sv ? ' så att ingen period blir längre än ' : ' so that no stretch is longer than ') + H(runMax) + '.' }); });
+    return { label: line.label, unit: line.unit, extra: !!line.extra, staff: line.staff, name: line.name, span, work, avgSpan, avgWork, daysPerWeek: line.cells.map(wk => wk.filter(Boolean).length), issues };
+  });
+  return { lines, breakMin: brk, runMax, rules: R };
+}
+// Reading and writing Medvind's Excel file goes through the local server (solver/server.py, medvind/medvind.py).
+const medvindCall = async (path, body, json) => {
+  let r; try { r = await fetch(SOLVER_URL + path, { method: 'POST', headers: { 'Content-Type': json ? 'application/json' : 'application/octet-stream' }, body }); }
+  catch (e) { throw new Error('unreachable'); }
+  if (!r.ok) { let m = ''; try { m = (await r.json()).error; } catch (e) {} throw new Error(m || 'HTTP ' + r.status); }
+  return r;
+};
+export const medvindRead = async file => (await medvindCall('/medvind/read', await file.arrayBuffer())).json();
+export const medvindWrite = async rot => (await medvindCall('/medvind/write', JSON.stringify(rot), true)).blob();

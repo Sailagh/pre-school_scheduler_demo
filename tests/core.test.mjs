@@ -188,3 +188,38 @@ test('children from Edlevo: only counts are accepted, and they replace the examp
   s.prefs.childSource = 'forecast';
   assert.deepEqual(m.solverProblem(s, [43]).weeks[0].days[0].need, curve.days[0].need, 'switching back uses the curve');
 });
+
+test('a rotation of schedule lines: hours averaged over the cycle, rest, and breaks needed', () => {
+  const day = (from, to) => ({ from, to }), off = null;
+  // Two weeks, each with a long Monday to 19:00; the rest from week 2 back to week 1 goes over the weekend.
+  const line = { label: '1, Avd 1', cells: [
+    [day(360, 1140), day(360, 780), day(450, 960), day(450, 960), day(450, 960), off, off],   // 13 h Monday, then 06:00 Tuesday: 11 h rest
+    [day(420, 1140), day(390, 780), day(450, 960), day(450, 960), day(450, 960), off, off]] };
+  const tight = { label: '2, Avd 1', cells: [[day(540, 1140), day(420, 780), off, off, off, off, off]] };  // 19:00 -> 07:00: 12 h
+  const short = { label: '3, Avd 1', cells: [[day(540, 1140), day(360, 600), off, off, off, off, off]] };  // 19:00 -> 06:00: 11 h exactly
+  const bad = { label: '4, Avd 1', cells: [[day(540, 1170), day(360, 600), off, off, off, off, off]] };    // 19:30 -> 06:00: 10.5 h
+  const s = m.seedState(), r = m.checkRotation({ weeks: 2, start: 1, lines: [line] }, s, 'sv');
+  const L = r.lines[0];
+  // Week 1: 13 + 7 + 8.5 + 8.5 + 8.5 = 45.5 h in the schedule; breaks 2 (13 h day) + 1 + 1 + 1 + 1 = 6 x 30 min.
+  assert.equal(L.span[0], 45.5 * 60); assert.equal(L.work[0], 45.5 * 60 - 6 * 30);
+  assert.deepEqual(L.issues.filter(x => x.rule === 'rest'), [], '11 h exactly is enough');
+  assert.equal(L.issues.filter(x => x.rule === 'breaks' && x.need === 2).length, 2, 'the two long Mondays need two breaks');
+  assert.equal(m.checkRotation({ weeks: 1, start: 1, lines: [tight, short] }, s).lines.flatMap(l => l.issues.filter(x => x.rule === 'rest')).length, 0);
+  const rest = m.checkRotation({ weeks: 1, start: 1, lines: [bad] }, s, 'sv').lines[0].issues.filter(x => x.rule === 'rest');
+  assert.equal(rest.length, 1); assert.match(rest[0].text, /Bara 10,5 h vila mellan vecka 1 måndag \(09:00–19:30\) och vecka 1 tisdag/);
+  // Over 40 h on average is an issue; the rule comes from Settings.
+  const long = { label: '5', cells: [[day(360, 1140), day(360, 1140), day(360, 1140), day(360, 1140), off, off, off]] };
+  assert.equal(m.checkRotation({ weeks: 1, start: 1, lines: [long] }, s).lines[0].issues.filter(x => x.rule === 'avg').length, 1);
+});
+
+test('our schedule as schedule lines, and repeating the rotation over later weeks', () => {
+  const s = solvedState(), rot = m.rotationFromShifts(s, 42, 2);
+  assert.equal(rot.weeks, 2); assert.equal(rot.lines.length, m.STAFF.length);
+  assert.match(rot.lines[0].label, /^1, Blåbär$/);
+  const p = rot.lines[0].staff, mine = s.shifts.filter(x => x.staff === p && x.week === 42 && x.day === 0);
+  assert.deepEqual(rot.lines[0].cells[0][0], { from: Math.min(...mine.map(x => x.start)), to: Math.max(...mine.map(x => x.end)) });
+  const st = solvedState(), to = m.repeatRotation(st, 42, 2);
+  assert.deepEqual(to, [44, 45, 46, 47, 48, 49, 50, 51, 52]);
+  const same = (a, b) => st.shifts.filter(x => x.week === a).map(({ staff, day, start, end, type }) => [staff, day, start, end, type]).sort().join() === st.shifts.filter(x => x.week === b).map(({ staff, day, start, end, type }) => [staff, day, start, end, type]).sort().join();
+  assert.ok(same(44, 42) && same(45, 43) && same(52, 42), 'weeks repeat the rotation');
+});

@@ -65,6 +65,13 @@ Under Inställningar › Barn och avdelningar väljer rektorn var antalet barn k
 - Schemat tar bara emot en fil med antal. En fil med barn-id (rådata) avvisas med en förklaring.
 - Exempelkurvans fredagar och *färre barn än vanligt* används inte för dagar med bokningar; *stänger tidigt* och *stängt* gäller fortfarande. Dagar i den hämtade perioden utan bokningar har inga barn.
 
+## Schemarader och rotation (som i Medvind)
+Fliken **▦ Schemarader** bredvid veckodagarna visar schemat så som Medvind visar ett grundschema: en rad per schemarad, en tid per dag (första start till sista slut), i en rotation på N veckor (1–8) som börjar en vald vecka. Varje vecka har sin timsumma och raden sitt snitt, både i schemat (med raster) och arbetat.
+- **Upprepa till vecka 52** ger de följande veckorna samma pass som rotationen. Det som fanns där ersätts, och det går att ångra.
+- **Exportera till Medvind (.xlsx)** skriver schemat i Medvinds layout: Signaler, Schemarad, Attesterad, en sammanslagen rubrik per vecka och startveckan markerad.
+- **Importera från Medvind…** läser en export från Medvind. Tider skrivna på olika sätt (06.00-13.00, 8-16.30, 0630-1030, 9-19) går bra. En felskrivning som går att förstå (6.3014.0) läses men markeras gul; det som inte går att läsa markeras rött och tas inte med; en schemarad utan avdelningsnummer markeras. Filen läses av demons server på datorn och sparas bara i webbläsaren.
+- Under rutnätet finns en **kontroll mot reglerna**: arbetstid i snitt över rotationen, dygnsvila (också från sista veckan till första) och raster. Exporten visar inte rasterna, så schemat säger hur många raster varje dag behöver (två på dagar över 10,5 timmar) i stället för att godkänna dem.
+
 ## Telefonen: knappen Jag
 Mellan *Mitt schema* och *Vem arbetar* längst ned finns en rund knapp på en liten vit kulle, med en enkel personikon. Den öppnar en sida för den anställda:
 - **Överst:** namn, hemavdelning, avtalade timmar i veckan och procent, och vad personen får göra (öppna, stänga, utbildad för särskilt stöd) och fasta lediga dagar eller tider.

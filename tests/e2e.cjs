@@ -128,6 +128,18 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     await btn(/Back to the schedule/).click(); await p.waitForTimeout(400);
     assert.equal(await p.getByText('Edlevo', { exact: true }).count(), 1, 'the Children row says the numbers come from Edlevo');
   });
+  await step('schedule lines: our schedule as a rotation, export to Medvind, import a Medvind file with flagged cells', async () => {
+    await p.goto(URL.replace(/\?solver=.*$/, '')); await p.waitForTimeout(2500);  // Excel goes through the demo's own server
+    await btn(/Schedule lines/).click(); await p.waitForTimeout(800);
+    assert.match(await body(), /1, Blåbär/); assert.match(await body(), /Week 1 · w\.\d+/);
+    const [dl] = await Promise.all([p.waitForEvent('download'), btn(/Export to Medvind/).click()]);
+    assert.match(dl.suggestedFilename(), /^grundschema-v\d+-\d+\.xlsx$/);
+    await p.setInputFiles('input[type=file]', require('path').join(__dirname, '../medvind/exempel-grundschema.xlsx')); await p.waitForTimeout(1500);
+    const t = await body();
+    assert.match(t, /Read 10 schedule lines over 6 weeks \(start week 4\)/); assert.match(t, /G4 "6\.3014\.0", I7 "7\.30-"/);
+    assert.match(t, /Week 4: start week/); assert.match(t, /Check against the rules/);
+    await btn(/Remove the import/).click(); await btn(/Back to the schedule/).click(); await p.waitForTimeout(300);
+  });
   await step('the demo runs on week 42', async () => {
     await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.goto(URL); await p.waitForTimeout(3000);
     await btn('▶ Demo').click(); await p.waitForTimeout(3000);

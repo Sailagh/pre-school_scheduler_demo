@@ -34,12 +34,12 @@ def fail(sv, en):
 
 
 def has_ortools():
-    return os.path.exists(PY) and subprocess.run([PY, "-c", "import ortools"], capture_output=True).returncode == 0
+    return os.path.exists(PY) and subprocess.run([PY, "-c", "import ortools, openpyxl"], capture_output=True).returncode == 0
 
 
 def install():
-    say("Första gången: installerar OR-Tools. Det tar en minut eller två och kräver internet.",
-        "First time: installing OR-Tools. This takes a minute or two and needs internet.")
+    say("Första gången: installerar OR-Tools och openpyxl (för Medvind-filer). Det tar en minut eller två och kräver internet.",
+        "First time: installing OR-Tools and openpyxl (for Medvind files). This takes a minute or two and needs internet.")
     if not os.path.exists(PY):
         venv.create(VENV, with_pip=True)
     r = subprocess.run([PY, "-m", "pip", "install", "--disable-pip-version-check", "-q", "-r",

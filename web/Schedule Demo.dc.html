@@ -48,6 +48,7 @@
         </div>
       </button>
     </sc-for>
+    <button onClick="{{ toggleLines }}" title="{{ linesTip }}" style="flex:none;border:0;border-left:1px solid #E3EAF0;background:transparent;padding:11px 16px 9px;cursor:pointer;font:inherit;font-size:14px;font-weight:600;color:#1F7D97;white-space:nowrap">▦ {{ linesTxt }}</button>
   </div>
   <div data-guide="warnings" style="display:flex;align-items:center;gap:12px;padding:8px 24px;background:#EEF4F7;border-bottom:1px solid #D3DDEA;min-height:52px;box-sizing:border-box">
     <div style="display:flex;align-items:center;gap:8px;flex:none"><div style="font-weight:600;font-size:13px">{{ checkTitle }}</div><span style="font-size:12px;font-weight:700;background:{{ countBg }};color:#fff;border-radius:999px;padding:2px 9px">{{ dayWarnCount }}</span></div>
@@ -443,6 +444,11 @@
       </div>
     </div>
   </sc-if>
+  <sc-if value="{{ linesOpen }}">
+    <div style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:29;background:#fff;display:flex">
+      <dc-import name="Schedule Lines" ctl="{{ ctl }}" mod="{{ mod }}" lang="{{ lang }}" rev="{{ rev }}" on-close="{{ toggleLines }}" on-go="{{ linesGo }}" hint-size="100%,100%" style="width:100%;height:100%"></dc-import>
+    </div>
+  </sc-if>
   <sc-if value="{{ setOpen }}">
     <div style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:30;background:#fff;display:flex">
       <dc-import name="Demo Settings" ctl="{{ ctl }}" mod="{{ mod }}" lang="{{ lang }}" rev="{{ rev }}" section="{{ setSection }}" pid="{{ setPid }}" on-nav="{{ setNav }}" on-close="{{ toggleSettings }}" on-show="{{ showPerson }}" set-lang="{{ setLangFn }}" hint-size="100%,100%" style="width:100%;height:100%"></dc-import>
@@ -653,6 +659,9 @@ class Component extends DCLogic {
       isFocus: !!fid, notFocus: !fid, unfocus: () => this.setState({ focus: null }), showAllTxt: t('Visa alla', 'Show everyone'),
       fTitle: fw ? t(fw.name + ' – veckan', fw.name + ' – the week') : '', fHours: fw ? fw.text : '', fFlag: fw ? fw.flagText : '', fCol: fw ? hc[fw.flag] : '#1F2D3A',
       fHasUnit: !!fUnit, fU: fUnit || {},
+      linesOpen: !!this.state.lines, toggleLines: () => this.setState(st => ({ lines: !st.lines, settings: false, dd: null })),
+      linesGo: (w, d) => { this.setState({ lines: false }); this.ctl.store.live(st => { st.week = w; }); this.ctl.up({ day: d, sel: null }); },
+      linesTxt: sv ? 'Schemarader' : 'Schedule lines', linesTip: sv ? 'Schemat som schemarader i en rotation, som i Medvind. Import och export av Medvinds grundschema.' : "The schedule as schedule lines in a rotation, as in Medvind. Import and export of Medvind's base schedule.",
       setOpen: !!this.state.settings, toggleSettings: () => this.setState(st => ({ settings: st.settings ? false : 'general', setPid: null, dd: null })),
       setSection: this.state.settings || 'general', setPid: this.state.setPid || null, setNav: k => this.setState({ settings: k }),
       showPerson: id => { this.setState({ settings: false, focus: id }); }, ctl: this.ctl, mod: this.mod, rev: (this._rev = (this._rev || 0) + 1),

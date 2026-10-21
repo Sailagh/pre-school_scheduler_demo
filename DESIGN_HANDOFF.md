@@ -289,6 +289,12 @@ Settings › Children and units › *Children during the day*: the example curve
 - The Tieto Education Calendar API v2 (`GetPreschoolCalendarEvents`) returns one child's events per call. `edlevo/aggregate.py` counts them per department and quarter and discards every child id; it is meant to run inside the municipality, and its output (`barnantal-v1`) is all the planner accepts. Raw XML or anything with `childid` is refused with an explanation.
 - For counted days the curve's Friday dip and *fewer children* do not apply; *closes early* and *closed* still do. A day inside the counted period with no bookings has no children. Units are matched to departments by name.
 
+### Schedule lines and rotation (as in Medvind)
+**▦ Schemarader**, a tab after the weekdays, opens a full-width page (`Schedule Lines.dc.html`): the schedule as Medvind shows a base schedule, one row per schedule line and one range per day (first start to last end), in a rotation of N weeks (1–8) from a chosen week, with hours per week and the average (scheduled with breaks · worked).
+- *Repeat to week 52* (`repeatRotation`) copies the rotation over the following weeks, replacing what is there; undoable.
+- *Export to Medvind (.xlsx)* and *Import from Medvind…* go through the local server (`POST /medvind/write`, `/medvind/read`, `medvind/medvind.py`). Hand-typed times are tolerated; a readable typo is flagged yellow (guessed), an unreadable cell red and left out, a line without a unit number flagged at its edge. An import is kept only in the browser (`state.medvindImport`).
+- *Check against the rules* (`checkRotation`): hours averaged over the rotation (R3), daily rest including the wrap from the last week to the first (R1), and breaks (R4). The export has no breaks, so for breaks it says how many each day needs rather than passing it. Worked time = range less 30 min per 5-hour stretch.
+
 ### What the demo does not do
 It is a demo and a guide, not a product:
 - no login or roles; anyone who opens it sees everything, including sick reasons;
