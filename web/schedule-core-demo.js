@@ -228,12 +228,38 @@ export function decideRequest(st, id, ok) {
   if (ok && r.type === 'swap') st.notes.push({ id: 'n' + Date.now() + 'b', to: r.with, key: 'swapIn', p: { from: r.staff, day: r.day, week: r.week }, at: Date.now(), read: false });
 }
 export const MERGE0 = { on: true, am: 450, pm: 960, ratio: 8, room: 'g3' };
+// ---------- children from Edlevo: counts only ----------
+// edlevo/aggregate.py turns Edlevo calendar events into the number of children per department per
+// 15 minutes, inside the municipality. The planner only ever gets those counts, never a child id.
+export const isoDate = (w, d) => new Date(Date.UTC(2026, 9, 12 + (w - 42) * 7 + d)).toISOString().slice(0, 10);
+export function checkCounts(text) {
+  // Returns { doc } or { error: 'raw' | 'format' }. Raw Edlevo data (with child ids) is refused.
+  if (/<calendarevents|childid|<\?xml/i.test(text)) return { error: 'raw' };
+  let doc; try { doc = JSON.parse(text); } catch (e) { return { error: 'format' }; }
+  const ok = doc && doc.format === 'barnantal-v1' && doc.slotMinutes === 15 && doc.dayStart === '06:00' && doc.counts && typeof doc.counts === 'object'
+    && Object.entries(doc.counts).every(([day, deps]) => /^\d{4}-\d{2}-\d{2}$/.test(day) && Object.values(deps).every(a => Array.isArray(a) && a.every(n => Number.isInteger(n) && n >= 0)));
+  if (!ok) return { error: 'format' };
+  const { format, about, made, period, departments, counts } = doc;
+  return { doc: { format, about, made, period, departments: (departments || []).map(x => ({ departmentname: x.departmentname, children: x.children })), counts } };
+}
+// The counted children for a day, by unit id, or null when the planner's example curve is used for that day.
+// A day inside the counted period with no bookings (e.g. closed) has no children.
+function countsOn(s, w, d) {
+  const C = s.childCounts; if (!C || (s.prefs || {}).childSource !== 'edlevo') return null;
+  const day = isoDate(w, d), p = C.period || {}; if (!(p.start <= day && day <= p.end) && !C.counts[day]) return null;
+  const byName = Object.fromEntries(Object.entries(C.counts[day] || {}).map(([k, v]) => [k.trim().toLowerCase(), v]));
+  return Object.fromEntries(GROUPS.map(g => [g.id, byName[g.name.toLowerCase()] || []]));
+}
+export const childSource = (s, w, d) => countsOn(s, w, d) ? 'edlevo' : 'forecast';
 // Children, adults needed and merge state at minute `mid` of `day`. Shared by the planner's staffing row and the solver.
 function needAt(s, day, mid) {
   const sp = specialsOn(s, s.week, day), fewer = sp.find(x => x.kind === 'fewer'), shut = sp.find(x => x.kind === 'closeEarly') || (sp.some(x => x.kind === 'closed') && { time: 0 });
   const f = (day === 4 ? .7 : 1) * (fewer ? fewer.pct / 100 : 1), M = s.merge || MERGE0, merged = !!M.on && (mid < M.am || mid >= M.pm);
+  // Counted children from Edlevo are the bookings themselves, so the example curve's Friday dip and
+  // "fewer children" do not apply to them; closing early or closed still does.
+  const real = countsOn(s, s.week, day), at = Math.floor((mid - DS) / 15);
   const groups = GROUPS.map(g => {
-    const c = (mid < g.open || mid > g.close || (shut && mid > shut.time)) ? 0 : Math.round(g.max * curve(mid) * f);
+    const c = shut && mid > shut.time ? 0 : real ? (real[g.id][at] || 0) : (mid < g.open || mid > g.close) ? 0 : Math.round(g.max * curve(mid) * f);
     const sn = 0;
     return { id: g.id, children: c, need: c ? Math.ceil(c / g.ratio) + sn : 0, frac: c / g.ratio, sn };
   });

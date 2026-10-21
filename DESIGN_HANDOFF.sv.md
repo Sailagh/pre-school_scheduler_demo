@@ -59,6 +59,12 @@ Högst 40 timmar per vecka, eller upp till `flex` timmar till (standard 2, går 
 ## Flytta rast och planering
 En rast, planering eller ett möte kan dras var som helst inom personens arbetsdag. Bara barntiden flyttar sig runt blocket; andra raster och planeringar står kvar, och dagen behåller sin början, sitt slut och sina minuter av varje slag. Släpps blocket på ett annat block hamnar det precis bredvid.
 
+## Antal barn från Edlevo
+Under Inställningar › Barn och avdelningar väljer rektorn var antalet barn kommer ifrån: en påhittad *exempelkurva*, eller *Från Edlevo (sammanräknat)*: hur många barn som är bokade på varje avdelning varje kvart. Behovet av vuxna, varningarna och lösaren räknar då på de bokade tiderna. Raden *Barn* i schemat är märkt *Edlevo* de dagarna.
+- Edlevos Calendar API v2 lämnar ett barns händelser per anrop (barn-id, start, slut, enhet, avdelning). Ett litet program, `edlevo/aggregate.py`, räknar ihop dem till antal per avdelning och kvart och slänger alla barn-id. Det är tänkt att köras inom kommunen; schemat får bara antalen.
+- Schemat tar bara emot en fil med antal. En fil med barn-id (rådata) avvisas med en förklaring.
+- Exempelkurvans fredagar och *färre barn än vanligt* används inte för dagar med bokningar; *stänger tidigt* och *stängt* gäller fortfarande. Dagar i den hämtade perioden utan bokningar har inga barn.
+
 ## Telefonen: knappen Jag
 Mellan *Mitt schema* och *Vem arbetar* längst ned finns en rund knapp på en liten vit kulle, med en enkel personikon. Den öppnar en sida för den anställda:
 - **Överst:** namn, hemavdelning, avtalade timmar i veckan och procent, och vad personen får göra (öppna, stänga, utbildad för särskilt stöd) och fasta lediga dagar eller tider.

@@ -284,6 +284,11 @@ No more than 40 hours in a week, or up to `flex` hours more (default 2, settable
 - `solver/server.py` serves `POST /solve`. The page calls `http://localhost:8000` (or `?solver=…`).
 - Every result is checked with the planner's own rule engine in the tests (`tests/`); the saved schedule for weeks 41–52 has no warnings and everyone gets their contract hours.
 
+### Children from Edlevo (counts only)
+Settings › Children and units › *Children during the day*: the example curve, or **From Edlevo (counted)**, the number of children booked in each unit each quarter of an hour. The need, warnings and solver then use the bookings, and the planner's *Barn* row is tagged *Edlevo*.
+- The Tieto Education Calendar API v2 (`GetPreschoolCalendarEvents`) returns one child's events per call. `edlevo/aggregate.py` counts them per department and quarter and discards every child id; it is meant to run inside the municipality, and its output (`barnantal-v1`) is all the planner accepts. Raw XML or anything with `childid` is refused with an explanation.
+- For counted days the curve's Friday dip and *fewer children* do not apply; *closes early* and *closed* still do. A day inside the counted period with no bookings has no children. Units are matched to departments by name.
+
 ### What the demo does not do
 It is a demo and a guide, not a product:
 - no login or roles; anyone who opens it sees everything, including sick reasons;

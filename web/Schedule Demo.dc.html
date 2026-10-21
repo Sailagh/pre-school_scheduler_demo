@@ -229,7 +229,7 @@
       </div>
       <sc-if value="{{ notFocus }}">
       <div data-guide="kids" style="display:flex;height:32px;flex:none;border-top:1px solid #D3DDEA;background:#EEF4F7;overflow:hidden;scrollbar-gutter:stable;scrollbar-width:thin">
-        <div style="width:150px;flex:none;padding:0 8px 0 16px;display:flex;align-items:center;font-size:12px;font-weight:600;box-sizing:border-box">{{ L.children }}</div>
+        <div style="width:150px;flex:none;padding:0 8px 0 16px;display:flex;align-items:center;font-size:12px;font-weight:600;box-sizing:border-box" title="{{ kidsTip }}">{{ L.children }}<sc-if value="{{ kidsEd }}"><span style="margin-left:6px;font-size:10px;font-weight:600;padding:2px 5px;border-radius:4px;background:#E3F1F5;color:#1F5E70">Edlevo</span></sc-if></div>
         <div style="position:relative;flex:1;margin-right:12px"><sc-for list="{{ mergeBands }}" as="mb"><div style="position:absolute;top:0;bottom:0;left:{{ mb.left }}%;width:{{ mb.width }}%;background:{{ mb.tint }};pointer-events:none"></div></sc-for><sc-for list="{{ cov }}" as="c"><div style="position:absolute;top:0;bottom:0;left:{{ c.left }}%;width:{{ c.width }}%;display:flex;align-items:center;justify-content:center;font:500 11px 'IBM Plex Mono',monospace;color:#3C4B5A">{{ c.kl }}</div></sc-for></div>
       </div>
       <div data-guide="need" style="display:flex;height:32px;flex:none;background:#EEF4F7;overflow:hidden;scrollbar-gutter:stable;scrollbar-width:thin">
@@ -878,6 +878,7 @@ class Component extends DCLogic {
           if (moved) st0.commit(); else this.setState(st => ({ dd: st.dd === 'merge' && st.mergeAt === b.left ? null : 'merge', mergeAt: b.left })); };
         window.addEventListener('pointermove', mv); window.addEventListener('pointerup', upH); }, label: (b.from <= 360 ? (sv ? 'Öppningsavdelning' : 'Opening unit') : (sv ? 'Stängningsavdelning' : 'Closing unit')) + ' · ' + room, tip: (sv ? 'Alla avdelningar är tillsammans i ' : 'All units are together in ') + room + ' ' + fm(b.from) + '–' + fm(b.to) + (sv ? '. 1 vuxen per ' + v.merge.ratio + ' barn. Dra för att ändra tiden, tryck för att byta avdelning.' : '. 1 adult per ' + v.merge.ratio + ' children. Drag to change the time, tap to change the unit.') }));
     return {
+      kidsEd: this.mod.childSource(PW, PW.week, v.day) === 'edlevo', kidsTip: this.mod.childSource(PW, PW.week, v.day) === 'edlevo' ? (sv ? 'Antal barn från bokade tider i Edlevo (sammanräknat, inga barn-id)' : 'Children from booked times in Edlevo (counted, no child ids)') : (sv ? 'Antal barn från exempelkurvan' : 'Children from the example curve'),
       ...v, ...base, lang, setLangFn: setLang, mergeBands, ...this.genVals(v, sv, lang), ...(() => {
         const RQ = (ctl.store.get().requests || []).slice().sort((a, b) => b.at - a.at), open = RQ.filter(r => r.status === 'pending' || r.status === 'new' || r.status === 'matched');
         const ST = { open: [sv ? 'Väntar på kollega' : 'Waiting for a colleague', '#8A5F0C'], matched: [sv ? 'Kollega har tackat ja' : 'A colleague said yes', '#1F7D97'], nobody: [sv ? 'Ingen kan' : 'Nobody can', '#8E2A27'], pending: [sv ? 'Väntar på svar' : 'Waiting', '#8A5F0C'], new: [sv ? 'Ny' : 'New', '#C2413D'], approved: [sv ? 'Godkänd' : 'Approved', '#2D6A1F'], declined: [sv ? 'Inte godkänd' : 'Declined', '#8E2A27'], seen: [sv ? 'Sedd' : 'Seen', '#5A6B7A'] };

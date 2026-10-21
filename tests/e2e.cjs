@@ -118,6 +118,16 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
       assert.equal(prefs.p1.offers, false);
     } finally { await btn('Close', true).click(); }
   });
+  await step('children can come from counted Edlevo bookings; raw data with child ids is refused', async () => {
+    await btn(/Settings/).first().click(); await p.waitForTimeout(400); await btn('Children and units', true).click(); await p.waitForTimeout(300);
+    await btn('From Edlevo (counted)', true).click(); await p.waitForTimeout(800);
+    let t = await body();
+    assert.match(t, /Lingon: 18 children with bookings/); assert.match(t, /must run inside the municipality/);
+    await p.setInputFiles('input[type=file]', require('path').join(__dirname, '../edlevo/mock/svar-001.xml')); await p.waitForTimeout(400);
+    assert.match(await body(), /has the children's ids \(raw Edlevo data\) and is not used/);
+    await btn(/Back to the schedule/).click(); await p.waitForTimeout(400);
+    assert.equal(await p.getByText('Edlevo', { exact: true }).count(), 1, 'the Children row says the numbers come from Edlevo');
+  });
   await step('the demo runs on week 42', async () => {
     await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.goto(URL); await p.waitForTimeout(3000);
     await btn('▶ Demo').click(); await p.waitForTimeout(3000);

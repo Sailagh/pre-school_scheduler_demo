@@ -71,10 +71,14 @@ Rebuild `web/solved-schedule.json` after changing the demo data or the solver (a
     .venv/bin/python solver/build_saved.py
     node solver/check_solution.mjs web/solved-schedule.json
 
+## Children from Edlevo (counts only)
+
+The number of children per unit every 15 minutes can come from booked times in Edlevo instead of the example curve (Inställningar › Barn och avdelningar). `edlevo/aggregate.py` reads Tieto Education Calendar API v2 responses and writes only counts, without child ids; it is meant to run inside the municipality. `edlevo/mock/` holds invented responses in the API's exact shape. See [edlevo/README.md](edlevo/README.md).
+
 ## Tests
 
     node --test tests/core.test.mjs                    # shared logic, rules, saved schedule (seconds)
-    .venv/bin/python -m unittest discover -s tests     # solver scenarios, checked with the planner's rules (~2 min)
+    .venv/bin/python -m unittest discover -s tests     # solver scenarios and the Edlevo counting, checked with the planner's rules (~10 min)
     BASE=http://localhost:8000 node tests/e2e.cjs      # browser walkthrough; needs the demo running and Playwright
 
 The solver scenarios (`tests/scenario.mjs`) are an ordinary week, special days, stricter rules from Settings, and a short-staffed week that uses the flexible week and evens it out the week after.

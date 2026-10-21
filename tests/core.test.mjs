@@ -169,3 +169,22 @@ test('someone who switched off cover requests on their phone is not asked', () =
   const now = m.coverCands(s, r, 'en').find(c => c.id === free.id);
   assert.equal(now.why, 'Does not want requests'); assert.equal(now.ok, false);
 });
+
+test('children from Edlevo: only counts are accepted, and they replace the example curve', () => {
+  const text = readFileSync(new URL('../web/edlevo-counts.json', import.meta.url), 'utf8');
+  const raw = readFileSync(new URL('../edlevo/mock/svar-001.xml', import.meta.url), 'utf8');
+  assert.equal(m.checkCounts(raw).error, 'raw', 'raw Edlevo data with child ids is refused');
+  assert.equal(m.checkCounts('{"format":"x"}').error, 'format');
+  const { doc } = m.checkCounts(text), s = m.seedState(), curve = m.solverProblem(s, [43]).weeks[0];
+  s.childCounts = doc; s.prefs.childSource = 'edlevo';
+  const ed = m.solverProblem(s, [43]).weeks[0], at = (h, mm) => (h * 60 + mm - 360) / 15;
+  // Monday 19 Oct 10:00: adults needed per unit from the counted children and each unit's children per adult.
+  const mon = doc.counts['2026-10-19'], want = Math.ceil(mon['Blåbär'][at(10, 0)] / 5 + mon['Lingon'][at(10, 0)] / 7 + mon['Hjortron'][at(10, 0)] / 10 - 1e-9);
+  assert.equal(ed.days[0].need[at(10, 0)], want);
+  assert.notDeepEqual(ed.days[0].need, curve.days[0].need);
+  assert.equal(m.childSource(s, 43, 0), 'edlevo');
+  // Christmas Eve is inside the counted period with no bookings: no children.
+  assert.ok(m.solverProblem(s, [52]).weeks[0].days[3].need.every(x => x === 0));
+  s.prefs.childSource = 'forecast';
+  assert.deepEqual(m.solverProblem(s, [43]).weeks[0].days[0].need, curve.days[0].need, 'switching back uses the curve');
+});
