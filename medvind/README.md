@@ -24,3 +24,14 @@ Medvind stores a base schedule as an **N-week rotation**: one row per **schedule
 A day in a Medvind base schedule is one range from start to end, breaks included. Worked time is that range less the
 unpaid breaks: 30 min for each stretch over 5 h (the break rules in Settings), i.e. one break on an ordinary day and
 two on days over 10.5 h.
+
+## Rule-check report
+
+`report.mjs` writes a short Markdown report (English) for any imported rotation, using the planner's own rule checker
+(`checkRotation`) and the rule values in Settings: what passes, what fails and where, how the file was read, and the
+limits of the check. Keep reports on real data in `private/`.
+
+```
+.venv/bin/python medvind/medvind.py read private/grundschema.xlsx > private/rotation.json
+node medvind/report.mjs private/rotation.json grundschema.xlsx > private/rule-check-report.md
+```
