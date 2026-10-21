@@ -68,6 +68,15 @@ class AggregateTest(unittest.TestCase):
         self.assertEqual(self.doc["responses"], 2)
         self.assertEqual(self.doc["format"], "barnantal-v1")
 
+    def test_times_with_a_time_zone_are_counted_in_swedish_time(self):
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, "z.xml"), "w", encoding="utf-8") as f:
+            f.write(response(event(A, "2026-10-19T04:20:00Z", "2026-10-19T14:00:00Z"),            # UTC: 06:20-16:00 in Sweden
+                             event(B, "2026-10-19T06:20:00.000+02:00", "2026-10-19T16:00:00+02:00")))
+        mon = aggregate([d])["counts"]["2026-10-19"]["Lingon"]
+        slot = lambda h, m: (h * 60 + m - 360) // 15
+        self.assertEqual((mon[slot(6, 0)], mon[slot(6, 15)], mon[slot(15, 45)], mon[slot(16, 0)]), (0, 2, 2, 0))
+
     def test_the_demo_counts_file_is_made_from_the_mock_and_has_no_ids(self):
         mock = os.path.join(ROOT, "edlevo", "mock")
         doc = aggregate([mock])

@@ -28,6 +28,20 @@ DAY_START, DAY_END, SLOT = 6 * 60, 18 * 60 + 30, 15  # the planner's day: 06:00-
 SLOTS = (DAY_END - DAY_START) // SLOT
 
 
+def _when(text):
+    """An xs:dateTime as Swedish wall-clock time. The API's examples have no time zone; a time with one
+    (e.g. UTC, "...Z") is converted to Europe/Stockholm, so 04:20Z in October counts as 06:20."""
+    text = text.strip()
+    t = datetime.fromisoformat(text[:-1] + "+00:00" if text.endswith("Z") else text)  # "Z" for Python < 3.11
+    if t.tzinfo is None:
+        return t
+    try:
+        from zoneinfo import ZoneInfo
+        return t.astimezone(ZoneInfo("Europe/Stockholm")).replace(tzinfo=None)
+    except Exception as e:  # Windows without the tzdata package has no time zone database
+        raise ValueError(f"The time {text} has a time zone, and Swedish time cannot be worked out here ({e}). Install tzdata.")
+
+
 def _files(paths):
     for p in paths:
         if os.path.isdir(p):
@@ -52,7 +66,7 @@ def aggregate(paths):
         tf = root.find("c:properties/c:timeframe", NS)
         if tf is not None:
             for k in ("start", "end"):
-                x = datetime.fromisoformat(tf.findtext("c:" + k, "", NS).strip()).date().isoformat()
+                x = _when(tf.findtext("c:" + k, "", NS)).date().isoformat()
                 asked[k] = min(asked.get(k, x), x) if k == "start" else max(asked.get(k, x), x)
         for ev in root.findall("c:calendarevent", NS):
             pre = ev.find("c:preschoolcalendarevent", NS)
@@ -63,8 +77,7 @@ def aggregate(paths):
             departments.setdefault(dept, (pre.findtext("c:departmentid", "", NS) or "").strip())
             enrolled[dept].add(child)
             units.setdefault(ev.findtext("c:unitid", "", NS).strip(), ev.findtext("c:unitname", "", NS).strip())
-            start = datetime.fromisoformat(ev.findtext("c:start", "", NS).strip())
-            stop = datetime.fromisoformat(ev.findtext("c:stop", "", NS).strip())
+            start, stop = _when(ev.findtext("c:start", "", NS)), _when(ev.findtext("c:stop", "", NS))
             if stop <= start:
                 continue
             events += 1
