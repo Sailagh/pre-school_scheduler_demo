@@ -53,6 +53,7 @@ def _build(problem, wk, days, targets, caps=None, away=True):
     # Each working person-day is in one unit (`m.units`), home or another; `m.unit_contact` is time with
     # children per unit, which is what each unit's need and special-needs cover count.
     m.units, m.unit_contact = {}, {}
+    m.gaps = []  # adults missing (total, per unit, special needs): what "the day has a gap" means
     units = problem["groups"]
     opener, closer = {}, {}
 
@@ -178,6 +179,7 @@ def _build(problem, wk, days, targets, caps=None, away=True):
             here = [contact[pid, d][t] for pid in staff if (pid, d) in contact]
             need = day["need"][t]
             short = m.new_int_var(0, max(need, 0), "")
+            m.gaps.append(short)
             m.add(sum(here) + short >= need)
             over = m.new_int_var(0, len(here), "")
             m.add(over >= sum(here) - need - 1)
@@ -185,12 +187,14 @@ def _build(problem, wk, days, targets, caps=None, away=True):
             for g, gneed in day["groupNeed"].items():
                 if gneed[t]:
                     gshort = m.new_int_var(0, gneed[t], "")
+                    m.gaps.append(gshort)
                     m.add(sum(m.unit_contact[pid, d][g][t] for pid in staff if g in m.unit_contact.get((pid, d), {})) + gshort >= gneed[t])
                     cost.append(W_GROUP * gshort)
         for kid in day["sn"]:
             trained = [pid for pid in staff if staff[pid]["sn"] and kid["group"] in m.unit_contact.get((pid, d), {})]
             for t in kid["slots"]:
                 miss = m.new_bool_var("")
+                m.gaps.append(miss)
                 m.add(sum(m.unit_contact[pid, d][kid["group"]][t] for pid in trained) + miss >= 1)
                 cost.append(W_SN * miss)
 
@@ -247,20 +251,26 @@ def solve_week(problem, wk, time_limit=20.0, workers=4):
         # Days stay in their home units first (small and fast). A day that leaves some unit short is
         # solved again with people allowed to help in other units.
         args = (problem, wk, [d], {pid: x[:2] for pid, x in day.items()}, {pid: x[2] for pid, x in day.items()})
-        m, *vars_ = _build(*args, away=False)
-        solver, status = _solve(m, time_limit * 0.2, workers)
-        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE) and solver.objective_value >= W_SHORT:
-            m, *vars_ = _build(*args, away=True)
-            solver, status = _solve(m, time_limit * 0.3, workers)
-        if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-            hint.update({k: solver.value(v) for k, v in _all_vars(vars_, m).items()})
+        best = None
+        for away in (False, True):
+            m, *vars_ = _build(*args, away=away)
+            solver, status = _solve(m, time_limit * (0.2 if not away else 0.3), workers)
+            if status == cp_model.UNKNOWN:  # a slow computer: keep going until the day has a schedule
+                solver, status = _solve(m, time_limit, workers)
+            ok = status in (cp_model.OPTIMAL, cp_model.FEASIBLE)
+            if ok and (best is None or solver.objective_value < best[0]):
+                best = (solver.objective_value, {k: solver.value(v) for k, v in _all_vars(vars_, m).items()})
+            if not ok or not any(solver.value(g) for g in m.gaps):
+                break  # no gap in any unit (or nothing found): no need to try with helpers
+        if best:
+            hint.update(best[1])
     targets = {p["id"]: (round(p["target"] / slot), round(p["planning"] / slot)) for p in wk["staff"]}
     m, contact, brk, plan, work, opener, closer = _build(problem, wk, range(5), targets)
     full = _all_vars((contact, brk, plan, work, opener, closer), m)
     left = max(time_limit * 0.3, time_limit - (time.monotonic() - started))
     hints = [(v, hint[k]) for k, v in full.items() if k in hint]
     solver, status = _solve(m, left, workers, hints)
-    if status == cp_model.UNKNOWN and hints:
+    if status == cp_model.UNKNOWN and all(k in hint for k in full if k[0] != "unit_contact" and k[0] != "unit"):
         # No week schedule found in the time: the days found one together, so take that.
         for v, val in hints:
             m.add(v == val)

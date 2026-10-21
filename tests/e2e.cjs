@@ -97,6 +97,16 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     assert.doesNotMatch(await body(), /has no schedule yet/);
     for (let i = 0; i < 2; i++) await btn('‹').click();
   });
+  await step("the phone opens on the scheduled week, with today's Sick button", async () => {
+    // Only week 42 is scheduled while the real date is later (as when trying the demo): week 42 plays "this week".
+    await p.evaluate(() => { const j = JSON.parse(localStorage.getItem('schema-demo-v5')); j.s.shifts = j.s.shifts.filter(x => x.week === 42); localStorage.setItem('schema-demo-v5', JSON.stringify(j)); });
+    await p.goto(URL); await p.waitForTimeout(3000);
+    await btn("Staff's phone", true).click(); await p.waitForTimeout(1000);
+    try {
+      assert.equal(await p.getByText('Week 42', { exact: true }).count(), 1, 'opens on week 42, not an empty week');
+      assert.equal(await btn('Sick', true).count(), 1, 'today is not treated as past');
+    } finally { await btn('Close', true).click(); }
+  });
   await step('the demo runs on week 42', async () => {
     await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.goto(URL); await p.waitForTimeout(3000);
     await btn('▶ Demo').click(); await p.waitForTimeout(3000);

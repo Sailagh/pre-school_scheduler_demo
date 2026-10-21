@@ -476,12 +476,14 @@ class Component extends DCLogic {
     const ctl = this.props.ctl || this.ctl, mod = this.props.mod || this.mod; if (!ctl || !mod) return { ready: false };
     const lang = this.props.lang === 'sv' ? 'sv' : 'en', sv = lang === 'sv', t = (a, b) => sv ? a : b, V = this.props.variant === 'b' ? 'b' : 'a';
     const s = ctl.store.get(), me = this.props.me || 'p1', P = mod.person(me) || mod.STAFF[0], st = this.state, W = st.week, D = st.day;
-    // Today's week may not be scheduled yet in the demo: then start on the planner's week, or the nearest scheduled one.
-    if (!this._weekChecked) {
-      this._weekChecked = true;
+    // Today's week may not be scheduled yet in the demo: then the planner's week (or the nearest scheduled one)
+    // plays "this week", keeping today's weekday, so the phone shows shifts and today's actions (report sick etc.).
+    if (!this._weekChecked && s.shifts.length) {
+      this._weekChecked = true; this._tw = TW;
       const has = w => s.shifts.some(x => x.week === w), weeks = [...new Set(s.shifts.map(x => x.week))];
-      if (!has(TW) && weeks.length) { const w = has(s.week) ? s.week : weeks.reduce((a, b) => Math.abs(b - TW) < Math.abs(a - TW) ? b : a); Promise.resolve().then(() => this.setState({ week: w })); }
+      if (!has(TW)) { const w = has(s.week) ? s.week : weeks.reduce((a, b) => Math.abs(b - TW) < Math.abs(a - TW) ? b : a); this._tw = w; Promise.resolve().then(() => this.setState({ week: w })); }
     }
+    const tw = this._tw ?? TW;
     const b0 = mod.blockOf(W), weeksArr = [b0, b0 + 1, b0 + 2, b0 + 3];
     const MON = sv ? ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'] : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const dt = (w, d) => new Date(2026, 9, 12 + (w - 42) * 7 + d);
@@ -500,10 +502,10 @@ class Component extends DCLogic {
     const segsOf = list => list.map(x => ({ left: pc(x.start) + '%', width: (pc(x.end) - pc(x.start)) + '%', bg: PAL[x.type] }));
     const rangeOf = list => list.length ? mod.fmt(list[0].start) + '–' + mod.fmt(list[list.length - 1].end) : '';
     const unitOf = list => { const c = list.find(x => x.type === 'contact') || list[0]; return c ? G(c.group) : null; };
-    const past = (w, d) => w < TW || (w === TW && d < TD);
+    const past = (w, d) => w < tw || (w === tw && d < TD);
     const open = (kind, w, d) => this.setState({ sheet: { kind, w, d }, swapWith: null, part: false, from: 780, to: 1110 });
     const dayVM = (w, d) => {
-      const sh = shifts(me, w, d), ab = absOf(me, w, d), pend = reqs.find(r => r.staff === me && r.week === w && r.day === d && r.status === 'pending'), u = unitOf(sh), today = w === TW && d === TD;
+      const sh = shifts(me, w, d), ab = absOf(me, w, d), pend = reqs.find(r => r.staff === me && r.week === w && r.day === d && r.status === 'pending'), u = unitOf(sh), today = w === tw && d === TD;
       let status = '', sBg = 'transparent', sFg = '#5A6B7A', dot = 'transparent';
       if (ab) { status = WHY[ab.reason] || WHY.leave; sBg = ab.reason === 'sick' ? '#FFDAD8' : '#E6EEF4'; sFg = ab.reason === 'sick' ? '#8E2A27' : '#3C4B5A'; dot = ab.reason === 'sick' ? '#E5534B' : '#8796A5'; }
       else if (pend) { status = t('Väntar', 'Waiting') + ': ' + TYPE[pend.type]; sBg = '#FFF1CF'; sFg = '#6B5214'; dot = '#E0A93B'; }
