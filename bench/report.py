@@ -39,6 +39,11 @@ def fmt_s(s):
     return f"{s:.0f} s" if s < 90 else f"{s / 60:.1f} min"
 
 
+def short(v):
+    """1000 -> 1k, 1000000 -> 1M: axis labels that fit."""
+    return f"{v // 1_000_000:g}M" if v >= 1_000_000 else f"{v // 1000:g}k" if v >= 1000 else f"{v:g}"
+
+
 def scatter(rows, title, W=440, H=260):
     """Time (x) against the solver's cost (y, log): one dot per run, filled if satisfactory."""
     L, R, T, B = 56, 12, 28, 40
@@ -50,7 +55,7 @@ def scatter(rows, title, W=440, H=260):
     out = [f'<svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(title)}">', f'<text x="{L}" y="16" class="t">{esc(title)}</text>']
     for k in range(int(math.log10(y0)), int(math.log10(y1)) + 1):
         y = Y(10 ** k)
-        out.append(f'<line x1="{L}" x2="{W - R}" y1="{y:.1f}" y2="{y:.1f}" class="grid"/><text x="{L - 6}" y="{y + 4:.1f}" class="ax" text-anchor="end">{10 ** k:,}</text>')
+        out.append(f'<line x1="{L}" x2="{W - R}" y1="{y:.1f}" y2="{y:.1f}" class="grid"/><text x="{L - 6}" y="{y + 4:.1f}" class="ax" text-anchor="end">{short(10 ** k)}</text>')
     step = next(s for s in (10, 20, 30, 60, 120, 300, 600) if x1 / s <= 6)
     for v in range(0, int(x1) + 1, step):
         out.append(f'<text x="{X(v):.1f}" y="{H - B + 16}" class="ax" text-anchor="middle">{v}</text>')
@@ -107,7 +112,8 @@ def main():
         rc = [r for r in rows if r["computer"] == comp]
         cpu, n = rc[0]["cpu"], rc[0]["logical_cpus"]
         parts.append(f'<h2>{esc(comp)}</h2><p class="sub">{esc(cpu)}, {esc(n)} logical CPUs, OR-Tools {esc(rc[0]["ortools"])}, Python {esc(rc[0]["python"])}. {len(rc)} runs.</p>')
-        # Summary table: smallest budget where every seed was satisfactory.
+        # Summary table: the smallest budget from which every seed at that budget and every larger one was satisfactory
+        # (a lucky seed at a small budget does not count when a larger budget still fails).
         trs = []
         for sc in NAMES:
             for c in sorted({r["cores"] for r in rc if r["scenario"] == sc}, key=lambda c: 0 if c == "all" else -int(c)):
@@ -117,16 +123,17 @@ def main():
                 by = {}
                 for r in g:
                     by.setdefault(r["budget"], []).append(r)
-                ok = [b for b in sorted(by) if all(r["sat"] for r in by[b])]
+                bs = sorted(by)
+                ok = [b for i, b in enumerate(bs) if all(r["sat"] for x in bs[i:] for r in by[x])]
                 first = ok[0] if ok else None
                 some = [b for b in sorted(by) if any(r["sat"] for r in by[b])]
                 cell = (f'{first:g} · {fmt_s(statistics.median(r["wall_s"] for r in by[first]))} (up to {fmt_s(max(r["wall_s"] for r in by[first]))})' if first is not None
                         else "never" + (f" for every seed (sometimes from budget {some[0]:g})" if some else ""))
                 best = min(by[max(by)], key=lambda r: r["objective"])
                 trs.append(f'<tr><td>{esc(NAMES[sc])}</td><td>{esc("all" if c == "all" else c)}</td><td>{len({r["seed"] for r in g})}</td><td>{cell}</td>'
-                           f'<td>{fmt_s(statistics.median(r["wall_s"] for r in by[max(by)]))}</td><td>{best.get("warnings", "")}</td><td>{best.get("planning_short_h", "")}</td></tr>')
-        parts.append('<table><thead><tr><th>Scenario</th><th>Cores</th><th>Seeds</th><th>First budget where every seed is satisfactory · seconds (median, worst)</th>'
-                     '<th>Largest budget · seconds</th><th>Warnings at largest</th><th>Planning hours missing at largest</th></tr></thead><tbody>' + "".join(trs) + "</tbody></table>")
+                           f'<td>{fmt_s(statistics.median(r["wall_s"] for r in by[max(by)]))}</td><td>{best.get("warnings", "")}</td><td>{best.get("hours_off_people", "")}</td><td>{best.get("planning_short_h", "")}</td></tr>')
+        parts.append('<table><thead><tr><th>Scenario</th><th>Cores</th><th>Seeds</th><th>Budget from which every seed is satisfactory · seconds (median, worst)</th>'
+                     '<th>Largest budget · seconds</th><th>Warnings at largest</th><th>People off their hours at largest</th><th>Planning hours missing at largest</th></tr></thead><tbody>' + "".join(trs) + "</tbody></table>")
         figs = [scatter([r for r in rc if r["scenario"] == sc and r["cores"] == "all" and r["scored"]], NAMES[sc]) for sc in NAMES
                 if any(r["scenario"] == sc and r["cores"] == "all" and r["scored"] for r in rc)]
         parts.append('<h3>Time against quality, all cores</h3><p class="sub">One dot per run. Filled: satisfactory (nothing to check, everyone within 15 min of their hours). Hollow: not. Lower cost is better: it adds up gaps, hours off contract, missing planning time and other soft goals.</p><div class="grid2">' + "".join(f"<figure>{f}</figure>" for f in figs) + "</div>")
