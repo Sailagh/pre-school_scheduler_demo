@@ -223,12 +223,17 @@ def _split(total, caps, unit):
     return out
 
 
+SEED = None  # set for repeatable experiments (bench/); CP-SAT's own default otherwise
+
+
 def _solve(model, seconds, workers, hint=None):
     """Searches for as much work as `seconds` on a typical computer (longer on a slow one, within reason)."""
     solver = cp_model.CpSolver()
     solver.parameters.max_deterministic_time = seconds * WORK_PER_SECOND
     solver.parameters.max_time_in_seconds = seconds * PATIENCE
     solver.parameters.num_workers = workers
+    if SEED is not None:
+        solver.parameters.random_seed = SEED
     if hint:
         model.clear_hints()
         for var, value in hint:

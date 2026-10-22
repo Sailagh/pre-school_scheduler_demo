@@ -7,3 +7,4 @@ __pycache__/
 
 # Real data from the municipality: never committed
 private/
+bench/results/solutions/
