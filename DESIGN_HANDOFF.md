@@ -176,7 +176,7 @@ A full-screen overlay with a **left side menu** (keep as designed) and a content
 - **Allmänt (General):** school name, language, time step for dragging, notifications, Börja om (reset demo).
 - **Import och export:**
   - **Import:** staff from HR, child counts from the child register (no child names), each shown as a preview before anything changes. Note: the municipality system (Edlevo) currently exports **PDF**. Plan a parser for a text-based PDF layout, but prefer asking for CSV/Excel or an API.
-  - **Export:** Excel / CSV / PDF / Calendar (ICS), for one week or the period. A "Timmar i filen" table lists staff total plus each substitute's hours.
+  - **Export:** Excel / CSV / PDF / Calendar (ICS), for the week shown in the planner ("Den här veckan") or a chosen range of weeks ("Välj veckor", From/To week steppers, weeks 41–52). A "Timmar i filen" table lists staff total plus each substitute's hours.
 - **Personal (Staff):** a list (sort by Namn / Avdelning / Avtal %) and a detail view per person:
   - **Tid och frånvaro:**
     - **Calendar:** two 7-week blocks side by side, with ‹ › arrows moving 7 weeks (about 35 weeks of history). Day cells are 20 px tall, colours below.

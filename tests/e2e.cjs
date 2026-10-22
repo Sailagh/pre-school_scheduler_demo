@@ -213,6 +213,22 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     assert.match(await body(), /\(sick from \d\d:\d\d, the time before counts as worked\)/);
     await btn(/Substitute desk/).click();
   });
+  await step('export: the week shown, or a range of weeks you choose', async () => {
+    await btn(/Settings/).first().click(); await p.waitForTimeout(500);
+    try {
+      await btn('Import and export', true).click(); await p.waitForTimeout(300);
+      assert.equal(await btn(/^This week \(w\.\d+\)$/).count(), 1);
+      await btn('Export', true).click(); await p.waitForTimeout(200);
+      assert.match(await body(), /schema-v\d+\.xlsx is ready/);
+      await btn('Choose weeks', true).click(); await p.waitForTimeout(200);
+      assert.match(await body(), /4 weeks, w\.(\d+)–\d+/);
+      const from = +(await body()).match(/4 weeks, w\.(\d+)/)[1];
+      await btn('+', true).first().click();  // From week's + await p.waitForTimeout(200);
+      assert.match(await body(), new RegExp('3 weeks, w\\.' + (from + 1) + '–' + (from + 3)));
+      await btn('Export', true).click(); await p.waitForTimeout(200);
+      assert.match(await body(), new RegExp('schema-v' + (from + 1) + '-' + (from + 3) + '\\.xlsx is ready'));
+    } finally { await btn(/Back to the schedule/).click(); await p.waitForTimeout(300); }
+  });
   await step('Swedish', async () => {
     await btn('SV', true).click(); await btn('Skapa schema', true).click(); await p.waitForTimeout(300);
     const t = await body();

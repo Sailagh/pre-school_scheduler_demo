@@ -119,6 +119,22 @@
                 <sc-for list="{{ ranges }}" as="x"><button onClick="{{ x.pick }}" style="height:34px;padding:0 14px;border:0;border-radius:5px;font:inherit;font-size:13px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer;white-space:nowrap">{{ x.name }}</button></sc-for>
               </div>
             </div>
+            <sc-if value="{{ isRange }}">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding:12px 16px;box-shadow:0 -1px 0 #E3EAF0">
+                <div style="font-size:13px;color:#5A6B7A">{{ rangeTxt }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:16px">
+                  <sc-for list="{{ weekSteps }}" as="r">
+                    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:#3C4B5A">{{ r.label }}</span>
+                      <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                        <button onClick="{{ r.dec }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0">−</button>
+                        <div style="min-width:48px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div>
+                        <button onClick="{{ r.inc }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0">+</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
             <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0;background:#F7FAFB">
               <div style="font-size:13px;line-height:1.45;color:#2D6A1F">{{ expTxt }}</div>
               <button onClick="{{ doExport }}" style="height:40px;padding:0 16px;border:0;border-radius:6px;background:#1F7D97;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">{{ io.exportBtn }}</button>
@@ -383,13 +399,17 @@ class Component extends DCLogic {
         applyTxt: t('Använd de här siffrorna', 'Use these numbers'), doneTxt: t('Antalet barn är uppdaterat.', 'The number of children is updated.'),
         apply: () => { ctl.touch(() => { const m = { g1: 18, g2: 28, g3: 38 }; G.forEach(g => { if (m[g.id]) g.max = m[g.id]; }); }); setImp('kids', 'done'); } },
     ].map(x => { const st = imp[x.key]; return { ...x, idle: !st, preview: st === 'preview', done: st === 'done', subTxt: st === 'done' ? x.doneTxt : x.sub, subFg: st === 'done' ? '#2D6A1F' : '#5A6B7A', choose: () => setImp(x.key, 'preview'), cancel: () => setImp(x.key, null) }; });
-    const F = this.state.fmt, Rg = this.state.range, b0 = mod.blockOf(s.week);
+    // Which weeks to export: the week shown in the planner, or a range of weeks the user picks.
+    const F = this.state.fmt, Rg = this.state.range === 'range' ? 'range' : 'week';
+    const wA = Math.max(mod.W0, Math.min(mod.W1, this.state.expFrom ?? s.week)), wB = Math.max(wA, Math.min(mod.W1, this.state.expTo ?? Math.min(mod.W1, s.week + 3)));
     const FM = { xlsx: ['Excel', t('För att ändra eller skicka till kontoret.', 'To edit or send to the office.')], csv: ['CSV', t('För lön- och tidrapporteringssystem.', 'For payroll and time-reporting systems.')],
       pdf: ['PDF', t('För att skriva ut eller sätta upp på väggen.', 'To print or put on the wall.')], ics: [t('Kalender', 'Calendar'), t('En fil per person som öppnas i telefonens kalender.', 'One file per person that opens in their phone calendar.')] };
     const formats = Object.entries(FM).map(([k, [name]]) => seg(k === F, name, () => this.setState({ fmt: k, exp: null })));
-    const ranges = [['week', t('Vecka ', 'Week ') + s.week], ['block', t('Period v.', 'Period w.') + b0 + '–' + (b0 + 3)]].map(([k, name]) => seg(k === Rg, name, () => this.setState({ range: k, exp: null })));
-    const span = Rg === 'week' ? 'v' + s.week : 'v' + b0 + '-' + (b0 + 3), people = mod.STAFF.length;
-    const inR = x => Rg === 'week' ? x.week === s.week : x.week >= b0 && x.week < b0 + 4, hh = m => fmtH(m, sv);
+    const ranges = [['week', t('Den här veckan (v.', 'This week (w.') + s.week + ')'], ['range', t('Välj veckor', 'Choose weeks')]].map(([k, name]) => seg(k === Rg, name, () => this.setState({ range: k, exp: null })));
+    const setW = (a, b) => this.setState({ expFrom: Math.max(mod.W0, Math.min(mod.W1, a)), expTo: Math.max(mod.W0, Math.min(mod.W1, b)), exp: null });
+    const weekSteps = [{ label: t('Från vecka', 'From week'), val: wA, dec: () => setW(wA - 1, wB), inc: () => setW(wA + 1, Math.max(wB, wA + 1)) }, { label: t('Till vecka', 'To week'), val: wB, dec: () => setW(Math.min(wA, wB - 1), wB - 1), inc: () => setW(wA, wB + 1) }];
+    const span = Rg === 'week' ? 'v' + s.week : wA === wB ? 'v' + wA : 'v' + wA + '-' + wB, people = mod.STAFF.length;
+    const inR = x => Rg === 'week' ? x.week === s.week : x.week >= wA && x.week <= wB, hh = m => fmtH(m, sv);
     const minsOf = id => s.shifts.filter(x => x.staff === id && inR(x)).reduce((a, x) => a + x.end - x.start, 0);
     const expRows = !this.state.exp || F === 'ics' ? [] : [{ name: t('Personal', 'Staff') + ' (' + people + ')', role: t('Anställda', 'Employees'), h: hh(mod.STAFF.reduce((a, p) => a + minsOf(p.id), 0)) },
       ...mod.SUBS.filter(p => minsOf(p.id) > 0).map(p => ({ name: p.name, role: t('Vikarie', 'Substitute'), h: hh(minsOf(p.id)) }))];
@@ -418,7 +438,7 @@ class Component extends DCLogic {
         format: t('Format', 'Format'), which: t('Veckor', 'Weeks'), exportBtn: t('Exportera', 'Export'), inFile: t('Timmar i filen', 'Hours in the file') },
       subMin: (() => { const v = P.subMin ?? mod.SUB_MIN; return { val: fmtH(v, sv), dec: () => setP('subMin', Math.max(60, v - 30)), inc: () => setP('subMin', Math.min(480, v + 30)) }; })(),
       offerMins: (() => { const v = P.offerMins ?? mod.OFFER_MINS; return { val: v + ' min', dec: () => setP('offerMins', Math.max(5, v - 5)), inc: () => setP('offerMins', Math.min(120, v + 5)) }; })(),
-      imports, formats, ranges, fmtSub: FM[F][1], doExport: () => this.setState({ exp: Date.now() }), expTxt, expRows, hasExpRows: expRows.length > 0, subs,
+      imports, formats, ranges, isRange: Rg === 'range', weekSteps, rangeTxt: wA === wB ? t('Vecka ', 'Week ') + wA : t(wB - wA + 1 + ' veckor, v.' + wA + '–' + wB, wB - wA + 1 + ' weeks, w.' + wA + '–' + wB), fmtSub: FM[F][1], doExport: () => this.setState({ exp: Date.now() }), expTxt, expRows, hasExpRows: expRows.length > 0, subs,
       sb: { title: t('Vikarier', 'Substitutes'), sub: t('Vikarier som kan få lediga pass när någon är sjuk. Ett ledigt pass erbjuds först den som är föredragen för avdelningen, och efter 15 minuter utan svar till alla som kan ta det.', 'Substitutes who can get free shifts when someone is sick. A free shift is first offered to the substitute preferred for the unit, and after 15 minutes without an answer to everyone who can take it.'),
         dlTitle: t('Svarstid för vikarier', 'Time for substitutes to answer'), dlSub: t('Hur länge vikarierna har på sig att svara när ett ledigt pass har publicerats. Är det inte täckt då visas nästa steg, till exempel kommunens vikarieportal.', 'How long substitutes have to answer once a free shift is published. If it is not covered by then, the next steps are shown, such as the municipality\'s substitute portal.'),
         minTitle: t('Kortaste pass för en vikarie', 'Shortest shift for a substitute'), minSub: t('När någon är sjuk erbjuds vikarien bara den del av passet där det saknas vuxna, men aldrig kortare än så här.', 'When someone is sick, the substitute is offered only the part of the shift where adults are missing, but never shorter than this.'),
