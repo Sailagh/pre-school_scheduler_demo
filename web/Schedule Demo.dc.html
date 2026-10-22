@@ -29,8 +29,6 @@
     <button onClick="{{ redo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ redoOp }}">↷ {{ L.redo }}</button>
     <button onClick="{{ copyWeek }}" title="{{ copyWeekTip }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer">{{ L.copyWeek }}</button>
     <button data-guide="gen" onClick="{{ openGen }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:#1F7D97;color:#fff">{{ genBtnTxt }}</button>
-    <button data-guide="phoneBtn" onClick="{{ togglePhone }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ phoneBtnBg }};color:{{ phoneBtnFg }}">{{ phoneTxt }}</button>
-    <button data-guide="cover" onClick="{{ toggleCover }}" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ covBtnBg }};color:{{ covBtnFg }}">{{ covTxt }}<sc-if value="{{ hasCovBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#D9A23A;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ covCount }}</span></sc-if></button>
     <button onClick="{{ toggleReq }}" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ reqBtnBg }};color:{{ reqBtnFg }}">{{ reqTxt }}<sc-if value="{{ hasReqBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#C2413D;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ reqCount }}</span></sc-if></button>
     <button data-guide="settings" onClick="{{ toggleSettings }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ setBtnBg }};color:{{ setBtnFg }}">⚙ {{ setTxt }}</button>
     
@@ -39,6 +37,7 @@
       <button onClick="{{ setSv }}" style="white-space:nowrap;flex:none;border:0;padding:6px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;background:{{ svBg }};color:{{ svFg }}">SV</button>
     </div>
   </div>
+  <div style="margin-right:84px">
   <div style="display:flex;padding:0 24px;background:#fff;border-bottom:1px solid #D3DDEA">
     <sc-for list="{{ days }}" as="d" hint-placeholder-count="5">
       <button onClick="{{ d.select }}" style="flex:1;border:0;border-bottom:3px solid {{ d.line }};background:transparent;padding:11px 12px 9px;text-align:left;cursor:pointer;font:inherit;display:flex;flex-direction:column;gap:2px">
@@ -249,7 +248,6 @@
         <div style="width:1px;height:16px;background:#C9D5E0"></div>
         <div style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:{{ mergeSw }}"></span>{{ mergeLegend }}</div>
         <div style="flex:1"></div>
-        <button onClick="{{ toggleGuides }}" style="border:1px solid #C9D5E0;background:{{ helpBg }};color:{{ helpFg }};border-radius:999px;height:28px;padding:0 12px;font:inherit;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap">? {{ helpTxt }}</button>
       </div>
       <sc-if value="{{ ddMerge }}">
         <div style="position:absolute;top:92px;left:{{ mergeDd.left }};width:240px;background:#fff;border-radius:10px;box-shadow:0 12px 32px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.06);padding:4px;z-index:12;display:flex;flex-direction:column;gap:2px">
@@ -336,9 +334,20 @@
       </sc-if>
     </div>
   </div>
+  </div>
+  <div data-guide="rail" style="position:absolute;top:57px;right:0;bottom:0;width:84px;z-index:37;background:#1F2D3A;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:12px 6px;box-sizing:border-box">
+    <div style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#8EA3B5;text-align:center;line-height:1.3;padding:0 2px 6px">{{ railHead }}</div>
+    <sc-for list="{{ rail }}" as="r">
+      <button data-guide="{{ r.guide }}" onClick="{{ r.go }}" title="{{ r.tip }}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border:0;border-radius:10px;background:{{ r.bg }};color:{{ r.fg }};font:inherit;font-size:11px;font-weight:600;line-height:1.25;cursor:pointer;text-align:center">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ r.icon }}"></path></svg>
+        <span>{{ r.name }}</span>
+        <sc-if value="{{ r.hasBadge }}"><span style="position:absolute;top:6px;right:10px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#E0A93B;color:#1F2D3A;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ r.badge }}</span></sc-if>
+      </button>
+    </sc-for>
+  </div>
   <sc-if value="{{ phoneOpen }}">
-    <div onClick="{{ togglePhone }}" style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:35;background:rgba(15,30,45,.32)"></div>
-    <div style="position:absolute;top:70px;right:32px;z-index:36;display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+    <div onClick="{{ togglePhone }}" style="position:absolute;left:0;right:84px;top:57px;bottom:0;z-index:35;background:rgba(15,30,45,.32)"></div>
+    <div style="position:absolute;top:70px;right:116px;z-index:36;display:flex;flex-direction:column;align-items:flex-end;gap:10px">
       <div style="display:flex;align-items:center;gap:10px;background:#fff;border-radius:8px;padding:6px 6px 6px 12px;box-shadow:0 8px 24px rgba(15,30,45,.18)">
         <div style="font-size:13px;color:#5A6B7A">{{ phoneOf }}</div>
         <div style="position:relative;display:inline-flex">
@@ -401,7 +410,7 @@
     </div>
   </sc-if>
   <sc-if value="{{ coverOpen }}">
-    <div data-guide="free" style="position:absolute;top:57px;right:0;bottom:0;width:600px;z-index:29;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
+    <div data-guide="free" style="position:absolute;top:57px;right:84px;bottom:0;width:600px;z-index:29;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
       <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
         <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ covTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ covSub }}</div><button onClick="{{ startDemo }}" style="margin-top:8px;height:32px;padding:0 12px;border:1px solid #9FCFDB;border-radius:6px;background:#EAF6F8;color:#16627A;font:inherit;font-size:13px;font-weight:600;cursor:pointer">▶ {{ demoTxt }}</button></div>
         <button onClick="{{ toggleCover }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
@@ -420,17 +429,27 @@
               <span style="font-size:14px;color:#5A6B7A;width:14px;text-align:center">{{ f.chev }}</span>
             </button>
             <sc-if value="{{ f.open }}">
-              <div style="display:flex;flex-direction:column;gap:14px;padding:4px 16px 16px">
+              <div style="display:flex;flex-direction:column;gap:12px;padding:4px 16px 16px">
                 <div style="font-size:14px;line-height:1.5;color:#3C4B5A">{{ f.replaces }}</div>
                 <sc-if value="{{ f.hasTags }}"><div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ f.tags }}" as="tg"><span style="font-size:13px;font-weight:600;padding:3px 8px;border-radius:5px;background:#EEF3F6;color:#3C4B5A">{{ tg.t }}</span></sc-for></div></sc-if>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"><sc-for list="{{ f.steps }}" as="sp"><div style="display:flex;flex-direction:column;gap:6px"><div style="height:6px;border-radius:3px;background:{{ sp.bar }}"></div><div style="font-size:13px;font-weight:{{ sp.fw }};color:{{ sp.fg }}">{{ sp.name }}</div></div></sc-for></div>
-                <div style="display:flex;flex-direction:column;gap:8px;border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px">
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"><sc-for list="{{ f.steps }}" as="sp"><div style="display:flex;flex-direction:column;gap:6px"><div style="height:6px;border-radius:3px;background:{{ sp.bar }}"></div><div style="font-size:12px;font-weight:{{ sp.fw }};color:{{ sp.fg }}">{{ sp.name }}</div></div></sc-for></div>
+                <div style="display:flex;flex-direction:column;gap:6px;border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px">
                   <div style="font-size:13px;font-weight:600;color:#5A6B7A">{{ f.gapTitle }}</div>
                   <sc-for list="{{ f.gaps }}" as="g"><div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="width:8px;height:8px;border-radius:50%;background:#E5534B;flex:none"></span><span>{{ g.t }}</span></div></sc-for>
                   <sc-if value="{{ f.noGaps }}"><div style="font-size:14px;color:#2D6A1F">{{ f.noGapTxt }}</div></sc-if>
-                  <div style="height:1px;background:#EEF3F6;margin:2px 0"></div>
-                  <div style="font-size:14px;line-height:1.45"><b>{{ f.winTxt }}</b> {{ f.winSub }}</div>
-                  <sc-if value="{{ f.canWin }}">
+                </div>
+                <sc-if value="{{ f.isDraft }}">
+                  <div style="display:flex;flex-direction:column;gap:8px;border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px">
+                    <div style="font-size:14px;font-weight:600">{{ f.inTitle }}</div>
+                    <div style="font-size:13px;line-height:1.45;color:#5A6B7A">{{ f.inSub }}</div>
+                    <sc-for list="{{ f.inDone }}" as="x"><div style="font-size:14px;color:#2D6A1F">✓ {{ x.t }}</div></sc-for>
+                    <sc-for list="{{ f.inOpts }}" as="x"><div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font-size:14px;line-height:1.4">{{ x.t }}</div><button onClick="{{ x.go }}" style="flex:none;height:32px;padding:0 12px;border:1px solid #9FCFDB;border-radius:6px;background:#EAF6F8;color:#16627A;font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ f.doTxt }}</button></div></sc-for>
+                    <sc-if value="{{ f.noInOpts }}"><div style="font-size:13px;color:#5A6B7A">{{ f.noInTxt }}</div></sc-if>
+                    <button onClick="{{ f.show }}" style="align-self:flex-start;border:0;background:transparent;color:#1F7D97;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:0">{{ f.selfTxt }}</button>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px;border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px">
+                    <div style="font-size:14px;font-weight:600">{{ f.outTitle }}</div>
+                    <div style="font-size:14px;line-height:1.45"><b>{{ f.winTxt }}</b> {{ f.winSub }}</div>
                     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
                       <sc-for list="{{ f.winSteps }}" as="r">
                         <div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;color:#3C4B5A">{{ r.label }}</span>
@@ -445,21 +464,43 @@
                       <button onClick="{{ f.toFull }}" style="height:32px;padding:0 10px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;color:#1F2D3A;font:inherit;font-size:13px;cursor:pointer">{{ f.toFullTxt }}</button>
                     </div>
                     <div style="font-size:12px;line-height:1.45;color:#5A6B7A">{{ f.winNote }}</div>
-                  </sc-if>
-                </div>
-                <div style="font-size:16px;font-weight:600;line-height:1.4">{{ f.statusLine }}</div>
-                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid #EEF3F6;padding-top:12px"><sc-for list="{{ f.log }}" as="lg"><div style="display:grid;grid-template-columns:52px minmax(0,1fr);column-gap:10px;font-size:14px;line-height:1.45"><span style="font-family:'IBM Plex Mono',monospace;color:#5A6B7A">{{ lg.t }}</span><span style="color:#1F2D3A">{{ lg.text }}</span></div></sc-for></div>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+                    <button onClick="{{ f.publish }}" style="height:42px;padding:0 18px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ f.publishTxt }}</button>
+                    <sc-if value="{{ f.noGaps }}"><button onClick="{{ f.close }}" style="height:42px;padding:0 16px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;cursor:pointer">{{ f.closeTxt }}</button></sc-if>
+                  </div>
+                  <div style="font-size:12px;line-height:1.45;color:#5A4410;background:#FFF6E0;border:1px solid #F0D9A0;border-radius:6px;padding:8px 10px">{{ f.humanNote }}</div>
+                </sc-if>
+                <sc-if value="{{ f.isOpen }}">
+                  <div style="font-size:14px;line-height:1.5">{{ f.openTxt }}</div>
+                  <div style="display:flex;flex-direction:column;gap:6px;border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px">
+                    <div style="font-size:13px;font-weight:600;color:#5A6B7A">{{ f.offTitle }}</div>
+                    <sc-if value="{{ f.noOffers }}"><div style="font-size:14px;color:#5A6B7A">{{ f.noOffTxt }}</div></sc-if>
+                    <sc-for list="{{ f.offers }}" as="o">
+                      <button onClick="{{ o.flip }}" style="display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;column-gap:10px;padding:8px 6px;border:0;border-radius:8px;background:{{ o.bg }};font:inherit;color:#1F2D3A;cursor:pointer;text-align:left">
+                        <span style="width:18px;height:18px;border-radius:4px;border:2px solid {{ o.boxBd }};background:{{ o.boxBg }};color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;box-sizing:border-box">{{ o.mark }}</span>
+                        <div style="min-width:0;display:flex;flex-direction:column;gap:4px"><div style="font-size:14px;font-weight:600">{{ o.name }}<span style="font-weight:500;color:#1F7D97">{{ o.pref }}</span></div><div style="position:relative;height:8px;border-radius:4px;background:#EEF3F6"><div style="position:absolute;top:0;bottom:0;left:{{ o.left }};width:{{ o.width }};border-radius:4px;background:{{ o.barBg }}"></div></div></div>
+                        <div style="font:500 13px 'IBM Plex Mono',monospace;white-space:nowrap">{{ o.time }}</div>
+                      </button>
+                    </sc-for>
+                    <sc-if value="{{ f.hasNo }}"><div style="font-size:13px;color:#5A6B7A">{{ f.noTxt }}</div></sc-if>
+                    <sc-if value="{{ f.hasWaiting }}"><div style="font-size:13px;color:#5A6B7A">{{ f.waitTxt }}</div></sc-if>
+                    <div style="font-size:14px;font-weight:600;color:{{ f.covFg }}">{{ f.covTxt }}</div>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:8px">
+                    <button onClick="{{ f.award }}" style="height:42px;padding:0 18px;border:0;border-radius:8px;background:{{ f.awardBg }};color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ f.awardTxt }}</button>
+                    <button onClick="{{ f.simulate }}" style="height:42px;padding:0 16px;border:1px dashed #9FCFDB;border-radius:8px;background:#fff;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ f.simTxt }}</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ f.isDone }}"><sc-for list="{{ f.result }}" as="x"><div style="font-size:15px;font-weight:600">{{ x.t }}</div></sc-for></sc-if>
+                <div style="display:flex;flex-direction:column;gap:5px;border-top:1px solid #EEF3F6;padding-top:12px"><sc-for list="{{ f.log }}" as="lg"><div style="display:grid;grid-template-columns:52px minmax(0,1fr);column-gap:10px;font-size:13px;line-height:1.45"><span style="font-family:'IBM Plex Mono',monospace;color:#5A6B7A">{{ lg.t }}</span><span style="color:#1F2D3A">{{ lg.text }}</span></div></sc-for></div>
                 <sc-if value="{{ f.hasEx }}">
                   <div style="display:flex;flex-direction:column;gap:6px;background:#F7FAFB;border-radius:10px;padding:12px 14px">
                     <div style="font-size:13px;font-weight:600;color:#5A6B7A">{{ f.exTitle }}</div>
                     <sc-for list="{{ f.ex }}" as="x"><div style="display:grid;grid-template-columns:130px minmax(0,1fr);column-gap:10px;font-size:14px;line-height:1.45"><span style="font-weight:600">{{ x.name }}</span><span style="color:#8E2A27">{{ x.why }}</span></div></sc-for>
                   </div>
                 </sc-if>
-                <div style="display:flex;flex-wrap:wrap;gap:8px">
-                  <sc-if value="{{ f.canConfirm }}"><button onClick="{{ f.confirm }}" style="height:42px;padding:0 18px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ f.confirmTxt }}</button></sc-if>
-                  <sc-if value="{{ f.canSkip }}"><button onClick="{{ f.skip }}" style="height:42px;padding:0 16px;border:1px dashed #9FCFDB;border-radius:8px;background:#fff;color:#1F7D97;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ f.skipTxt }}</button></sc-if>
-                  <button onClick="{{ f.show }}" style="height:42px;padding:0 16px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ f.showTxt }}</button>
-                </div>
+                <div><button onClick="{{ f.show }}" style="height:38px;padding:0 14px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ f.showTxt }}</button></div>
               </div>
             </sc-if>
           </div>
@@ -468,12 +509,12 @@
     </div>
   </sc-if>
   <sc-if value="{{ linesOpen }}">
-    <div style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:29;background:#fff;display:flex">
+    <div style="position:absolute;left:0;right:84px;top:57px;bottom:0;z-index:29;background:#fff;display:flex">
       <dc-import name="Schedule Lines" ctl="{{ ctl }}" mod="{{ mod }}" lang="{{ lang }}" rev="{{ rev }}" on-close="{{ toggleLines }}" on-go="{{ linesGo }}" hint-size="100%,100%" style="width:100%;height:100%"></dc-import>
     </div>
   </sc-if>
   <sc-if value="{{ setOpen }}">
-    <div data-guide="settingsPanel" style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:30;background:#fff;display:flex">
+    <div data-guide="settingsPanel" style="position:absolute;left:0;right:84px;top:57px;bottom:0;z-index:30;background:#fff;display:flex">
       <dc-import name="Demo Settings" ctl="{{ ctl }}" mod="{{ mod }}" lang="{{ lang }}" rev="{{ rev }}" section="{{ setSection }}" pid="{{ setPid }}" on-nav="{{ setNav }}" on-close="{{ toggleSettings }}" on-show="{{ showPerson }}" set-lang="{{ setLangFn }}" hint-size="100%,100%" style="width:100%;height:100%"></dc-import>
     </div>
   </sc-if>
@@ -483,7 +524,7 @@
   <sc-if value="{{ hasToast }}"><div style="position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#1F2D3A;color:#fff;font-size:13px;padding:10px 16px;border-radius:8px;z-index:21">{{ toast }}</div></sc-if>
   <sc-if value="{{ guideMenu }}">
     <div onClick="{{ toggleGuides }}" style="position:absolute;inset:0;z-index:43"></div>
-    <div style="position:absolute;right:24px;bottom:56px;width:340px;z-index:44;background:#fff;border-radius:12px;box-shadow:0 16px 40px rgba(15,30,45,.22),0 0 0 1px rgba(0,0,0,.06);padding:8px;display:flex;flex-direction:column;gap:2px">
+    <div style="position:absolute;right:96px;top:300px;width:340px;z-index:44;background:#fff;border-radius:12px;box-shadow:0 16px 40px rgba(15,30,45,.22),0 0 0 1px rgba(0,0,0,.06);padding:8px;display:flex;flex-direction:column;gap:2px">
       <div style="font-size:12px;font-weight:600;color:#5A6B7A;padding:6px 10px 4px">{{ guidesHead }}</div>
       <sc-for list="{{ guides }}" as="g"><button onClick="{{ g.go }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 10px;border:0;border-radius:8px;background:transparent;font:inherit;color:#1F2D3A;cursor:pointer;text-align:left" style-hover="background:#EEF4F7"><span style="font-size:14px;font-weight:600">{{ g.name }}</span><span style="font-size:12px;line-height:1.4;color:#5A6B7A">{{ g.sub }}</span></button></sc-for>
     </div>
@@ -546,9 +587,11 @@ class Component extends DCLogic {
       { t: ['kids', 'need'], en: ['Children and adults needed', 'The adults needed every quarter of an hour come from the number of children and how many children each adult can have (the pencil). The children can come from an example curve or from counted bookings in Edlevo; then the row says Edlevo.'], sv: ['Barn och behov', 'Hur många vuxna som behövs varje kvart räknas från antalet barn och hur många barn varje vuxen kan ha (pennan). Barnen kan komma från en exempelkurva eller från sammanräknade bokningar i Edlevo; då står det Edlevo på raden.'] },
       { t: ['working'], en: ['Who is working', 'How many are working at each time. Red means too few, green enough, yellow more than needed.'], sv: ['Vem som arbetar', 'Hur många som arbetar vid varje tid. Rött betyder för få, grönt tillräckligt, gult fler än behövs.'] },
       { t: ['lines'], en: ['Schedule lines', 'The schedule the way Medvind shows a base schedule: one row per schedule line and one time a day, in a rotation of several weeks. Import and export Medvind\'s Excel file here, and see a check against the rules.'], sv: ['Schemarader', 'Schemat så som Medvind visar ett grundschema: en rad per schemarad och en tid per dag, i en rotation på flera veckor. Här importerar och exporterar du Medvinds Excel-fil och ser en kontroll mot reglerna.'] },
-      { t: ['cover'], en: ['Sick cover', 'A sick report becomes a free shift offered to substitutes. The card shows where adults are missing, and the substitute is offered only that part of the day. Show how it works walks through it step by step.'], sv: ['Sjuk och vikarier', 'En sjukanmälan blir ett ledigt pass som erbjuds vikarier. Kortet visar var det saknas vuxna, och vikarien erbjuds bara den delen av dagen. Visa hur det går till går igenom det steg för steg.'] },
-      { t: ['phoneBtn'], en: ['Staff\'s phone', 'Shows the app the staff use, for any person or substitute. There is a guide for it too.'], sv: ['Telefon', 'Visar appen som personalen använder, för vem som helst i personalen eller en vikarie. Det finns en guide för den också.'] },
       { t: ['settings'], en: ['Settings', 'Staff, children and units, substitutes, rules, import and export. There is a guide for Settings too.'], sv: ['Inställningar', 'Personal, barn och avdelningar, vikarier, regler, import och export. Det finns en guide för Inställningar också.'] },
+      { t: ['rail'], en: ['Other roles', 'The dark bar on the right holds what is not part of making the schedule and would not sit in the planner in a real system: the staff\'s phone, the substitute desk for whoever arranges cover when someone is sick, and the guides.'], sv: ['Andra roller', 'Det mörka fältet till höger har det som inte är en del av schemaläggningen och inte skulle finnas i planeringsvyn i ett riktigt system: personalens telefon, vikarieförmedlingen för den som ordnar vikarier vid sjukdom, och guiderna.'] },
+      { t: ['cover'], en: ['Substitute desk', 'A sick report arrives as a draft. Whoever arranges cover sees where adults are missing, can let colleagues start earlier or stay later (straight into the schedule), sets how much is needed from outside and publishes. Substitutes offer the whole time or part of it; the app suggests a combination and the person awards.'], sv: ['Vikarieförmedling', 'En sjukanmälan kommer som ett utkast. Den som ordnar vikarier ser var det saknas vuxna, kan låta kollegor börja tidigare eller stanna längre (direkt i schemat), bestämmer hur mycket som behövs utifrån och publicerar. Vikarierna erbjuder hela tiden eller en del; appen föreslår en kombination och personen tilldelar.'] },
+      { t: ['phoneBtn'], en: ['Staff\'s phone', 'The app staff and substitutes use, for any of them. There is a guide for it too.'], sv: ['Personalens telefon', 'Appen som personal och vikarier använder, för vem som helst av dem. Det finns en guide för den också.'] },
+      { t: ['guides'], en: ['Guides and demo', 'This guide, guides to Settings and the phone, and a sick report step by step.'], sv: ['Guider och demo', 'Den här guiden, guider till inställningarna och telefonen, och en sjukanmälan steg för steg.'] },
     ],
     settings: [
       { t: ['settingsPanel'], set: { settings: 'general' }, place: 'br', en: ['General', 'The preschool\'s name, language, how finely time is divided when you drag shifts, which messages you get, and Start over, which puts the demo back to the beginning.'], sv: ['Allmänt', 'Förskolans namn, språk, hur fint tiden delas när du drar pass, vilka meddelanden du får och Börja om, som återställer demon.'] },
@@ -563,7 +606,7 @@ class Component extends DCLogic {
       { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'all', inbox: false, sheet: null }, en: ['Who\'s working', 'Everyone working that day, by unit. Colleagues who are away show as away; only the person and the principal see why.'], sv: ['Vem arbetar', 'Alla som arbetar den dagen, per avdelning. Den som är borta visas som frånvarande; bara personen själv och rektor ser varför.'] },
       { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'prof', inbox: false, sheet: null }, en: ['Me', 'The round button: the week\'s and month\'s hours against the contract in plain words, hours per day, and a few settings, such as whether to get requests to cover.'], sv: ['Jag', 'Den runda knappen: veckans och månadens timmar mot avtalet i klartext, timmar per dag och några inställningar, till exempel om man vill få förfrågningar om att täcka pass.'] },
       { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'me', inbox: true, sheet: null }, en: ['Inbox', 'Requests from colleagues to take over a shift, answers from the principal, and the person\'s own requests.'], sv: ['Inkorg', 'Förfrågningar från kollegor om att ta över ett pass, svar från rektor och de egna förfrågningarna.'] },
-      { t: ['phoneFrame'], set: { phone: true, phoneMe: 's1' }, cmd: { inbox: false, sheet: null }, en: ['A substitute', 'A substitute sees free shifts with the time, unit and what they need, never who is sick or why, and their booked shifts with who they work with.'], sv: ['En vikarie', 'En vikarie ser lediga pass med tid, avdelning och vad som krävs, aldrig vem som är sjuk eller varför, och sina bokade pass med vem de arbetar med.'] },
+      { t: ['phoneFrame'], set: { phone: true, phoneMe: 's1' }, cmd: { inbox: false, sheet: null }, en: ['A substitute', 'A substitute sees published free shifts with the time, unit and what they need, never who is sick or why. They offer the whole time, part of it, or say no, and see their booked shifts with who they work with.'], sv: ['En vikarie', 'En vikarie ser publicerade lediga pass med tid, avdelning och vad som krävs, aldrig vem som är sjuk eller varför. Vikarien erbjuder hela tiden, en del av den eller säger nej, och ser sina bokade pass med vem de arbetar med.'] },
       { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'me', inbox: false, sheet: null }, en: ['Try it on a phone', 'On the start page, Phone opens the app full screen. Started with start.py --lan, it also opens on a phone on the same Wi-Fi.'], sv: ['Prova på en telefon', 'På startsidan öppnar Telefonen appen i helskärm. Startad med start.py --lan går den också att öppna på en telefon i samma wifi.'] },
     ],
   };
@@ -656,26 +699,27 @@ class Component extends DCLogic {
     cap(1, t('06:40 · Anna Lindqvist är sjuk', '06:40 · Anna Lindqvist is sick'), t('Anna sjukanmäler sig i appen. Hennes pass i dag är ' + span + ' i ' + unitName + '.', 'Anna reports sick in the app. Her shift today is ' + span + ' in ' + unitName + '.'));
     await next(); if (!alive()) return;
     ctl.touch(st => mod.submitRequest(st, { staff: 'p1', week: W, day: D, type: 'sick', clock: 400 })); cmd({ sheet: null });
-    await wait(700); if (!alive()) return;
+    await wait(600); if (!alive()) return;
     this.setState({ phone: false, unit: unitOf, coverOpen: true, freeTab: 'active', freeOpen: {} });
-    const f0 = fr(ctl.store.get()) || {}, firstOffer = (f0.offered || []).map(id => mod.person(id).name), pref = f0.stage === 'preferred';
-    const firstNames = firstOffer.map(x => x.split(' ')[0]).join(t(' och ', ' and '));
-    const fw = fr(ctl.store.get()) || {}, part = fw.full && (fw.from > fw.full.from || fw.to < fw.full.to), win = fw.from != null ? mod.fmt(fw.from) + '–' + mod.fmt(fw.to) : span;
-    cap(2, t('06:41 · Ledigt pass', '06:41 · Free shift'), t('Passet blir ett ledigt pass. Kortet visar var det nu saknas vuxna, och vikarien behövs ' + win + (part ? ', inte hela passet ' + span : ', hela passet') + '.' + (needsSn ? ' Det kräver en vuxen utbildad för särskilt stöd.' : '') + (pref ? ' Först erbjuds det ' + firstOffer.join(' och ') + ', föredragen vikarie för ' + unitName + '.' : ' Det erbjuds alla vikarier som kan ta det.'), 'The shift becomes a free shift.' + (needsSn ? ' It needs an adult trained for special needs.' : '') + (pref ? ' It is first offered to ' + firstOffer.join(' and ') + ', the preferred substitute for ' + unitName + '.' : ' It is offered to every substitute who can take it.')).replace('The shift becomes a free shift.', 'The shift becomes a free shift. The card shows where adults are now missing, and the substitute is needed ' + win + (part ? ', not the whole shift ' + span : ', the whole shift') + '.'));
+    cap(2, t('06:41 · Ett utkast i Vikarieförmedlingen', '06:41 · A draft at the substitute desk'), t('Sjukanmälan blir ett utkast, inget skickas än. Den som ordnar vikarier, rektor eller en bemanningsfunktion, ser var det saknas vuxna och vad kollegor som redan arbetar kan täcka.' + (needsSn ? ' Passet kräver en vuxen utbildad för särskilt stöd.' : ''), 'The sick report becomes a draft; nothing is sent yet. The person arranging substitutes, a principal or a staffing coordinator, sees where adults are missing and what colleagues already working could cover.' + (needsSn ? ' The shift needs an adult trained for special needs.' : '')));
     await next(); if (!alive()) return;
-    ctl.touch(st => { const f = fr(st); if (f) mod.skipFree(st, f.id); });
-    cap(3, t('06:56 · Inget svar', '06:56 · No answer'), t((pref ? firstNames + ' har inte svarat på 15 minuter. ' : '') + 'Passet går nu till alla vikarier som kan ta det. Kortet visar vilka som inte kan och varför.', (pref ? firstNames + ' has not answered in 15 minutes. ' : '') + 'The shift now goes to every substitute who can take it. The card shows who cannot and why.'));
+    const opt = (() => { const S0 = ctl.store.get(), f = fr(S0); return f ? mod.internalOptions(S0, f, sv ? 'sv' : 'en')[0] : null; })();
+    if (opt) ctl.touch(st => { const f = fr(st); if (f) mod.coverInternally(st, f.id, opt); });
+    const f1 = fr(ctl.store.get()) || {}, win = f1.from != null ? mod.fmt(f1.from) + '–' + mod.fmt(f1.to) : span;
+    cap(3, t('06:45 · Täcka inifrån', '06:45 · Covering inside'), (opt ? opt.name + opt.text + '. ' + t('Det står nu i schemat. ', 'It is now in the schedule. ') : t('Ingen kollega kan täcka något utan att bryta mot en regel. ', 'No colleague can cover anything without breaking a rule. ')) + t('Det som behövs utifrån är ' + win + '.', 'What is needed from outside is ' + win + '.'));
     await next(); if (!alive()) return;
-    this.setState({ phone: true, phoneMe: 's1' });
-    cap(4, t('07:02 · Sara Ek tar passet', '07:02 · Sara Ek takes the shift'), t('Sara ser ett ledigt pass med tid, avdelning och vad som krävs. Hon ser inte vem som är sjuk eller varför.', 'Sara sees a free shift with the time, unit and what it needs. She does not see who is sick or why.'));
+    ctl.touch(st => { const f = fr(st); if (f) mod.publishFree(st, f.id); });
+    const f2 = fr(ctl.store.get()) || {}, asked = (f2.asked || []).map(id => mod.person(id).name);
+    this.setState({ phone: !!asked.length, phoneMe: (f2.asked || [])[0] || 's1' });
+    cap(4, t('06:46 · Publicerat', '06:46 · Published'), t('Den som ordnar vikarier publicerar. ' + (asked.length ? asked.join(', ') + ' får frågan och kan erbjuda hela tiden, en del av den, eller säga nej. Så här ser det ut för ' + asked[0].split(' ')[0] + '. Ingen ser vem som är sjuk.' : 'Ingen vikarie kan ta någon del.'), 'The coordinator publishes. ' + (asked.length ? asked.join(', ') + ' are asked and can offer the whole time, part of it, or say no. This is how it looks for ' + asked[0].split(' ')[0] + '. Nobody sees who is sick.' : 'No substitute can take any part.')));
     await next(); if (!alive()) return;
-    ctl.touch(st => { const f = fr(st); if (f) mod.acceptFree(st, f.id, 's1'); });
-    await wait(900); if (!alive()) return;
-    this.setState({ phone: false, unit: unitOf });
-    cap(5, t('Accepterat', 'Accepted'), t('Sara Ek står nu i schemat för tisdag med taggen Vikarie. Hennes timmar räknas in.', 'Sara Ek is now in Tuesday\'s schedule with a Substitute tag. Her hours are counted.'));
+    ctl.touch(st => { const f = fr(st); if (f) mod.simulateOffers(st, f.id); });
+    this.setState({ phone: false, pick: {} });
+    const f3 = fr(ctl.store.get()) || {}, sug = mod.suggestOffers(f3), sugTxt = (f3.offers || []).filter(o => sug.includes(o.id)).map(o => mod.person(o.sub).name.split(' ')[0] + ' ' + mod.fmt(o.from) + '–' + mod.fmt(o.to)).join(t(' och ', ' and '));
+    cap(5, t('07:00 · Erbjudanden', '07:00 · Offers'), t('Svaren kommer in. Någon kan bara en del av tiden. Appen föreslår ' + (sugTxt || 'inget') + ', men det är den som ordnar vikarier som väljer.', 'The answers come in. Some can only do part of the time. The app suggests ' + (sugTxt || 'nothing') + ', but the coordinator chooses.'));
     await next(); if (!alive()) return;
-    ctl.touch(st => { const f = fr(st); if (f) mod.confirmFree(st, f.id); }); this.setState({ freeTab: 'done', freeOpen: {} });
-    cap(6, t('Bekräftat', 'Confirmed'), t('Rektor bekräftar med ett klick. Sara får en bekräftelse i appen, och hennes timmar kommer med i exporten.', 'The principal confirms with one click. Sara gets a confirmation in the app, and her hours are included in the export.'), true);
+    ctl.touch(st => { const f = fr(st); if (f) mod.awardFree(st, f.id, mod.suggestOffers(f)); }); this.setState({ freeTab: 'done', freeOpen: {} });
+    cap(6, t('07:02 · Tilldelat', '07:02 · Awarded'), t('De valda får passet i appen och står nu i schemat. De som inte valdes får ett tack. Den som gör schemat ser vad som hände, utan att behöva göra något.', 'The chosen substitutes get the shift in the app and are now in the schedule. The others get a thank-you. The person making the schedule sees what happened, without having to do anything.'), true);
   }
   flash(msg) { clearTimeout(this._ft); this.ctl.up({ toast: msg }); this._ft = setTimeout(() => this.ctl.up({ toast: null }), 2800); }
   scrollTo(root, id) {
@@ -1002,6 +1046,20 @@ class Component extends DCLogic {
       showHelp: false, helpTxt: sv ? 'Visa guiden' : 'Show the guide',
       toggleGuides: e => { if (e && e.currentTarget) this._root = e.currentTarget.closest('[data-root]') || this._root; this.setState(st => ({ guideMenu: !st.guideMenu })); },
       guideMenu: !!this.state.guideMenu, guidesHead: sv ? 'Guider' : 'Guides',
+      // Other roles: things that are not part of making the schedule and would not sit in the planner later.
+      railHead: sv ? 'Andra roller' : 'Other roles',
+      rail: (() => {
+        const FA = (this.ctl.store.get().free || []), need = FA.filter(f => f.status === 'draft' || (f.status === 'open' && (f.offers || []).length)).length;
+        const on = a => ({ bg: a ? '#2B91AD' : 'transparent', fg: a ? '#fff' : '#DCE5EC' }), close = { settings: false, lines: false, reqOpen: false, dd: null };
+        return [
+          { guide: 'phoneBtn', name: sv ? 'Personalens telefon' : "Staff's phone", tip: sv ? 'Appen som personal och vikarier använder' : 'The app staff and substitutes use', icon: 'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM11 18h2',
+            ...on(!!this.state.phone), hasBadge: false, go: () => this.setState(st => ({ ...close, phone: !st.phone, coverOpen: false, guideMenu: false })) },
+          { guide: 'cover', name: sv ? 'Vikarie­förmedling' : 'Substitute desk', tip: sv ? 'För den som ordnar vikarier vid sjukdom' : 'For the person who arranges substitutes', icon: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 9-5M16 12h6M19 9v6',
+            ...on(!!this.state.coverOpen), hasBadge: need > 0, badge: need, go: () => this.setState(st => ({ ...close, coverOpen: !st.coverOpen, phone: false, guideMenu: false })) },
+          { guide: 'guides', name: sv ? 'Guider och demo' : 'Guides and demo', tip: sv ? 'Guider till schemat, inställningarna och telefonen, och sjukanmälan steg för steg' : 'Guides to the schedule, settings and phone, and a sick report step by step', icon: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5h.01',
+            ...on(!!this.state.guideMenu), hasBadge: false, go: e => { if (e && e.currentTarget) this._root = e.currentTarget.closest('[data-root]') || this._root; this.setState(st => ({ guideMenu: !st.guideMenu })); } },
+        ];
+      })(),
       guides: [['plan', sv ? 'Schemat' : 'The schedule', sv ? 'Planeringsvyn: skapa schema, varningar, avdelningar, schemarader, sjuk och vikarier.' : 'The planner: make a schedule, warnings, units, schedule lines, sick cover.'],
         ['settings', sv ? 'Inställningar' : 'Settings', sv ? 'Personal, barn och avdelningar, Edlevo, vikarier och regler.' : 'Staff, children and units, Edlevo, substitutes and rules.'],
         ['phone', sv ? 'Personalens telefon' : "Staff's phone", sv ? 'Mitt schema, vem arbetar, Jag, inkorgen och vikariens vy.' : 'My schedule, who is working, Me, the inbox and the substitute\'s view.'],
@@ -1034,55 +1092,77 @@ class Component extends DCLogic {
         rowBg: r.active ? '#F3F9FB' : r.off ? '#F7F9FA' : '#fff', rowRing: r.active ? 'inset 4px 0 #2B91AD' : 'none' })) : v.rows.map(r => ({ ...r, ...uf(r), dbl: () => this.setState({ focus: r.id }), dblTip: sv ? 'Dubbelklicka för att se bara den här personens vecka' : 'Double-click to see only this person\'s week', rowBg: r.selected ? '#FFF4D6' : r.preview ? '#EAF6F8' : r.isSub ? '#EEF4F7' : '#fff', rowRing: r.selected ? 'inset 4px 0 #E09A1F, inset 0 1px #F2C877, inset 0 -1px #F2C877' : 'none', strike: r.sick ? 'line-through' : 'none' })),
       ...(() => {
         const S = ctl.store.get(), mod = this.mod, fm = mod.fmt, nm = id => (mod.person(id) || {}).name || '', names = ids => (ids || []).map(nm).join(', ');
-        const FA = S.free || [], FR = FA.filter(f => f.week === v.weekNo && f.day === v.day), act = f => f.status !== 'confirmed', tab = this.state.freeTab || 'active';
+        const FA = S.free || [], FR = FA.filter(f => f.week === v.weekNo && f.day === v.day), act = f => f.status === 'draft' || f.status === 'open', tab = this.state.freeTab || 'active';
         const MON = sv ? ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'] : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const DN = sv ? ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], dLab = (w, d) => { const x = new Date(2026, 9, 5 + (w - 41) * 7 + d); return DN[d] + ' ' + x.getDate() + ' ' + MON[x.getMonth()]; };
         const PILL = { offered: [sv ? 'Erbjudet' : 'Offered', '#FFF1CF', '#6B5214'], nobody: [sv ? 'Ingen vikarie' : 'No substitute', '#FFDAD8', '#8E2A27'], accepted: [sv ? 'Accepterat' : 'Accepted', '#DDF1F5', '#16627A'], confirmed: [sv ? 'Bekräftat' : 'Confirmed', '#E2F6D4', '#2D6A1F'] };
         const opened = this.state.freeOpen || {}, list = FA.filter(f => tab === 'active' ? act(f) : !act(f)).sort((a, b) => (b.week * 10 + b.day) - (a.week * 10 + a.day) || b.clock - a.clock);
-        const freeCards = list.map((f, i) => { const g = v.groups.find(x => x.id === f.group) || {}, u = U[f.group] || { letter: '', ub: 'transparent', uf: '#000' }, idx = { offered: 0, nobody: 0, accepted: 1, confirmed: 2 }[f.status] ?? 0;
-          const LOG = l => ({ sick: nm(f.staff) + (sv ? ' sjukanmälde sig' : ' reported sick'), offerPref: (sv ? 'Erbjudet ' : 'Offered to ') + names(l.ids) + (sv ? ', föredragen för ' : ', preferred for ') + g.name,
-            noAnswer: sv ? 'Inget svar på 15 minuter' : 'No answer in 15 minutes', offerAll: (sv ? 'Skickat till ' : 'Sent to ') + names(l.ids), accepted: nm(l.by) + (sv ? ' tog passet' : ' took the shift'),
-            declined: nm(l.by) + (sv ? ' tackade nej' : ' declined'), window: (sv ? 'Vikarien behövs ' : 'Substitute needed ') + fm(l.from) + '–' + fm(l.to), confirmed: sv ? 'Bekräftat av dig' : 'Confirmed by you', wait: sv ? '15 minuter till utan svar' : '15 more minutes without an answer', nobody: sv ? 'Ingen vikarie kan ta passet' : 'No substitute can take the shift' })[l.k] || '';
-          const statusLine = f.status === 'accepted' ? (sv ? 'Accepterat · ' : 'Accepted · ') + nm(f.by) : f.status === 'confirmed' ? (sv ? 'Bekräftat · ' : 'Confirmed · ') + nm(f.by) : f.status === 'nobody' ? (sv ? 'Ingen vikarie kan ta passet. Välj personal nedan.' : 'No substitute can take the shift. Choose staff below.')
-            : f.stage === 'preferred' ? (sv ? 'Erbjudet ' : 'Offered to ') + names(f.offered) + (sv ? '. Går till alla om 15 min utan svar.' : '. Goes to everyone after 15 min without an answer.') : (sv ? 'Erbjudet ' + f.offered.length + ' vikarier. Den som svarar först får passet.' : 'Offered to ' + f.offered.length + ' substitutes. The first to answer gets it.');
-          const ex = f.status === 'offered' || f.status === 'nobody' ? mod.subCands(S, f, lang).filter(x => !x.ok) : [];
-          // Partial cover: where the day is short now, and the part of the shift the substitute is offered.
-          const full = f.full || { from: f.from, to: f.to }, min = Math.min((S.prefs || {}).subMin ?? mod.SUB_MIN, full.to - full.from), hh = x => mod.fmtN(Math.round(x / 6) / 10, lang) + ' h';
+        const freeCards = list.map((f, i) => { const g = v.groups.find(x => x.id === f.group) || {}, u = U[f.group] || { letter: '', ub: 'transparent', uf: '#000' };
+          const full = f.full || { from: f.from, to: f.to }, hh = x => mod.fmtN(Math.round(x / 6) / 10, lang) + ' h', rng = (a, b) => fm(a) + '–' + fm(b);
+          const min = Math.min((S.prefs || {}).subMin ?? mod.SUB_MIN, full.to - full.from), isDraft = f.status === 'draft', isOpen = f.status === 'open', isDone = f.status === 'awarded' || f.status === 'covered';
+          const idx = { draft: (f.internal || []).length ? 1 : 0, open: 3, awarded: 4, covered: 4 }[f.status] ?? 0;
+          const LOG = l => ({ sick: nm(f.staff) + (sv ? ' sjukanmälde sig' : ' reported sick'), window: (sv ? 'Behov utifrån ' : 'Needed from outside ') + rng(l.from, l.to),
+            internal: nm(l.by) + ' ' + rng(l.from, l.to) + (l.role === 'open' ? (sv ? ', öppnar' : ', opens') : l.role === 'close' ? (sv ? ', stänger' : ', closes') : ''),
+            published: (sv ? 'Publicerat till ' : 'Published to ') + names(l.ids), nobody: sv ? 'Publicerat, men ingen vikarie kan ta någon del' : 'Published, but no substitute can take any part',
+            offer: nm(l.by) + (sv ? ' erbjuder ' : ' offers ') + rng(l.from, l.to), declined: nm(l.by) + (sv ? ' kan inte' : " can't"),
+            awarded: (sv ? 'Tilldelat: ' : 'Awarded: ') + (l.won || []).map(o => nm(o.sub) + ' ' + rng(o.from, o.to)).join(', '), covered: sv ? 'Täckt inifrån, ingen vikarie' : 'Covered from inside, no substitute' })[l.k] || '';
           const gaps = mod.shortfall(S, f.week, f.day).filter(r => r.from < full.to + 60 && r.to > full.from - 60);
           const setW = (a, b) => { if (b - a < min) return; ctl.touch(st => mod.setFreeWindow(st, f.id, a, b)); };
+          const partial = f.from > full.from || f.to < full.to, before = f.from > full.from ? rng(full.from, f.from) : '', after = f.to < full.to ? rng(f.to, full.to) : '';
           const restShort = gaps.some(r => (r.group === f.group || r.group === null) && ((r.from < f.from && r.to > full.from) || (r.to > f.to && r.from < full.to)));
-          const partial = f.from > full.from || f.to < full.to, before = f.from > full.from ? fm(full.from) + '–' + fm(f.from) : '', after = f.to < full.to ? fm(f.to) + '–' + fm(full.to) : '';
-          const part = { gapTitle: sv ? 'Där det saknas vuxna nu' : 'Where adults are missing now',
-            gaps: gaps.map(r => ({ t: ((v.groups.find(x => x.id === r.group) || {}).name || (sv ? 'Hela förskolan' : 'Whole preschool')) + ' ' + fm(r.from) + '–' + fm(r.to) + ': ' + r.n + (sv ? ' för få' : ' too few') })),
-            noGaps: !gaps.length, noGapTxt: f.status === 'confirmed' || f.status === 'accepted' ? (sv ? 'Inga luckor. Dagen är täckt.' : 'No gaps. The day is covered.') : (sv ? 'Inga luckor just nu: kollegorna täcker dagen. Det kanske inte behövs någon vikarie.' : 'No gaps right now: colleagues cover the day. A substitute may not be needed.'),
-            winTxt: (sv ? 'Vikarien ' + (f.by ? 'tar ' : 'behövs ') : 'The substitute ' + (f.by ? 'takes ' : 'is needed ')) + fm(f.from) + '–' + fm(f.to) + ' (' + hh(f.to - f.from) + ')',
-            winSub: partial ? (sv ? 'av passet ' : 'of the shift ') + fm(full.from) + '–' + fm(full.to) + '. ' + (sv ? 'Resten (' : 'The rest (') + [before, after].filter(Boolean).join(sv ? ' och ' : ' and ') + (restShort ? (sv ? ') måste täckas av personalen – det saknas vuxna där nu.' : ') must be covered by the staff – adults are missing there now.') : (sv ? ') täcks redan av personalen.' : ') is already covered by the staff.')) : (sv ? '– hela passet.' : '– the whole shift.'),
-            canWin: f.status === 'offered' || f.status === 'nobody',
+          const cands = isDraft || isOpen ? mod.subCands(S, f, lang) : [], canN = cands.filter(c => c.ok).length, ex = isOpen ? cands.filter(x => !x.ok && !(f.declined || []).includes(x.id)) : [];
+          const inOpts = isDraft ? mod.internalOptions(S, f, lang) : [];
+          const offers = f.offers || [], picked = (this.state.pick || {})[f.id] ?? mod.suggestOffers(f), unc = isOpen ? mod.uncoveredBy(f, picked) : 0;
+          const flip = id => this.setState(st => { const cur = (st.pick || {})[f.id] ?? mod.suggestOffers(f); return { pick: { ...(st.pick || {}), [f.id]: cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id] } }; });
+          const answered = new Set([...offers.map(o => o.sub), ...(f.declined || [])]), waiting = (f.asked || []).filter(x => !answered.has(x));
+          const pc = x => ((x - f.from) / Math.max(1, f.to - f.from) * 100).toFixed(1) + '%';
+          const PILL = { draft: [sv ? 'Utkast' : 'Draft', '#EEF3F6', '#3C4B5A'], open: [sv ? 'Publicerat' : 'Published', '#FFF1CF', '#6B5214'], awarded: [sv ? 'Tilldelat' : 'Awarded', '#E2F6D4', '#2D6A1F'], covered: [sv ? 'Täckt inifrån' : 'Covered inside', '#E2F6D4', '#2D6A1F'] }[f.status] || ['', '#fff', '#000'];
+          return { title: sv ? 'Ledigt pass' : 'Free shift', unit: g.name, ...u, time: rng(f.from, f.to), when: dLab(f.week, f.day), short: nm(f.staff) + (sv ? ' sjuk' : ' sick'),
+            replaces: (sv ? 'Ersätter ' : 'Replaces ') + nm(f.staff) + (sv ? ' (sjuk), passet ' : ' (sick), shift ') + rng(full.from, full.to) + '. ' + (sv ? 'Vikarier ser bara ”ledigt pass”.' : 'Substitutes only see “free shift”.'),
+            tags: [...(f.needs.open ? [{ t: sv ? 'Öppnar' : 'Opens' }] : []), ...(f.needs.close ? [{ t: sv ? 'Stänger' : 'Closes' }] : []), ...(f.needs.sn ? [{ t: sv ? 'Utbildad för särskilt stöd' : 'Special needs trained' }] : [])], hasTags: !!(f.needs.open || f.needs.close || f.needs.sn),
+            steps: [sv ? 'Täck inifrån' : 'Cover inside', sv ? 'Behov utifrån' : 'From outside', sv ? 'Publicera' : 'Publish', sv ? 'Tilldela' : 'Award'].map((n, k) => ({ name: n, bar: k < idx || (k === idx && isDone) ? '#1F7D97' : k === idx ? '#9FCFDB' : '#E3EAF0', fw: k === Math.min(idx, 3) ? 700 : 500, fg: k <= idx ? '#1F2D3A' : '#8796A5' })),
+            gapTitle: sv ? 'Där det saknas vuxna nu' : 'Where adults are missing now', gaps: gaps.map(r => ({ t: ((v.groups.find(x => x.id === r.group) || {}).name || (sv ? 'Hela förskolan' : 'Whole preschool')) + ' ' + rng(r.from, r.to) + ': ' + r.n + (sv ? ' för få' : ' too few') })),
+            noGaps: !gaps.length, noGapTxt: isDone ? (sv ? 'Inga luckor. Dagen är täckt.' : 'No gaps. The day is covered.') : (sv ? 'Inga luckor just nu: dagen är täckt utan vikarie.' : 'No gaps right now: the day is covered without a substitute.'),
+            isDraft, isOpen, isDone,
+            inTitle: sv ? '1. Kan ni täcka något inifrån?' : '1. Can you cover some of it inside?', inSub: sv ? 'Kollegor som redan arbetar kan börja tidigare eller stanna längre. Det läggs in i schemat direkt, och behovet utifrån räknas om.' : 'Colleagues already working can start earlier or stay later. It goes straight into the schedule, and the need from outside is worked out again.',
+            inDone: (f.internal || []).map(x => ({ t: nm(x.pid) + ' ' + (x.to > x.from ? rng(x.from, x.to) : '') + (x.role === 'open' ? (sv ? ' öppnar' : ' opens') : x.role === 'close' ? (sv ? ' stänger' : ' closes') : '') })),
+            inOpts: inOpts.map(o => ({ t: o.name + o.text, go: () => ctl.touch(st => mod.coverInternally(st, f.id, o)) })), noInOpts: !inOpts.length, noInTxt: sv ? 'Ingen som redan arbetar kan täcka mer utan att bryta mot en regel.' : 'Nobody already working can cover more without breaking a rule.',
+            doTxt: sv ? 'Gör det' : 'Do it', selfTxt: sv ? 'Eller ändra själv i schemat ›' : 'Or change it yourself in the schedule ›',
+            outTitle: sv ? '2. Hur mycket behövs utifrån?' : '2. How much is needed from outside?',
+            winTxt: (sv ? 'Vikarie behövs ' : 'A substitute is needed ') + rng(f.from, f.to) + ' (' + hh(f.to - f.from) + ')',
+            winSub: partial ? (sv ? 'av passet ' : 'of the shift ') + rng(full.from, full.to) + '. ' + (sv ? 'Resten (' : 'The rest (') + [before, after].filter(Boolean).join(sv ? ' och ' : ' and ') + (restShort ? (sv ? ') måste täckas av personalen – det saknas vuxna där nu.' : ') must be covered by the staff – adults are missing there now.') : (sv ? ') täcks redan av personalen.' : ') is already covered by the staff.')) : (sv ? '– hela passet.' : '– the whole shift.'),
             winSteps: [{ label: sv ? 'Från' : 'From', val: fm(f.from), dec: () => setW(f.from - 15, f.to), inc: () => setW(f.from + 15, f.to) }, { label: sv ? 'Till' : 'To', val: fm(f.to), dec: () => setW(f.from, f.to - 15), inc: () => setW(f.from, f.to + 15) }],
             toGapsTxt: sv ? 'Bara där det saknas nu' : 'Only where it is short now', toGaps: () => { const w = mod.subWindow(S, f); ctl.touch(st => mod.setFreeWindow(st, f.id, w.from, w.to)); },
             toFullTxt: sv ? 'Hela passet' : 'Whole shift', toFull: () => ctl.touch(st => mod.setFreeWindow(st, f.id, full.from, full.to)),
-            winNote: sv ? 'Kan personalen täcka början eller slutet av dagen? Flytta dem i schemat och tryck sedan ”Bara där det saknas nu”. Kortaste pass för en vikarie: ' + hh(min) + ' (Inställningar › Vikarier).' : 'Can the staff cover the start or the end of the day? Move them in the schedule, then press “Only where it is short now”. Shortest shift for a substitute: ' + hh(min) + ' (Settings › Substitutes).' };
-          return { ...part, title: sv ? 'Ledigt pass' : 'Free shift', unit: g.name, ...u, time: fm(f.from) + '–' + fm(f.to), replaces: (sv ? 'Ersätter ' : 'Replaces ') + nm(f.staff) + (sv ? ' (sjuk). Vikarier ser bara ”ledigt pass”.' : ' (sick). Substitutes only see “free shift”.'),
-            tags: [...(f.needs.open ? [{ t: sv ? 'Öppnar' : 'Opens' }] : []), ...(f.needs.close ? [{ t: sv ? 'Stänger' : 'Closes' }] : []), ...(f.needs.sn ? [{ t: sv ? 'Utbildad för särskilt stöd' : 'Special needs trained' }] : [])],
-            steps: [sv ? 'Erbjudet' : 'Offered', sv ? 'Accepterat' : 'Accepted', sv ? 'Bekräftat' : 'Confirmed'].map((n, k) => ({ name: n, bar: k <= idx ? (f.status === 'nobody' ? '#E5534B' : '#1F7D97') : '#E3EAF0', fw: k === idx ? 700 : 500, fg: k === idx ? '#1F2D3A' : '#8796A5' })),
-            statusLine, log: f.log.map(l => ({ t: fm(l.t), text: LOG(l) })), ex, hasEx: ex.length > 0, exTitle: sv ? 'Kan inte ta passet' : 'Cannot take the shift',
-            canSkip: f.status === 'offered', skipTxt: sv ? '⏩ Hoppa fram 15 minuter (demo)' : '⏩ Skip ahead 15 minutes (demo)', skip: () => ctl.touch(st => mod.skipFree(st, f.id)),
-            canConfirm: f.status === 'accepted', confirmTxt: sv ? 'Bekräfta ' + nm(f.by) : 'Confirm ' + nm(f.by), confirm: () => { ctl.touch(st => mod.confirmFree(st, f.id)); this.setState(st => ({ freeTab: 'done', freeOpen: { ...(st.freeOpen || {}), [f.id]: true } })); },
+            winNote: sv ? 'Vikarier kan erbjuda hela tiden eller en del av den, minst ' + hh(min) + ' (Inställningar › Vikarier).' : 'Substitutes can offer the whole time or part of it, at least ' + hh(min) + ' (Settings › Substitutes).',
+            publishTxt: (sv ? '3. Publicera till vikarier' : '3. Publish to substitutes') + ' (' + canN + ')', publish: () => ctl.touch(st => mod.publishFree(st, f.id)),
+            closeTxt: sv ? 'Klart utan vikarie' : 'Done without a substitute', close: () => ctl.touch(st => mod.closeFree(st, f.id)),
+            humanNote: sv ? 'Här publicerar en människa med flit, efter att ha sett vad som kan lösas inifrån. Ett riktigt system skulle kunna publicera direkt vid sjukanmälan, utan det här steget.' : 'Here a person publishes on purpose, after seeing what can be solved inside. A real system could publish straight away when someone reports sick, without this step.',
+            openTxt: (sv ? 'Publicerat till ' : 'Published to ') + names(f.asked) + '. ' + (sv ? 'Vikarierna svarar med hela tiden, en del av den eller nej. Du väljer.' : 'The substitutes answer with the whole time, part of it, or no. You choose.'),
+            offTitle: sv ? '4. Erbjudanden' : '4. Offers', noOffers: !offers.length, noOffTxt: sv ? 'Inga erbjudanden än.' : 'No offers yet.',
+            offers: offers.slice().sort((a, b) => a.from - b.from).map(o => { const on = picked.includes(o.id), p = mod.person(o.sub) || {}; return { name: p.name || o.sub, pref: (p.prefer || []).includes(f.group) ? (sv ? ' · föredragen för ' : ' · preferred for ') + g.name : '', time: rng(o.from, o.to) + ' · ' + hh(o.to - o.from),
+              left: pc(o.from), width: pc(f.from + (o.to - o.from)), barBg: on ? '#1F7D97' : '#AFC0D6', bg: on ? '#EAF6F8' : 'transparent', boxBd: on ? '#1F7D97' : '#AFC0D6', boxBg: on ? '#1F7D97' : '#fff', mark: on ? '✓' : '', flip: () => flip(o.id) }; }),
+            hasNo: !!(f.declined || []).length, noTxt: (sv ? 'Kan inte: ' : "Can't: ") + names(f.declined), hasWaiting: isOpen && waiting.length > 0, waitTxt: (sv ? 'Inget svar än: ' : 'No answer yet: ') + names(waiting),
+            covTxt: !picked.length ? (sv ? 'Välj ett eller flera erbjudanden.' : 'Choose one or more offers.') : unc ? (sv ? 'De valda täcker inte ' + hh(unc) + ' av ' + rng(f.from, f.to) + '.' : 'The chosen offers leave ' + hh(unc) + ' of ' + rng(f.from, f.to) + ' uncovered.') : (sv ? 'De valda täcker hela ' + rng(f.from, f.to) + '.' : 'The chosen offers cover all of ' + rng(f.from, f.to) + '.'),
+            covFg: !picked.length || unc ? '#8A5F0C' : '#2D6A1F',
+            awardTxt: (sv ? 'Tilldela' : 'Award') + (picked.length ? ' (' + picked.length + ')' : ''), awardBg: picked.length ? '#1F7D97' : '#A9C9D2',
+            award: () => { if (!picked.length) return; ctl.touch(st => mod.awardFree(st, f.id, picked)); this.setState(st => ({ freeTab: 'done', freeOpen: { ...(st.freeOpen || {}), [f.id]: true } })); },
+            simTxt: sv ? '⏩ Simulera svar från vikarier (demo)' : '⏩ Simulate answers from substitutes (demo)', simulate: () => ctl.touch(st => mod.simulateOffers(st, f.id)),
+            result: f.status === 'covered' ? [{ t: sv ? 'Täckt inifrån, ingen vikarie behövdes.' : 'Covered inside, no substitute needed.' }] : (f.won || []).map(o => ({ t: nm(o.sub) + ' ' + rng(o.from, o.to) })),
+            log: f.log.map(l => ({ t: fm(l.t), text: LOG(l) })), ex, hasEx: ex.length > 0, exTitle: sv ? 'Kan inte ta någon del' : 'Cannot take any part',
             open: opened[f.id] ?? i === 0, chev: (opened[f.id] ?? i === 0) ? '▴' : '▾', toggle: () => this.setState(st => ({ freeOpen: { ...(st.freeOpen || {}), [f.id]: !((st.freeOpen || {})[f.id] ?? i === 0) } })),
-            when: dLab(f.week, f.day), short: nm(f.staff) + (sv ? ' sjuk' : ' sick') + (f.by ? ' → ' + nm(f.by) : ''), pill: (PILL[f.status] || PILL.offered)[0], pillBg: (PILL[f.status] || PILL.offered)[1], pillFg: (PILL[f.status] || PILL.offered)[2],
-            headBg: (opened[f.id] ?? i === 0) ? '#F7FAFB' : '#fff', bd: f.status === 'nobody' ? '#F5B9B5' : '#D3DDEA', showTxt: sv ? 'Visa i schemat' : 'Show in schedule',
-            show: () => { ctl.store.live(st => { st.week = f.week; }); ctl.up({ day: f.day, person: null, sel: null }); this.setState({ unit: f.group, focus: null }); },
-            topBd: i === 0 && !v.hasSel && !v.hasPerson ? '0' : '1px dashed #D3DDEA', topPad: i === 0 && !v.hasSel && !v.hasPerson ? '0' : '12px', hasTags: !!(f.needs.open || f.needs.close || f.needs.sn) }; });
-        const freeKeys = new Set(FR.filter(f => f.status !== 'nobody').map(f => f.staff + '-' + f.day));
+            pill: PILL[0], pillBg: PILL[1], pillFg: PILL[2], headBg: (opened[f.id] ?? i === 0) ? '#F7FAFB' : '#fff', bd: isOpen && !offers.length && !(f.asked || []).length ? '#F5B9B5' : '#D3DDEA', showTxt: sv ? 'Visa i schemat' : 'Show in schedule',
+            show: () => { ctl.store.live(st => { st.week = f.week; }); ctl.up({ day: f.day, person: null, sel: null }); this.setState({ unit: f.group, focus: null, coverOpen: false }); } }; });
+        const freeKeys = new Set(FR.map(f => f.staff + '-' + f.day));
         const coverF = v.cover.filter(u => u.onDay && !freeKeys.has(u.key)).map(u => ({ ...u, cands: u.cands.filter(c => !c.sub).slice(0, 5).map(c => ({ ...c, op: c.ok ? 1 : .5, line: c.ok ? c.info : c.reason, col: c.ok ? '#5A6B7A' : '#C2413D' })) }));
-        const nAct = FA.filter(act).length, nDone = FA.length - nAct, need = FA.filter(f => f.status === 'accepted' || f.status === 'nobody').length;
+        const nAct = FA.filter(act).length, nDone = FA.length - nAct, need = FA.filter(f => f.status === 'draft' || (f.status === 'open' && (f.offers || []).length)).length;
         const tabOpt = (k, name) => { const a = tab === k; return { name, pick: () => this.setState({ freeTab: k }), bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#3C4B5A', fw: a ? 600 : 500, sh: a ? '0 1px 2px rgba(15,30,45,.12)' : 'none' }; };
         return { freeCards, coverF, showFloat: v.hasSel || v.hasPerson || coverF.length > 0, noFree: !freeCards.length,
           noFreeTxt: tab === 'active' ? (sv ? 'Ingen är sjuk just nu. När någon sjukanmäler sig blir passet ett ledigt pass som syns här.' : 'Nobody is sick right now. When someone reports sick, the shift becomes a free shift and shows up here.') : (sv ? 'Inga avslutade ännu.' : 'Nothing finished yet.'),
           coverOpen: !!this.state.coverOpen, toggleCover: () => this.setState(st => ({ coverOpen: !st.coverOpen, reqOpen: false, settings: false })),
           covTxt: sv ? 'Sjuk och vikarier' : 'Sick cover', covCount: nAct, hasCovBadge: nAct > 0, covBtnBg: this.state.coverOpen ? '#1F2D3A' : '#fff', covBtnFg: this.state.coverOpen ? '#fff' : '#1F2D3A',
-          covTitle: sv ? 'Sjuk och vikarier' : 'Sick cover', covSub: sv ? 'Varje sjukanmälan blir ett ledigt pass som erbjuds vikarier. Följ dem här tills de är bekräftade.' : 'Every sick report becomes a free shift offered to substitutes. Follow them here until they are confirmed.',
-          covTabs: [tabOpt('active', (sv ? 'Pågående' : 'In progress') + ' (' + nAct + ')'), tabOpt('done', (sv ? 'Bekräftade' : 'Confirmed') + ' (' + nDone + ')')] };
+          covNeed: need, covTitle: sv ? 'Vikarieförmedling' : 'Substitute desk', covSub: sv ? 'För den som ordnar vikarier vid sjukdom, till exempel rektor eller en bemanningsfunktion. Det här är inte en del av schemaläggningen.' : 'For the person who arranges substitutes when someone is sick, such as a principal or a staffing coordinator. This is not part of making the schedule.',
+          covTabs: [tabOpt('active', (sv ? 'Att göra' : 'To do') + ' (' + nAct + ')'), tabOpt('done', (sv ? 'Klara' : 'Done') + ' (' + nDone + ')')] };
       })(),
       ddShift: this.state.dd === 'shift', ddShiftToggle: () => this.setState(st => ({ dd: st.dd === 'shift' ? null : 'shift' })),
       sCur: (() => { const g = v.sel && v.sel.groups.find(x => x.active); return g && U[g.id] ? { ...U[g.id], name: g.name } : { letter: '', ub: 'transparent', uf: '#000', name: '—' }; })(),

@@ -368,8 +368,22 @@
           <div style="font-size:15px;font-weight:600">{{ o.when }}</div>
           <div style="font:600 28px 'IBM Plex Mono',monospace;letter-spacing:-.02em">{{ o.time }}</div>
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;color:#3C4B5A"><span style="flex:none;width:16px;height:16px;border-radius:4px;background:{{ o.ub }};color:{{ o.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ o.letter }}</span>{{ o.unit }}<sc-for list="{{ o.tags }}" as="tg"><span style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:#EEF3F6;color:#3C4B5A">{{ tg.t }}</span></sc-for></div>
-          <sc-if value="{{ o.canTake }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px"><button onClick="{{ o.take }}" style="height:48px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.takeShift }}</button><button onClick="{{ o.decline }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;height:48px;font-size:15px">{{ tx.decline }}</button></div></sc-if>
-          <sc-if value="{{ o.taken }}"><div style="font-size:13px;font-weight:600;color:#5A6B7A">{{ tx.taken }}</div></sc-if>
+          <div style="font-size:13px;line-height:1.45;color:#3C4B5A">{{ o.freeTxt }}</div>
+          <sc-if value="{{ o.canOffer }}">
+            <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:4px">
+              <button onClick="{{ o.offerAll }}" style="height:48px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ o.offerAllTxt }}</button>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onClick="{{ o.editPart }}" style="height:44px;border:1px solid #9FCFDB;border-radius:8px;background:#EAF6F8;color:#16627A;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ tx.partOffer }}</button><button onClick="{{ o.decline }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ tx.cantOffer }}</button></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ o.editing }}">
+            <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid #EEF3F6;padding-top:10px">
+              <sc-for list="{{ o.steps }}" as="r"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:14px">{{ r.label }}</span><div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:8px;overflow:hidden"><button onClick="{{ r.dec }}" style="width:44px;border:0;background:#fff;font-size:18px;cursor:pointer">−</button><div style="min-width:70px;display:flex;align-items:center;justify-content:center;font:600 15px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div><button onClick="{{ r.inc }}" style="width:44px;border:0;background:#fff;font-size:18px;cursor:pointer">+</button></div></div></sc-for>
+              <div style="font-size:12px;color:#5A6B7A">{{ o.minTxt }}</div>
+              <button onClick="{{ o.sendPart }}" style="height:46px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ o.sendPartTxt }}</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ o.hasMine }}"><div style="display:flex;align-items:center;gap:8px;background:#EAF6F8;border-radius:8px;padding:10px 12px"><div style="flex:1;font-size:14px;line-height:1.4"><b>{{ o.mineTxt }}</b><br><span style="color:#3C4B5A">{{ o.mineSub }}</span></div><sc-if value="{{ o.canChange }}"><button onClick="{{ o.editPart }}" style="height:36px;padding:0 12px;border:1px solid #9FCFDB;border-radius:8px;background:#fff;color:#16627A;font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ tx.change }}</button></sc-if></div></sc-if>
+          <sc-if value="{{ o.done }}"><div style="font-size:14px;font-weight:600;color:{{ o.doneFg }}">{{ o.doneTxt }}</div></sc-if>
         </div>
       </sc-for>
     </div>
@@ -649,13 +663,28 @@ class Component extends DCLogic {
     const openOffers = offers.filter(o => o.canAnswer).length;
     const FR = s.free || [], lastOffer = f => { const l = (f.log || []).filter(x => x.k === 'offerPref' || x.k === 'offerAll'); return l.length ? l[l.length - 1].t : f.clock; };
     const needTags = f => [...(f.needs.open ? [{ t: t('Öppnar', 'Opens') }] : []), ...(f.needs.close ? [{ t: t('Stänger', 'Closes') }] : []), ...(f.needs.sn ? [{ t: t('Särskilt stöd', 'Special needs') }] : [])];
-    const subOffers = isSubMe ? FR.filter(f => (f.offered || []).includes(me) && !(f.declined || []).includes(me) && f.by !== me && f.status !== 'nobody').sort((a, b) => b.clock - a.clock).map(f => { const g = G(f.group);
-      return { when: LD(f.day) + ' ' + dLab(f.week, f.day), time: mod.fmt(f.from) + '–' + mod.fmt(f.to), unit: g ? g.name : '', ...(g ? UC[g.id] : {}), tags: needTags(f), sent: t('Skickat ', 'Sent ') + mod.fmt(lastOffer(f)),
-        canTake: f.status === 'offered', taken: f.status !== 'offered', op: f.status === 'offered' ? 1 : .6,
-        take: () => { ctl.touch(x => mod.acceptFree(x, f.id, me)); this.flash(t('Passet är ditt', 'The shift is yours')); }, decline: () => ctl.touch(x => mod.declineFree(x, f.id, me)) }; }) : [];
-    const subDays = isSubMe ? [...new Set(s.shifts.filter(x => x.staff === me).map(x => x.week * 10 + x.day))].sort((a, b) => a - b).map(k => { const w = Math.floor(k / 10), d = k % 10, sh = shifts(me, w, d), u = unitOf(sh), f = FR.find(z => z.by === me && z.week === w && z.day === d);
+    // A call for proposals: offer the whole time, a part of it (at least the shortest substitute shift), or say no.
+    const subMin = Math.min((s.prefs || {}).subMin ?? mod.SUB_MIN, 1440);
+    const subOffers = isSubMe ? FR.filter(f => (f.asked || []).includes(me) && (f.status === 'open' ? !(f.declined || []).includes(me) : (f.offers || []).some(o => o.sub === me))).sort((a, b) => b.clock - a.clock).map(f => { const g = G(f.group);
+      const mine = (f.offers || []).find(o => o.sub === me), c = mod.subCands(s, { ...f, declined: [] }, lang).find(x => x.id === me) || { free: [] }, fr = c.free[0] || { from: f.from, to: f.to };
+      const ed = st.offerEdit && st.offerEdit.id === f.id ? st.offerEdit : null, min = Math.min(subMin, f.to - f.from), open = f.status === 'open';
+      const whole = c.free.length === 1 && fr.from === f.from && fr.to === f.to, rng = (a, b) => mod.fmt(a) + '–' + mod.fmt(b);
+      const stepE = (k, dd) => this.setState(x => { const e = { ...x.offerEdit }; e[k] = Math.max(f.from, Math.min(f.to, e[k] + dd)); if (e.to - e.from < min) return {}; return { offerEdit: e }; });
+      return { when: LD(f.day) + ' ' + dLab(f.week, f.day), time: rng(f.from, f.to), unit: g ? g.name : '', ...(g ? UC[g.id] : {}), tags: needTags(f), sent: t('Skickat ', 'Sent ') + mod.fmt(f.clock), op: open ? 1 : .75,
+        freeTxt: !open ? '' : whole ? t('Du är ledig hela tiden.', 'You are free the whole time.') : c.free.length ? t('Du kan ', 'You can do ') + c.free.map(x => rng(x.from, x.to)).join(t(' och ', ' and ')) + '.' : '',
+        canOffer: open && !mine && !ed, offerAllTxt: whole ? t('Erbjud hela tiden', 'Offer the whole time') : t('Erbjud ', 'Offer ') + rng(fr.from, fr.to),
+        offerAll: () => { ctl.touch(x => mod.offerFree(x, f.id, me, fr.from, fr.to)); this.flash(t('Erbjudandet är skickat', 'Your offer is sent')); },
+        editPart: () => this.setState({ offerEdit: { id: f.id, from: mine ? mine.from : fr.from, to: mine ? mine.to : Math.min(fr.to, fr.from + Math.max(min, 300)) } }),
+        decline: () => ctl.touch(x => mod.declineFree(x, f.id, me)), editing: open && !!ed,
+        steps: ed ? [{ label: t('Från', 'From'), val: mod.fmt(ed.from), dec: () => stepE('from', -15), inc: () => stepE('from', 15) }, { label: t('Till', 'To'), val: mod.fmt(ed.to), dec: () => stepE('to', -15), inc: () => stepE('to', 15) }] : [],
+        minTxt: (h => t('Minst ' + h + '.', 'At least ' + h + '.'))(mod.fmtN(Math.round(min / 6) / 10, lang) + ' h'), sendPartTxt: ed ? t('Skicka erbjudande ', 'Send offer ') + rng(ed.from, ed.to) : '',
+        sendPart: () => { if (!ed) return; ctl.touch(x => mod.offerFree(x, f.id, me, ed.from, ed.to)); this.setState({ offerEdit: null }); this.flash(t('Erbjudandet är skickat', 'Your offer is sent')); },
+        hasMine: !!mine && !ed, mineTxt: mine ? t('Ditt erbjudande: ', 'Your offer: ') + rng(mine.from, mine.to) : '', canChange: open,
+        mineSub: !mine ? '' : open ? t('Väntar på svar från den som ordnar vikarier.', 'Waiting for an answer from the person arranging substitutes.') : mine.status === 'won' ? t('Du fick passet. Det står nu i Mina pass.', 'You got the shift. It is now under My shifts.') : t('Passet är tillsatt. Tack för ditt erbjudande!', 'The shift has been filled. Thank you for your offer!'),
+        done: false, doneTxt: '', doneFg: '#5A6B7A' }; }) : [];
+    const subDays = isSubMe ? [...new Set(s.shifts.filter(x => x.staff === me).map(x => x.week * 10 + x.day))].sort((a, b) => a - b).map(k => { const w = Math.floor(k / 10), d = k % 10, sh = shifts(me, w, d), u = unitOf(sh), f = FR.find(z => (z.won || []).some(o => o.sub === me) && z.week === w && z.day === d);
       const mates = [...mod.STAFF, ...mod.SUBS].filter(p => p.id !== me && !absOf(p.id, w, d)).map(p => { const ps = shifts(p.id, w, d).filter(x => u && x.group === u.id); return ps.length ? { name: p.name, range: rangeOf(ps), start: ps[0].start } : null; }).filter(Boolean).sort((a, b) => a.start - b.start);
-      const cf = f && f.status === 'confirmed';
+      const cf = !f || f.status === 'awarded';
       return { when: LD(d) + ' ' + dLab(w, d), range: rangeOf(sh), unit: u ? u.name : '', ...(u ? UC[u.id] : {}), status: !f || cf ? t('Bekräftat', 'Confirmed') : t('Väntar på bekräftelse', 'Waiting for confirmation'), sBg: !f || cf ? '#E2F6D4' : '#FFF1CF', sFg: !f || cf ? '#2D6A1F' : '#6B5214',
         list: sh.map(x => ({ time: mod.fmt(x.start) + '–' + mod.fmt(x.end), type: TL[x.type], sw: PAL[x.type] })), mates, hasMates: mates.length > 0 }; }) : [];
     const send = r => { ctl.touch(x => mod.submitRequest(x, { staff: me, week: SH.w, day: SH.d, ...r })); this.setState({ sheet: null }); };
@@ -754,6 +783,7 @@ class Component extends DCLogic {
         taken: t('Passet är tillsatt.', 'The shift has been taken.'), myShifts: t('Mina pass', 'My shifts'), noSubDays: t('Du har inga bokade pass.', 'You have no booked shifts.'), mates: t('Du arbetar med', 'You work with'), bUn: t('Kan inte', "Can't work"),
         aSick: t('Sjukanmäl dig', 'Report sick'), aSwap: t('Be om att byta pass', 'Ask to swap'), aUn: t('Säg att du inte kan arbeta', "Say you can't work"),
         settings: t('Inställningar', 'Settings'), setNote: t('Avtal, hemavdelning och tider ändras av den som planerar. Säg till om något är fel.', 'Contract, home unit and times are changed by the planner. Tell them if something is wrong.'),
+        partOffer: t('En del av tiden', 'Part of the time'), cantOffer: t('Kan inte', "Can't"), change: t('Ändra', 'Change'),
         sendSick: t('Sjukanmäl', 'Report sick'), sendReq: t('Skicka förfrågan', 'Send request'), cancel: t('Avbryt', 'Cancel') },
     };
   }

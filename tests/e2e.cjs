@@ -91,17 +91,26 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     assert.match(t, /Keep them and fill in around them/); assert.match(t, /Start over: replace the whole week/);
     await btn('Close', true).click();
   });
-  await step('sick cover: shows where adults are missing and offers the substitute only part of the shift', async () => {
+  await step('substitute desk: a sick report is a draft; cover inside, publish, offers, award', async () => {
+    assert.equal(await btn('Sick cover', true).count(), 0, 'not in the top bar any more');
     await p.locator('[data-row="p8"]').first().click({ position: { x: 60, y: 20 } }).catch(() => {}); await p.getByText('Ahmed Karimi').first().click(); await p.waitForTimeout(300);
-    await btn(/Mark sick today/).click(); await p.waitForTimeout(400); await btn(/Sick cover/).click(); await p.waitForTimeout(600);
+    await btn(/Mark sick today/).click(); await p.waitForTimeout(400); await btn(/Substitute desk/).click(); await p.waitForTimeout(600);
     let t = await body();
-    assert.match(t, /Where adults are missing now/); assert.match(t, /Avd 2 \d\d:\d\d–\d\d:\d\d: 1 too few/);
-    assert.match(t, /The substitute is needed 07:15–13:30 \(6\.3 h\) of the shift 06:00–13:30\. The rest \(06:00–07:15\) is already covered by the staff\./);
+    assert.match(t, /Draft/); assert.match(t, /Where adults are missing now/); assert.match(t, /1\. Can you cover some of it inside\?/);
+    assert.match(t, /A substitute is needed 07:15–13:30 \(6\.3 h\) of the shift 06:00–13:30\. The rest \(06:00–07:15\) is already covered by the staff\./);
+    assert.match(t, /could publish straight away/);
     await btn('Whole shift', true).click(); await p.waitForTimeout(300);
-    assert.match(await body(), /The substitute is needed 06:00–13:30 \(7\.5 h\) – the whole shift\./);
+    assert.match(await body(), /A substitute is needed 06:00–13:30 \(7\.5 h\) – the whole shift\./);
     await btn('Only where it is short now', true).click(); await p.waitForTimeout(300);
-    assert.match(await body(), /needed 07:15–13:30/);
-    await btn(/Sick cover/).click(); await p.waitForTimeout(300);
+    await btn('Do it', true).first().click(); await p.waitForTimeout(400);
+    assert.match(await body(), /✓ .* opens/, 'taking over the opening is done in the schedule');
+    await btn(/3\. Publish to substitutes/).click(); await p.waitForTimeout(400);
+    assert.match(await body(), /Published to /); assert.match(await body(), /No offers yet/);
+    await btn(/Simulate answers from substitutes/).click(); await p.waitForTimeout(400);
+    t = await body(); assert.match(t, /The chosen offers cover all of|The chosen offers leave/);
+    await btn(/^Award \(\d\)/).click(); await p.waitForTimeout(400);
+    assert.match(await body(), /Awarded/);
+    await btn(/Substitute desk/).click(); await p.waitForTimeout(300);
   });
   await step('Copy last week appears once the week before has a schedule', async () => {
     for (let i = 0; i < 2; i++) await btn('›').click(); await p.waitForTimeout(300);
@@ -155,8 +164,8 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
   await step('the guides: the schedule, Settings and the phone', async () => {
     await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.goto(URL); await p.waitForTimeout(3000);
     assert.equal(await btn('▶ Demo').count(), 0, 'the demo is no longer in the top bar');
-    for (const [guide, first, last] of [['The schedule', /Make a schedule/, /Settings, There is a guide|There is a guide for Settings too/], ['Settings', /The preschool's name, language/, /The rules the schedule is checked against/], ["Staff's phone", /The week at the top, the chosen day below/, /On the start page, Phone opens the app/]]) {
-      await btn(/Show the guide/).first().click(); await p.waitForTimeout(200);
+    for (const [guide, first, last] of [['The schedule', /Make a schedule/, /This guide, guides to Settings and the phone/], ['Settings', /The preschool's name, language/, /The rules the schedule is checked against/], ["Staff's phone", /The week at the top, the chosen day below/, /On the start page, Phone opens the app/]]) {
+      await btn(/Show the guide|Guides and demo/).first().click(); await p.waitForTimeout(200);
       await p.getByRole('button', { name: new RegExp('^' + guide + '\\s?(The planner|Staff, children|My schedule)') }).click(); await p.waitForTimeout(500);
       assert.match(await body(), first, guide);
       for (let i = 0; i < 20 && await btn('Next', true).count(); i++) { await btn('Next', true).click(); await p.waitForTimeout(250); }
@@ -165,14 +174,14 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     }
   });
   await step('a sick report step by step: moves on only when you press Next', async () => {
-    await btn(/Show the guide/).first().click(); await p.waitForTimeout(200);
+    await btn(/Show the guide|Guides and demo/).first().click(); await p.waitForTimeout(200);
     await p.getByRole('button', { name: /^A sick report step by step/ }).click(); await p.waitForTimeout(2500);
     assert.match(await body(), /Her shift today is \d\d:\d\d–\d\d:\d\d in /);
     await p.waitForTimeout(2500);
     assert.match(await body(), /1 \/ 6/, 'waits for Next');
     await btn('Next', true).click(); await p.waitForTimeout(1500);
-    assert.match(await body(), /In progress \(1\)/, 'the free shift shows up');
-    assert.match(await body(), /The card shows where adults are now missing/);
+    assert.match(await body(), /To do \(1\)/, 'the free shift shows up as a draft');
+    assert.match(await body(), /A draft at the substitute desk/);
     for (let i = 0; i < 4; i++) { await btn('Next', true).click(); await p.waitForTimeout(1500); }
     assert.match(await body(), /6 \/ 6/); await btn('Done', true).click();
   });

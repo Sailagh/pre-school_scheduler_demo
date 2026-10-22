@@ -203,6 +203,7 @@ export const noteLabel = (n, lang) => {
   if (n.key === 'approved') return (sv ? 'Godkänd: ' : 'Approved: ') + what;
   if (n.key === 'declined') return (sv ? 'Inte godkänd: ' : 'Declined: ') + what;
   if (n.key === 'coverIn') return sv ? 'Godkänt: du tar ' + fmt(p.from) + '–' + fmt(p.to) + ' ' + dayName(p.day, lang) + ' v.' + p.week + ' i ' + ((grp(p.group) || {}).name || '') + '.' : 'Approved: you take ' + fmt(p.from) + '–' + fmt(p.to) + ' on ' + dayName(p.day, lang) + ' w.' + p.week + ' in ' + ((grp(p.group) || {}).name || '') + '.';
+  if (n.key === 'offerLost') return sv ? 'Passet ' + dayName(p.day, lang) + ' v.' + p.week + ' är tillsatt. Tack för ditt erbjudande!' : 'The shift on ' + dayName(p.day, lang) + ' w.' + p.week + ' has been filled. Thank you for your offer!';
   if (n.key === 'subConfirmed') return sv ? 'Bekräftat: du arbetar ' + dayName(p.day, lang) + ' v.' + p.week + ' ' + fmt(p.from) + '–' + fmt(p.to) + ' i ' + ((grp(p.group) || {}).name || '') + '.' : 'Confirmed: you work on ' + dayName(p.day, lang) + ' w.' + p.week + ' ' + fmt(p.from) + '–' + fmt(p.to) + ' in ' + ((grp(p.group) || {}).name || '') + '.';
   if (n.key === 'swapIn') return sv ? 'Du har fått ' + (person(p.from) || {}).name + 's pass på ' + dayName(p.day, lang) + ' v.' + p.week + '.' : 'You now have ' + (person(p.from) || {}).name + "'s shift on " + dayName(p.day, lang) + ' w.' + p.week + '.';
   return '';
@@ -463,28 +464,29 @@ export function freeNeeds(s, pid, w, d, from, to, group) {
   const first = sh.length ? sh[0].start : from, last = sh.length ? Math.max(...sh.map(x => x.end)) : to;
   return { open: r.open === pid && from <= first, close: r.close === pid && to >= last, sn: !!p.sn && (s.snKids || []).some(k => k.unit === group && k.days.includes(d) && k.from < to && k.to > from) };
 }
+// Substitutes for a free shift. A substitute who is busy part of the time can still offer the rest: `free` is the
+// time inside the window they could take (not working or booked then, enough rest), and they are asked if any part
+// of it is at least the shortest substitute shift.
+const subMinOf = (s, f) => Math.min((s.prefs || {}).subMin ?? SUB_MIN, f.to - f.from);
 export function subCands(s, f, lang) {
+  const min = subMinOf(s, f);
   return SUBS.map(p => {
-    const w = f.week, d = f.day; let why = null;
+    const w = f.week, d = f.day; let why = null, free = [];
     if ((f.declined || []).includes(p.id)) why = S2(lang, 'Tackade nej', 'Declined');
     else if (!p.days.includes(d)) why = S2(lang, 'Inte tillgänglig på ', 'Not available on ') + dayName(d, lang);
     else if (f.needs.sn && !p.sn) why = S2(lang, 'Inte utbildad för särskilt stöd', 'Not trained for special needs');
     else if (f.needs.open && !p.open) why = S2(lang, 'Får inte öppna', 'May not open');
     else if (f.needs.close && !p.close) why = S2(lang, 'Får inte stänga', 'May not close');
     else {
-      const bk = bookedOn(p, w, d).find(b => b.from < f.to && b.to > f.from), sh = f.by !== p.id && dayShifts(s, p.id, w, d).find(x => x.start < f.to && x.end > f.from);
-      if (bk || sh) why = S2(lang, 'Arbetar redan då', 'Already working then') + (bk && bk.where ? ' · ' + bk.where : '');
-      else if (f.by !== p.id) why = restIssue(s, p, w, d, f.from, f.to, lang);
+      const busy = [...bookedOn(p, w, d).map(b => [b.from, b.to, b.where]), ...dayShifts(s, p.id, w, d).filter(x => x.was !== f.staff).map(x => [x.start, x.end])].sort((a, b) => a[0] - b[0]);
+      let at = f.from;
+      for (const [a, b] of busy) { if (b <= at || a >= f.to) continue; if (a > at) free.push({ from: at, to: a }); at = Math.max(at, b); }
+      if (at < f.to) free.push({ from: at, to: f.to });
+      free = free.filter(x => x.to - x.from >= min && !restIssue(s, p, w, d, x.from, x.to, lang));
+      if (!free.length) { const bk = busy.find(b => b[0] < f.to && b[1] > f.from); why = bk ? S2(lang, 'Arbetar redan då', 'Already working then') + (bk[2] ? ' · ' + bk[2] : '') : restIssue(s, p, w, d, f.from, f.to, lang) || S2(lang, 'Ingen tid som räcker', 'No time long enough'); }
     }
-    return { id: p.id, name: p.name, ok: !why, why, pref: (p.prefer || []).includes(f.group) };
+    return { id: p.id, name: p.name, ok: !why, why, free, part: !why && !(free.length === 1 && free[0].from === f.from && free[0].to === f.to), pref: (p.prefer || []).includes(f.group) };
   });
-}
-function route(st, f, first) {
-  const ok = subCands(st, f, 'en').filter(c => c.ok), pref = ok.filter(c => c.pref);
-  if (first) f.clock += 1;
-  if (first && pref.length) { f.stage = 'preferred'; f.offered = pref.map(c => c.id); f.log.push({ t: f.clock, k: 'offerPref', ids: f.offered.slice() }); }
-  else if (ok.length) { f.stage = 'all'; f.offered = ok.map(c => c.id); f.log.push({ t: f.clock, k: 'offerAll', ids: f.offered.slice() }); }
-  else { f.stage = 'all'; f.offered = []; f.status = 'nobody'; f.log.push({ t: f.clock, k: 'nobody' }); }
 }
 // Where a day is short of adults right now, as time ranges: per unit, and for the whole preschool while the units
 // are merged in the morning and evening. Shifts of people who are away do not count. [{ group|null, from, to, n }]
@@ -510,65 +512,177 @@ export function subWindow(s, f) {
   while (b - a < min) { if (a > a0) a -= 15; if (b - a < min && b < b0) b += 15; }
   return { from: a, to: b };
 }
+// ---------- sick cover: a call for proposals (contract net) ----------
+// A sick report makes a free shift as a DRAFT. The person who arranges substitutes (a principal or a staffing
+// coordinator, not necessarily the one who makes the schedule) decides how much to cover from inside, by moving
+// colleagues in the schedule, and how much from outside, and then PUBLISHES it: a call for proposals to the
+// substitutes who can take some of it. Each substitute offers the whole time, a part of it, or declines. The
+// coordinator AWARDS one or more offers (the app suggests a combination); the others are told the shift is taken.
+// Statuses: draft -> open -> awarded, or covered (handled inside, no substitute). A real system could publish by
+// itself, without the human step; here a person is in the loop on purpose.
 export function makeFree(st, pid, w, d, t) {
   st.free = st.free || [];
   if (st.free.some(f => f.staff === pid && f.week === w && f.day === d)) return null;
   const sh = dayShifts(st, pid, w, d); if (!sh.length) return null;
   const from = sh[0].start, to = sh[sh.length - 1].end, c = sh.find(x => x.type === 'contact') || sh[0];
-  const f = { id: 'f' + Date.now(), staff: pid, week: w, day: d, from, to, full: { from, to }, group: c.group, status: 'offered', stage: 'preferred', offered: [], declined: [], by: null, clock: t, log: [{ t, k: 'sick' }] };
+  const f = { id: 'f' + Date.now(), staff: pid, week: w, day: d, from, to, full: { from, to }, group: c.group, status: 'draft', asked: [], offers: [], declined: [], won: [], internal: [], clock: t, log: [{ t, k: 'sick' }] };
   Object.assign(f, subWindow(st, f)); f.needs = freeNeeds(st, pid, w, d, f.from, f.to, c.group);
-  route(st, f, true); st.free.push(f); return f;
+  st.free.push(f); return f;
 }
-// The planner changes the part a substitute is offered (inside the sick person's shift). Who can take it is worked
-// out again; someone who already said no is not asked again.
+const freeById = (st, id) => (st.free || []).find(x => x.id === id);
+// The coordinator changes how much is needed from outside (inside the sick person's shift), before publishing.
 export function setFreeWindow(st, id, from, to) {
-  const f = freeById(st, id); if (!f || !(f.status === 'offered' || f.status === 'nobody')) return;
+  const f = freeById(st, id); if (!f || f.status !== 'draft') return;
   const full = f.full || { from: f.from, to: f.to }; f.full = full;
   f.from = Math.max(full.from, Math.min(from, full.to - 15)); f.to = Math.min(full.to, Math.max(to, f.from + 15));
   f.needs = freeNeeds(st, f.staff, f.week, f.day, f.from, f.to, f.group);
-  const ok = subCands(st, f, 'en').filter(c => c.ok).map(c => c.id);
   const l = f.log[f.log.length - 1];
   if (l && l.k === 'window') Object.assign(l, { from: f.from, to: f.to }); else f.log.push({ t: f.clock, k: 'window', from: f.from, to: f.to });
-  if (!ok.length) { f.status = 'nobody'; f.offered = []; }
-  else if (f.status === 'nobody') { f.status = 'offered'; f.stage = 'all'; f.offered = ok; }
-  else f.offered = f.stage === 'preferred' && f.offered.some(x => ok.includes(x)) ? f.offered.filter(x => ok.includes(x)) : ok;
 }
-const freeById = (st, id) => (st.free || []).find(x => x.id === id);
-export function skipFree(st, id) {
-  const f = freeById(st, id); if (!f || f.status !== 'offered') return;
-  f.clock += 15;
-  if (f.stage === 'preferred') { f.log.push({ t: f.clock, k: 'noAnswer', ids: f.offered.slice() }); route(st, f, false); }
-  else f.log.push({ t: f.clock, k: 'wait' });
+// Covering from inside: colleagues already working that day who could start earlier or stay later to fill a gap in
+// the sick person's unit (at most 3 hours more), within their availability, rest and weekly limit. Taking over the
+// opening or closing is offered when the sick person had it and the colleague may do it.
+export function internalOptions(s, f, lang = 'sv') {
+  const sv = lang === 'sv', w = f.week, d = f.day, key = w + '-' + d, roles = s.roles[key] || {}, full = f.full || f, RW = rp(s, 'week', w);
+  const gaps = shortfall(s, w, d).filter(r => (r.group === f.group || r.group === null) && r.from < full.to && r.to > full.from);
+  const out = [];
+  for (const p of STAFF) {
+    if (p.id === f.staff || isAbsent(s, p.id, w, d) || (p.off || []).includes(d) || (p.end && w > p.end)) continue;
+    const sh = dayShifts(s, p.id, w, d).filter(x => !x.was); if (!sh.length) continue;
+    const first = sh[0].start, last = Math.max(...sh.map(x => x.end));
+    for (const g of gaps) {
+      const opts = [];
+      if (first > g.from && first <= g.to + 60) opts.push({ kind: 'earlier', from: Math.max(g.from, p.earliest ?? 0, full.from), to: first });
+      if (last < g.to && last >= g.from - 60) opts.push({ kind: 'later', from: last, to: Math.min(g.to, p.latest ?? 1440, full.to) });
+      for (const o of opts) {
+        const ext = o.to - o.from; if (ext < 15 || ext > 180) continue;
+        if (restIssue(s, p, w, d, o.kind === 'earlier' ? o.from : first, o.kind === 'later' ? o.to : last, lang)) continue;
+        const weekNow = weekMins(s, p.id, w); if (RW && weekNow + ext > (RW.h + (RW.flex || 0)) * 60) continue;
+        const role = o.kind === 'earlier' && roles.open === f.staff && o.from <= full.from && p.open ? 'open' : o.kind === 'later' && roles.close === f.staff && o.to >= full.to && p.close ? 'close' : null;
+        const over = Math.max(0, weekNow + ext - effCs(s, p, w));
+        if (!out.some(x => x.pid === p.id && x.kind === o.kind)) out.push({ pid: p.id, name: p.name, ...o, ext, role, over, same: p.group === f.group,
+          text: (sv ? (o.kind === 'earlier' ? ' börjar ' + fmt(o.from) + ' i stället för ' + fmt(first) : ' stannar till ' + fmt(o.to) + ' i stället för ' + fmt(last)) : (o.kind === 'earlier' ? ' starts at ' + fmt(o.from) + ' instead of ' + fmt(first) : ' stays until ' + fmt(o.to) + ' instead of ' + fmt(last)))
+            + ' (+' + hrs(ext, lang) + ')' + (role ? (sv ? (role === 'open' ? ' och öppnar' : ' och stänger') : (role === 'open' ? ' and opens' : ' and closes')) : '') + (over ? (sv ? ', ' + hrs(over, lang) + ' över avtalet denna vecka' : ', ' + hrs(over, lang) + ' over contract this week') : '') });
+      }
+    }
+  }
+  // The sick person opened or closed: someone else must. First those already there then, at no extra time; else
+  // someone who may open (close) and starts (ends) within two hours of it.
+  for (const role of ['open', 'close']) {
+    if (roles[role] !== f.staff || f.internal.some(x => x.role === role)) continue;
+    const at = role === 'open' ? full.from : full.to, cand = [];
+    for (const p of STAFF) {
+      if (p.id === f.staff || !p[role] || isAbsent(s, p.id, w, d)) continue;
+      const sh = dayShifts(s, p.id, w, d).filter(x => !x.was); if (!sh.length) continue;
+      const first = sh[0].start, last = Math.max(...sh.map(x => x.end));
+      if (role === 'open' ? first <= at : last >= at) cand.push({ pid: p.id, name: p.name, kind: 'role', from: at, to: at, ext: 0, role, over: 0, same: p.group === f.group,
+        text: sv ? (role === 'open' ? ' öppnar i stället (är redan där ' + fmt(first) + ')' : ' stänger i stället (är kvar till ' + fmt(last) + ')') : (role === 'open' ? ' opens instead (already there at ' + fmt(first) + ')' : ' closes instead (there until ' + fmt(last) + ')') });
+      else {
+        const o = role === 'open' ? { kind: 'earlier', from: Math.max(at, p.earliest ?? 0), to: first } : { kind: 'later', from: last, to: Math.min(at, p.latest ?? 1440) }, ext = o.to - o.from;
+        if (ext < 15 || ext > 120 || (role === 'open' ? o.from > at : o.to < at)) continue;
+        if (restIssue(s, p, w, d, o.kind === 'earlier' ? o.from : first, o.kind === 'later' ? o.to : last, lang)) continue;
+        const weekNow = weekMins(s, p.id, w); if (RW && weekNow + ext > (RW.h + (RW.flex || 0)) * 60) continue;
+        const over = Math.max(0, weekNow + ext - effCs(s, p, w));
+        cand.push({ pid: p.id, name: p.name, ...o, ext, role, over, same: p.group === f.group,
+          text: (sv ? (o.kind === 'earlier' ? ' börjar ' + fmt(o.from) + ' i stället för ' + fmt(first) + ' och öppnar' : ' stannar till ' + fmt(o.to) + ' i stället för ' + fmt(last) + ' och stänger') : (o.kind === 'earlier' ? ' starts at ' + fmt(o.from) + ' instead of ' + fmt(first) + ' and opens' : ' stays until ' + fmt(o.to) + ' instead of ' + fmt(last) + ' and closes'))
+            + ' (+' + hrs(ext, lang) + ')' + (over ? (sv ? ', ' + hrs(over, lang) + ' över avtalet denna vecka' : ', ' + hrs(over, lang) + ' over contract this week') : '') });
+      }
+    }
+    cand.sort((a, b) => a.ext - b.ext || (b.same ? 1 : 0) - (a.same ? 1 : 0)).slice(0, 2).forEach(c => { if (!out.some(x => x.pid === c.pid && x.kind === c.kind)) out.unshift(c); });
+  }
+  return out.sort((a, b) => (b.role ? 1 : 0) - (a.role ? 1 : 0) || (b.same ? 1 : 0) - (a.same ? 1 : 0) || a.over - b.over || a.ext - b.ext).slice(0, 6);
 }
-export function acceptFree(st, id, subId) {
-  const f = freeById(st, id); if (!f || f.status !== 'offered' || !f.offered.includes(subId)) return false;
-  f.status = 'accepted'; f.by = subId; f.clock += 6; f.log.push({ t: f.clock, k: 'accepted', by: subId });
-  // The substitute takes the part of the day inside the window, as time with the children; the rest of the
-  // sick person's day stays uncovered, for colleagues to cover.
-  st.shifts = st.shifts.flatMap(x => {
-    if (x.staff !== f.staff || x.week !== f.week || x.day !== f.day || x.end <= f.from || x.start >= f.to) return [x];
-    const out = [];
-    if (x.start < f.from) out.push({ ...x, end: f.from });
-    if (x.end > f.to) out.push({ ...x, id: 'h' + (++st.nid), start: f.to });
-    const mid = { ...x, id: x.start < f.from ? 'h' + (++st.nid) : x.id, start: Math.max(x.start, f.from), end: Math.min(x.end, f.to), was: x.staff, staff: subId };
-    if (mid.type !== 'contact' && mid.type !== 'break') { mid.wasType = mid.type; mid.type = 'contact'; }
-    return [...out, mid];
-  });
-  return true;
+// Applies an internal option in the schedule: the colleague gets the extra time with the children in the sick
+// person's unit (and the opening or closing), and the time needed from outside is worked out again.
+export function coverInternally(st, id, o) {
+  const f = freeById(st, id); if (!f || f.status !== 'draft') return;
+  if (o.to > o.from) st.shifts.push({ id: 'h' + (++st.nid), staff: o.pid, week: f.week, day: f.day, start: o.from, end: o.to, type: 'contact', group: f.group });
+  if (o.role) { const key = f.week + '-' + f.day; st.roles[key] = { ...(st.roles[key] || {}), [o.role]: o.pid }; }
+  f.internal.push({ pid: o.pid, from: o.from, to: o.to, role: o.role }); f.log.push({ t: f.clock, k: 'internal', by: o.pid, from: o.from, to: o.to, role: o.role });
+  Object.assign(f, subWindow(st, f)); f.needs = freeNeeds(st, f.staff, f.week, f.day, f.from, f.to, f.group);
+}
+// No substitute needed: the day is covered from inside.
+export function closeFree(st, id) {
+  const f = freeById(st, id); if (!f || f.status !== 'draft') return;
+  f.status = 'covered'; f.log.push({ t: f.clock, k: 'covered' });
+}
+// Publishing sends the call for proposals to every substitute who can take some of the time.
+export function publishFree(st, id) {
+  const f = freeById(st, id); if (!f || f.status !== 'draft') return;
+  f.status = 'open'; f.clock += 1;
+  f.asked = subCands(st, f, 'en').filter(c => c.ok).map(c => c.id);
+  f.log.push({ t: f.clock, k: f.asked.length ? 'published' : 'nobody', ids: f.asked.slice() });
+}
+// A substitute's answer: the whole window or a part of it (at least the shortest substitute shift), or no.
+export function offerFree(st, id, subId, from, to) {
+  const f = freeById(st, id); if (!f || f.status !== 'open' || !f.asked.includes(subId)) return false;
+  from = Math.max(f.from, from); to = Math.min(f.to, to);
+  if (to - from < subMinOf(st, f)) return false;
+  f.offers = f.offers.filter(o => o.sub !== subId); f.declined = f.declined.filter(x => x !== subId); f.clock += 2;
+  f.offers.push({ id: 'o' + (f.offers.length + 1) + subId, sub: subId, from, to, status: 'sent', t: f.clock });
+  f.log.push({ t: f.clock, k: 'offer', by: subId, from, to }); return true;
 }
 export function declineFree(st, id, subId) {
-  const f = freeById(st, id); if (!f || f.status !== 'offered') return;
-  f.declined = [...(f.declined || []), subId]; f.log.push({ t: f.clock, k: 'declined', by: subId });
-  if (f.offered.every(x => f.declined.includes(x))) route(st, f, false);
+  const f = freeById(st, id); if (!f || f.status !== 'open') return;
+  f.offers = f.offers.filter(o => o.sub !== subId);
+  if (!f.declined.includes(subId)) { f.declined.push(subId); f.clock += 1; f.log.push({ t: f.clock, k: 'declined', by: subId }); }
 }
-export function confirmFree(st, id) {
-  const f = freeById(st, id); if (!f || f.status !== 'accepted') return;
-  f.status = 'confirmed'; f.clock += 2; f.log.push({ t: f.clock, k: 'confirmed', by: f.by });
-  st.notes = st.notes || []; st.notes.push({ id: 'n' + Date.now() + 'f', to: f.by, key: 'subConfirmed', p: { week: f.week, day: f.day, from: f.from, to: f.to, group: f.group }, at: Date.now(), read: false });
+// The app's suggestion: an offer covering everything if there is one (the preferred substitute first); otherwise
+// offers added one at a time by how much uncovered time each adds. The coordinator decides.
+export function suggestOffers(f) {
+  const pref = o => { const p = person(o.sub); return p && (p.prefer || []).includes(f.group) ? 1 : 0; };
+  const all = f.offers.filter(o => o.status === 'sent'), whole = all.filter(o => o.from <= f.from && o.to >= f.to).sort((a, b) => pref(b) - pref(a) || a.t - b.t);
+  if (whole.length) return [whole[0].id];
+  const pick = [], covered = [];
+  const gain = o => { let m = 0; for (let t = o.from; t < o.to; t += 15) if (!covered.some(c => c.from <= t && c.to > t)) m += 15; return m; };
+  for (;;) {
+    const best = all.filter(o => !pick.includes(o.id)).map(o => ({ o, g: gain(o) })).filter(x => x.g > 0).sort((a, b) => b.g - a.g || pref(b.o) - pref(a.o) || a.o.t - b.o.t)[0];
+    if (!best) break; pick.push(best.o.id); covered.push(best.o);
+  }
+  return pick;
 }
+export const uncoveredBy = (f, ids) => { const ch = f.offers.filter(o => ids.includes(o.id)); let m = 0; for (let t = f.from; t < f.to; t += 15) if (!ch.some(o => o.from <= t && o.to > t)) m += 15; return m; };
+// Awarding: each chosen substitute takes the sick person's day inside their offer (time with the children), in
+// the order of the offers; the rest stays uncovered. Everyone who offered is told.
+export function awardFree(st, id, ids) {
+  const f = freeById(st, id); if (!f || f.status !== 'open' || !ids.length) return;
+  const chosen = f.offers.filter(o => ids.includes(o.id)).sort((a, b) => a.from - b.from);
+  for (const o of chosen) {
+    st.shifts = st.shifts.flatMap(x => {
+      if (x.staff !== f.staff || x.week !== f.week || x.day !== f.day || x.end <= o.from || x.start >= o.to) return [x];
+      const out = [];
+      if (x.start < o.from) out.push({ ...x, end: o.from });
+      if (x.end > o.to) out.push({ ...x, id: 'h' + (++st.nid), start: o.to });
+      const mid = { ...x, id: x.start < o.from ? 'h' + (++st.nid) : x.id, start: Math.max(x.start, o.from), end: Math.min(x.end, o.to), was: x.staff, staff: o.sub };
+      if (mid.type !== 'contact' && mid.type !== 'break') { mid.wasType = mid.type; mid.type = 'contact'; }
+      return [...out, mid];
+    });
+  }
+  f.clock += 3; st.notes = st.notes || [];
+  for (const o of f.offers) {
+    o.status = ids.includes(o.id) ? 'won' : 'lost';
+    st.notes.push({ id: 'n' + Date.now() + o.id, to: o.sub, key: o.status === 'won' ? 'subConfirmed' : 'offerLost', p: { week: f.week, day: f.day, from: o.from, to: o.to, group: f.group }, at: Date.now(), read: false });
+  }
+  f.won = chosen.map(o => ({ sub: o.sub, from: o.from, to: o.to })); f.status = 'awarded';
+  f.log.push({ t: f.clock, k: 'awarded', won: f.won.slice() });
+}
+// For the demo only: the substitutes who were asked answer as people often do. The first can take about 5 hours
+// from the start, the second the rest of the day, the others say no.
+export function simulateOffers(st, id) {
+  const f = freeById(st, id); if (!f || f.status !== 'open') return;
+  const min = subMinOf(st, f), c = subCands(st, { ...f, declined: [] }, 'en').filter(x => f.asked.includes(x.id) && !f.offers.some(o => o.sub === x.id) && !f.declined.includes(x.id)).sort((a, b) => (b.pref ? 1 : 0) - (a.pref ? 1 : 0));
+  c.forEach((x, i) => {
+    const fr = x.free[0], len = fr.to - fr.from;
+    if (i === 0) offerFree(st, f.id, x.id, fr.from, len > 300 + 15 ? fr.from + Math.max(min, 300) : fr.to);
+    else if (i === 1) { const last = x.free[x.free.length - 1]; offerFree(st, f.id, x.id, Math.max(last.from, last.to - Math.max(min, f.to - f.from - 300 + 60)), last.to); }
+    else declineFree(st, f.id, x.id);
+  });
+}
+// Taking the sick report back gives the person their day again, and removes extra time given to colleagues.
 export function removeFree(st, pid, w, d) {
   const f = (st.free || []).find(x => x.staff === pid && x.week === w && x.day === d); if (!f) return;
   st.shifts.forEach(x => { if (x.was === pid && x.week === w && x.day === d) { x.staff = pid; delete x.was; if (x.wasType) { x.type = x.wasType; delete x.wasType; } } });
+  for (const o of f.internal || []) st.shifts = st.shifts.filter(x => !(x.staff === o.pid && x.week === w && x.day === d && x.start === o.from && x.end === o.to && x.type === 'contact'));
   st.free = st.free.filter(x => x !== f);
 }
 export function nonChildTarget(s, p, w) {
@@ -744,7 +858,9 @@ export function controller(comp) {
   const load = () => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!j || !j.s) return null;
     j.staff.forEach(x => { const p = STAFF.find(y => y.id === x.id); if (p) Object.assign(p, x); else STAFF.push(x); });
     for (let i = STAFF.length - 1; i >= 0; i--) if (!j.staff.some(x => x.id === STAFF[i].id)) STAFF.splice(i, 1);
-    (j.groups || []).forEach(x => { const g = GROUPS.find(y => y.id === x.id); if (g) Object.assign(g, x, x.name === OLD_NAMES[x.id] ? { name: g.name } : {}); }); (j.subs || []).forEach(x => { const p = SUBS.find(y => y.id === x.id); if (p) Object.assign(p, x); }); if (!j.s.free) j.s.free = []; if (!j.s.requests) j.s.requests = []; if (!j.s.special) j.s.special = [];
+    (j.groups || []).forEach(x => { const g = GROUPS.find(y => y.id === x.id); if (g) Object.assign(g, x, x.name === OLD_NAMES[x.id] ? { name: g.name } : {}); }); (j.subs || []).forEach(x => { const p = SUBS.find(y => y.id === x.id); if (p) Object.assign(p, x); }); if (!j.s.free) j.s.free = [];
+    j.s.free.forEach(f => { if (f.asked) return; const by = f.by; f.asked = f.offered || []; f.offers = []; f.declined = f.declined || []; f.internal = []; f.full = f.full || { from: f.from, to: f.to };
+      f.won = by ? [{ sub: by, from: f.from, to: f.to }] : []; f.status = by ? 'awarded' : 'open'; }); if (!j.s.requests) j.s.requests = []; if (!j.s.special) j.s.special = [];
     (j.s.rules || []).filter(r => r.type === 'week').forEach(r => r.versions.forEach(v => { if (v.p.flex == null) v.p.flex = 2; })); if (!j.s.notes) j.s.notes = []; return j.s; } catch (e) { return null; } };
   const store = createStore(load() || seed());
   const me = Math.random().toString(36).slice(2); let syncing = false;

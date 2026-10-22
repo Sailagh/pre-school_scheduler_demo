@@ -236,32 +236,41 @@ test('units are called Avd 1-3, can be renamed, and Edlevo departments are match
   } finally { g.name = old; }
 });
 
-test('partial cover: the substitute is offered only where adults are missing, at least the minimum, and gets only that part', () => {
+test('sick cover as a call for proposals: draft, cover inside, publish, offers, award', () => {
   const s = solvedState(), pid = 'p8', day = s.shifts.filter(x => x.staff === pid && x.week === 42 && x.day === 1).sort((a, b) => a.start - b.start);
   const start = day[0].start, end = Math.max(...day.map(x => x.end));
   s.absences.push({ staff: pid, week: 42, day: 1, from: 0, to: 1440, reason: 'sick' });
-  const gaps = m.shortfall(s, 42, 1);
-  assert.ok(gaps.length, 'losing a person leaves gaps');
   const f = m.makeFree(s, pid, 42, 1, 400);
+  assert.equal(f.status, 'draft', 'nothing is sent until someone publishes');
   assert.deepEqual(f.full, { from: start, to: end });
   assert.ok(f.from >= start && f.to <= end && f.to - f.from >= m.SUB_MIN, 'inside the shift and at least 3 h');
-  const own = gaps.filter(r => (r.group === f.group || r.group === null) && r.from < end && r.to > start);
-  assert.equal(f.from, Math.max(start, Math.min(...own.map(r => r.from))), 'starts at the first gap');
-  // The planner moves the window; it is kept inside the shift and who can take it is worked out again.
-  m.setFreeWindow(s, f.id, start - 120, start + 60);
-  assert.deepEqual([f.from, f.to], [start, start + 60]);
-  m.setFreeWindow(s, f.id, start + 60, end); assert.equal(f.needs.open, false, 'not opening when the part starts later');
-  assert.equal(f.log.filter(l => l.k === 'window').length, 1, 'changes in a row are one line in the log');
-  // The substitute gets only that part, as time with children; the rest stays with the sick person, uncovered.
-  const sub = f.offered[0]; assert.ok(sub);
-  m.acceptFree(s, f.id, sub);
-  const got = s.shifts.filter(x => x.staff === sub && x.week === 42 && x.day === 1);
-  assert.equal(Math.min(...got.map(x => x.start)), start + 60); assert.equal(Math.max(...got.map(x => x.end)), end);
-  assert.ok(got.every(x => x.type === 'contact' || x.type === 'break'));
-  assert.ok(s.shifts.some(x => x.staff === pid && x.week === 42 && x.day === 1 && x.start === start && x.end <= start + 60), 'the first hour is still uncovered');
-  // Taking the sick report back gives the person their day again, as it was.
+  // Covering inside: p8 opened that day, so taking over the opening comes first, in the schedule itself.
+  const opts = m.internalOptions(s, f, 'sv');
+  assert.equal(opts[0].role, 'open'); assert.match(opts[0].name + opts[0].text, /och öppnar|öppnar i stället/);
+  m.coverInternally(s, f.id, opts[0]);
+  assert.equal(s.roles['42-1'].open, opts[0].pid, 'the colleague opens now');
+  if (opts[0].to > opts[0].from) assert.ok(s.shifts.some(x => x.staff === opts[0].pid && x.week === 42 && x.day === 1 && x.start === opts[0].from && x.end === opts[0].to));
+  assert.equal(f.needs.open, false, 'the substitute no longer has to open');
+  // Publishing asks every substitute who can take some of it; they offer all of it, part of it, or decline.
+  m.publishFree(s, f.id);
+  assert.equal(f.status, 'open'); assert.ok(f.asked.length >= 2);
+  const [a1, a2] = f.asked;
+  assert.equal(m.offerFree(s, f.id, a1, f.from, f.from + 60), false, 'shorter than the minimum is refused');
+  assert.ok(m.offerFree(s, f.id, a1, f.from, f.from + 300));
+  assert.ok(m.offerFree(s, f.id, a2, f.to - 180, f.to));
+  if (f.asked[2]) m.declineFree(s, f.id, f.asked[2]);
+  const sug = m.suggestOffers(f);
+  assert.equal(sug.length, 2, 'two parts together'); assert.equal(m.uncoveredBy(f, sug), Math.max(0, (f.to - f.from) - 300 - 180));
+  // Awarding: each chosen substitute gets their part as time with the children; the others are told.
+  m.awardFree(s, f.id, sug);
+  assert.equal(f.status, 'awarded');
+  const got = id => s.shifts.filter(x => x.staff === id && x.week === 42 && x.day === 1);
+  assert.equal(Math.min(...got(a1).map(x => x.start)), f.from);
+  assert.ok(got(a1).every(x => x.type === 'contact' || x.type === 'break'));
+  assert.ok(s.notes.some(n => n.to === a1 && n.key === 'subConfirmed'));
+  // Taking the sick report back gives the person their day again and removes the colleague's extra time.
   m.removeFree(s, pid, 42, 1);
-  const back = s.shifts.filter(x => x.staff === pid && x.week === 42 && x.day === 1).sort((a, b) => a.start - b.start);
+  const back = s.shifts.filter(x => x.staff === pid && x.week === 42 && x.day === 1);
   assert.equal(back.reduce((a, x) => a + x.end - x.start, 0), day.reduce((a, x) => a + x.end - x.start, 0));
   assert.ok(back.every(x => !x.was && !x.wasType));
 });
