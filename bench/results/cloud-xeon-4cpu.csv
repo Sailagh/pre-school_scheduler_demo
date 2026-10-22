@@ -1,0 +1,6 @@
+computer,cpu,logical_cpus,cores,python,ortools,scenario,week,budget,seed,wall_s,status,objective,warnings,staffing_warnings,rule_warnings,hours_off_people,hours_off_max_min,planning_short_h,satisfactory
+cloud-xeon-4cpu,Intel(R) Xeon(R) Processor @ 2.80GHz,4,all,3.13.16,9.15.6755,base,42,2.5,1,22.8,OPTIMAL,504000,5,4,1,14,480,21.75,0
+cloud-xeon-4cpu,Intel(R) Xeon(R) Processor @ 2.80GHz,4,all,3.13.16,9.15.6755,base,42,2.5,2,22.9,OPTIMAL,331296,8,7,1,12,480,20.0,0
+cloud-xeon-4cpu,Intel(R) Xeon(R) Processor @ 2.80GHz,4,all,3.13.16,9.15.6755,base,42,2.5,3,23.2,OPTIMAL,1032,0,0,0,0,15,11.5,1
+cloud-xeon-4cpu,Intel(R) Xeon(R) Processor @ 2.80GHz,4,all,3.13.16,9.15.6755,base,42,5,1,21.3,OPTIMAL,1597048,38,33,5,16,1920,20.0,0
+cloud-xeon-4cpu,Intel(R) Xeon(R) Processor @ 2.80GHz,4,all,3.13.16,9.15.6755,base,42,5,2,22.7,OPTIMAL,1701692,30,27,3,17,1920,42.5,0
