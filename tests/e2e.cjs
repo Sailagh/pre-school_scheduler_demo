@@ -152,13 +152,29 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     assert.match(t, /Week 4: start week/); assert.match(t, /Check against the rules/);
     await btn(/Remove the import/).click(); await btn(/Back to the schedule/).click(); await p.waitForTimeout(300);
   });
-  await step('the demo runs on week 42', async () => {
+  await step('the guides: the schedule, Settings and the phone', async () => {
     await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.goto(URL); await p.waitForTimeout(3000);
-    await btn('▶ Demo').click(); await p.waitForTimeout(3000);
+    assert.equal(await btn('▶ Demo').count(), 0, 'the demo is no longer in the top bar');
+    for (const [guide, first, last] of [['The schedule', /Make a schedule/, /Settings, There is a guide|There is a guide for Settings too/], ['Settings', /The preschool's name, language/, /The rules the schedule is checked against/], ["Staff's phone", /The week at the top, the chosen day below/, /On the start page, Phone opens the app/]]) {
+      await btn(/Show the guide/).first().click(); await p.waitForTimeout(200);
+      await p.getByRole('button', { name: new RegExp('^' + guide + '\\s?(The planner|Staff, children|My schedule)') }).click(); await p.waitForTimeout(500);
+      assert.match(await body(), first, guide);
+      for (let i = 0; i < 20 && await btn('Next', true).count(); i++) { await btn('Next', true).click(); await p.waitForTimeout(250); }
+      assert.match(await body(), last, guide + ': last step');
+      await btn('Done', true).click(); await p.waitForTimeout(300);
+    }
+  });
+  await step('a sick report step by step: moves on only when you press Next', async () => {
+    await btn(/Show the guide/).first().click(); await p.waitForTimeout(200);
+    await p.getByRole('button', { name: /^A sick report step by step/ }).click(); await p.waitForTimeout(2500);
     assert.match(await body(), /Her shift today is \d\d:\d\d–\d\d:\d\d in /);
-    await p.waitForTimeout(3000);
+    await p.waitForTimeout(2500);
+    assert.match(await body(), /1 \/ 6/, 'waits for Next');
+    await btn('Next', true).click(); await p.waitForTimeout(1500);
     assert.match(await body(), /In progress \(1\)/, 'the free shift shows up');
-    await btn(/Stop|Done/).click();
+    assert.match(await body(), /The card shows where adults are now missing/);
+    for (let i = 0; i < 4; i++) { await btn('Next', true).click(); await p.waitForTimeout(1500); }
+    assert.match(await body(), /6 \/ 6/); await btn('Done', true).click();
   });
   await step('Swedish', async () => {
     await btn('SV', true).click(); await btn('Skapa schema', true).click(); await p.waitForTimeout(300);

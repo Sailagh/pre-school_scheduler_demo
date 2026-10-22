@@ -302,6 +302,9 @@ Settings › Children and units › *Children during the day*: the example curve
 - *Export to Medvind (.xlsx)* and *Import from Medvind…* go through the local server (`POST /medvind/write`, `/medvind/read`, `medvind/medvind.py`). Hand-typed times are tolerated; a readable typo is flagged yellow (guessed), an unreadable cell red and left out, a line without a unit number flagged at its edge. An import is kept only in the browser (`state.medvindImport`).
 - *Check against the rules* (`checkRotation`): hours averaged over the rotation (R3), daily rest including the wrap from the last week to the first (R1), and breaks (R4). The export has no breaks, so for breaks it says how many each day needs rather than passing it. Worked time = range less 30 min per 5-hour stretch.
 
+### Guides
+**? Show the guide** (bottom right, and on the empty-week card) opens a menu of four guides: *The schedule* (the planner, updated for schedule generation, schedule lines, sick cover, Edlevo), *Settings* (each section, by opening it), *Staff's phone* (My schedule, Who's working, Me, the inbox, a substitute's view) and *A sick report step by step*. The last is the former ▶ Demo, removed from the top bar: it waits for **Next** at every step, and also starts from the Sick cover panel (*Show how it works*). Guides are data (`GUIDES` in `Schedule Demo.dc.html`): each step names `data-guide` targets and can open a panel first (`set`) or tell the phone what to show (`cmd`).
+
 ### What the demo does not do
 It is a demo and a guide, not a product:
 - no login or roles; anyone who opens it sees everything, including sick reasons;

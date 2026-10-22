@@ -28,10 +28,9 @@
     <button onClick="{{ undo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ undoOp }}">↶ {{ L.undo }}</button>
     <button onClick="{{ redo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ redoOp }}">↷ {{ L.redo }}</button>
     <button onClick="{{ copyWeek }}" title="{{ copyWeekTip }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;color:#1F2D3A;border-radius:6px;font:inherit;font-size:13px;cursor:pointer">{{ L.copyWeek }}</button>
-    <button onClick="{{ openGen }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:#1F7D97;color:#fff">{{ genBtnTxt }}</button>
-    <button onClick="{{ startDemo }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:{{ demoBtnBg }};color:{{ demoBtnFg }}">▶ Demo</button>
-    <button onClick="{{ togglePhone }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ phoneBtnBg }};color:{{ phoneBtnFg }}">{{ phoneTxt }}</button>
-    <button onClick="{{ toggleCover }}" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ covBtnBg }};color:{{ covBtnFg }}">{{ covTxt }}<sc-if value="{{ hasCovBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#D9A23A;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ covCount }}</span></sc-if></button>
+    <button data-guide="gen" onClick="{{ openGen }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #1F7D97;border-radius:6px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:#1F7D97;color:#fff">{{ genBtnTxt }}</button>
+    <button data-guide="phoneBtn" onClick="{{ togglePhone }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ phoneBtnBg }};color:{{ phoneBtnFg }}">{{ phoneTxt }}</button>
+    <button data-guide="cover" onClick="{{ toggleCover }}" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ covBtnBg }};color:{{ covBtnFg }}">{{ covTxt }}<sc-if value="{{ hasCovBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#D9A23A;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ covCount }}</span></sc-if></button>
     <button onClick="{{ toggleReq }}" style="white-space:nowrap;flex:none;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ reqBtnBg }};color:{{ reqBtnFg }}">{{ reqTxt }}<sc-if value="{{ hasReqBadge }}"><span style="min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#C2413D;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ reqCount }}</span></sc-if></button>
     <button data-guide="settings" onClick="{{ toggleSettings }}" style="white-space:nowrap;flex:none;height:32px;padding:0 12px;border:1px solid #C9D5E0;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;background:{{ setBtnBg }};color:{{ setBtnFg }}">⚙ {{ setTxt }}</button>
     
@@ -48,7 +47,7 @@
         </div>
       </button>
     </sc-for>
-    <button onClick="{{ toggleLines }}" title="{{ linesTip }}" style="flex:none;border:0;border-left:1px solid #E3EAF0;background:transparent;padding:11px 16px 9px;cursor:pointer;font:inherit;font-size:14px;font-weight:600;color:#1F7D97;white-space:nowrap">▦ {{ linesTxt }}</button>
+    <button data-guide="lines" onClick="{{ toggleLines }}" title="{{ linesTip }}" style="flex:none;border:0;border-left:1px solid #E3EAF0;background:transparent;padding:11px 16px 9px;cursor:pointer;font:inherit;font-size:14px;font-weight:600;color:#1F7D97;white-space:nowrap">▦ {{ linesTxt }}</button>
   </div>
   <div data-guide="warnings" style="display:flex;align-items:center;gap:12px;padding:8px 24px;background:#EEF4F7;border-bottom:1px solid #D3DDEA;min-height:52px;box-sizing:border-box">
     <div style="display:flex;align-items:center;gap:8px;flex:none"><div style="font-weight:600;font-size:13px">{{ checkTitle }}</div><span style="font-size:12px;font-weight:700;background:{{ countBg }};color:#fff;border-radius:999px;padding:2px 9px">{{ dayWarnCount }}</span></div>
@@ -161,6 +160,7 @@
           <div style="width:520px;max-width:100%;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.05);padding:24px;display:flex;flex-direction:column;gap:14px">
             <div><div style="font-size:20px;font-weight:600">{{ emptyTitle }}</div><div style="font-size:15px;color:#5A6B7A;margin-top:4px">{{ emptySub }}</div></div>
             <sc-for list="{{ emptyOpts }}" as="o"><button onClick="{{ o.go }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:14px 16px;border:1px solid {{ o.bd }};border-radius:10px;background:{{ o.bg }};color:{{ o.fg }};font:inherit;cursor:pointer"><span style="font-size:16px;font-weight:600">{{ o.title }}</span><span style="font-size:14px;line-height:1.45;color:{{ o.sfg }}">{{ o.sub }}</span></button></sc-for>
+            <div style="display:flex;justify-content:flex-end"><button onClick="{{ toggleGuides }}" style="border:0;background:transparent;color:#1F7D97;font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:2px 0">? {{ helpTxt }}</button></div>
           </div>
         </div>
       </sc-if>
@@ -249,7 +249,7 @@
         <div style="width:1px;height:16px;background:#C9D5E0"></div>
         <div style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:{{ mergeSw }}"></span>{{ mergeLegend }}</div>
         <div style="flex:1"></div>
-        <button onClick="{{ startTour }}" style="border:1px solid #C9D5E0;background:{{ helpBg }};color:{{ helpFg }};border-radius:999px;height:28px;padding:0 12px;font:inherit;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap">? {{ helpTxt }}</button>
+        <button onClick="{{ toggleGuides }}" style="border:1px solid #C9D5E0;background:{{ helpBg }};color:{{ helpFg }};border-radius:999px;height:28px;padding:0 12px;font:inherit;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap">? {{ helpTxt }}</button>
       </div>
       <sc-if value="{{ ddMerge }}">
         <div style="position:absolute;top:92px;left:{{ mergeDd.left }};width:240px;background:#fff;border-radius:10px;box-shadow:0 12px 32px rgba(15,30,45,.18),0 0 0 1px rgba(0,0,0,.06);padding:4px;z-index:12;display:flex;flex-direction:column;gap:2px">
@@ -349,7 +349,7 @@
         </div>
         <button onClick="{{ togglePhone }}" style="height:32px;padding:0 12px;border:0;border-radius:6px;background:#1F2D3A;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ phoneClose }}</button>
       </div>
-      <div style="position:relative;width:342px;height:743px">
+      <div data-guide="phoneFrame" style="position:relative;width:342px;height:743px">
         <div style="position:absolute;top:0;right:0;width:402px;height:874px;transform:scale(.85);transform-origin:top right">
           <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
             <dc-import name="Staff App" variant="b" others="unit" split="{{ true }}" ctl="{{ ctl }}" mod="{{ mod }}" rev="{{ rev }}" lang="{{ lang }}" me="{{ phoneMe }}" cmd="{{ phoneCmd }}" hint-size="402px,874px" style="display:block;width:402px;height:874px"></dc-import>
@@ -403,7 +403,7 @@
   <sc-if value="{{ coverOpen }}">
     <div data-guide="free" style="position:absolute;top:57px;right:0;bottom:0;width:600px;z-index:29;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
       <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
-        <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ covTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ covSub }}</div></div>
+        <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ covTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ covSub }}</div><button onClick="{{ startDemo }}" style="margin-top:8px;height:32px;padding:0 12px;border:1px solid #9FCFDB;border-radius:6px;background:#EAF6F8;color:#16627A;font:inherit;font-size:13px;font-weight:600;cursor:pointer">▶ {{ demoTxt }}</button></div>
         <button onClick="{{ toggleCover }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
       </div>
       <div style="display:flex;gap:2px;margin:14px 24px 4px;padding:3px;background:#EEF3F6;border-radius:8px;align-self:flex-start">
@@ -473,7 +473,7 @@
     </div>
   </sc-if>
   <sc-if value="{{ setOpen }}">
-    <div style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:30;background:#fff;display:flex">
+    <div data-guide="settingsPanel" style="position:absolute;left:0;right:0;top:57px;bottom:0;z-index:30;background:#fff;display:flex">
       <dc-import name="Demo Settings" ctl="{{ ctl }}" mod="{{ mod }}" lang="{{ lang }}" rev="{{ rev }}" section="{{ setSection }}" pid="{{ setPid }}" on-nav="{{ setNav }}" on-close="{{ toggleSettings }}" on-show="{{ showPerson }}" set-lang="{{ setLangFn }}" hint-size="100%,100%" style="width:100%;height:100%"></dc-import>
     </div>
   </sc-if>
@@ -481,12 +481,19 @@
     <div style="position:absolute;left:{{ ghost.x }}px;top:{{ ghost.y }}px;transform:translate(-20px,-50%);pointer-events:none;z-index:20;background:#1F2D3A;color:#fff;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:8px;align-items:center">{{ ghost.name }}<span style="font:500 11px 'IBM Plex Mono',monospace;color:#B4C3D0">{{ ghost.label }}</span></div>
   </sc-if>
   <sc-if value="{{ hasToast }}"><div style="position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#1F2D3A;color:#fff;font-size:13px;padding:10px 16px;border-radius:8px;z-index:21">{{ toast }}</div></sc-if>
+  <sc-if value="{{ guideMenu }}">
+    <div onClick="{{ toggleGuides }}" style="position:absolute;inset:0;z-index:43"></div>
+    <div style="position:absolute;right:24px;bottom:56px;width:340px;z-index:44;background:#fff;border-radius:12px;box-shadow:0 16px 40px rgba(15,30,45,.22),0 0 0 1px rgba(0,0,0,.06);padding:8px;display:flex;flex-direction:column;gap:2px">
+      <div style="font-size:12px;font-weight:600;color:#5A6B7A;padding:6px 10px 4px">{{ guidesHead }}</div>
+      <sc-for list="{{ guides }}" as="g"><button onClick="{{ g.go }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 10px;border:0;border-radius:8px;background:transparent;font:inherit;color:#1F2D3A;cursor:pointer;text-align:left" style-hover="background:#EEF4F7"><span style="font-size:14px;font-weight:600">{{ g.name }}</span><span style="font-size:12px;line-height:1.4;color:#5A6B7A">{{ g.sub }}</span></button></sc-for>
+    </div>
+  </sc-if>
   <sc-if value="{{ demoOn }}">
     <div style="position:absolute;left:24px;bottom:24px;width:440px;z-index:45;background:#1F2D3A;color:#fff;border-radius:14px;padding:18px 20px 16px;box-shadow:0 20px 50px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px;box-sizing:border-box">
       <div style="display:flex;align-items:center;gap:10px"><span style="font:600 12px 'IBM Plex Mono',monospace;background:#2B91AD;color:#fff;border-radius:999px;padding:3px 10px">{{ demoStep }}</span><div style="flex:1;font-size:12px;color:#A9B9C8">{{ demoLabel }}</div></div>
       <div style="font-size:20px;font-weight:600;line-height:1.25">{{ demo.title }}</div>
       <div style="font-size:15px;line-height:1.55;color:#DCE5EC;text-wrap:pretty">{{ demo.body }}</div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:2px"><button onClick="{{ stopDemo }}" style="border:0;background:{{ demoEndBg }};color:#fff;border-radius:8px;height:36px;padding:0 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ demoEndTxt }}</button></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:2px"><sc-if value="{{ demoCanNext }}"><button onClick="{{ demoNext }}" style="border:0;background:#2B91AD;color:#fff;border-radius:8px;height:36px;padding:0 18px;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ demoNextTxt }}</button></sc-if><button onClick="{{ stopDemo }}" style="border:0;background:{{ demoEndBg }};color:#fff;border-radius:8px;height:36px;padding:0 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ demoEndTxt }}</button></div>
     </div>
   </sc-if>
   <sc-if value="{{ tourOn }}">
@@ -526,16 +533,41 @@ class Component extends DCLogic {
     selRing: '0 0 0 2px #1F2D3A', warnRing: '0 0 0 2px #D9534F', w_rule: '#C2413D', w_cover: '#C2413D', w_staffing: '#D9A23A', w_role: '#1F7D97',
   };
   rootRef = React.createRef();
-  STEPS = [
-    { t: ['warnings'], en: ['Things to check', 'Everything that breaks a rule on the day you are looking at shows up here. Click a card to jump straight to the shift.'], sv: ['Att kontrollera', 'Allt som bryter mot en regel den dag du tittar på visas här. Klicka på ett kort för att gå direkt till passet.'] },
-    { t: ['unit'], en: ['Choose a unit', 'Pick a unit to see only its teachers and children. The coloured letter next to each name shows which unit the teacher belongs to.'], sv: ['Välj avdelning', 'Välj en avdelning för att bara se dess personal och barn. Den färgade bokstaven vid varje namn visar vilken avdelning personen tillhör.'] },
-    { t: ['staff'], en: ['Your staff', 'The bar under each name fills up as their contract hours are planned: yellow means more to plan, green means done, red means too many. Drag a name onto the schedule to add a 1-hour shift.'], sv: ['Din personal', 'Stapeln under varje namn fylls i takt med att avtalade timmar planeras: gul betyder mer att planera, grön betyder klart, röd betyder för många. Dra ett namn till schemat för att lägga till ett pass på 1 timme.'] },
-    { t: ['card'], open: 'person', en: ['A teacher\'s card', 'Clicking a name opens this card. Click the name at the top to see only their week. The card shows their contract and which unit they belong to, which you can change in the list. The day buttons show the days they are available; click one to jump to that day. Below, you can set who opens or closes that day and mark the person sick.'], sv: ['Lärarens kort', 'När du klickar på ett namn öppnas det här kortet. Klicka på namnet högst upp för att bara se personens vecka. Kortet visar avtalet och vilken avdelning personen tillhör, som du kan ändra i listan. Dagknapparna visar vilka dagar personen är tillgänglig; klicka på en för att gå till den dagen. Längre ner kan du välja vem som öppnar eller stänger den dagen och sjukanmäla personen.'] },
-    { t: ['schedule'], en: ['The schedule', 'Drag across an empty part of a row to draw a shift. Drag a shift to move it, or drag its edges to change the time. Click a shift to change what kind of time it is.'], sv: ['Schemat', 'Dra över en tom del av en rad för att rita ett pass. Dra ett pass för att flytta det, eller dra i kanterna för att ändra tiden. Klicka på ett pass för att ändra vilken sorts tid det är.'] },
-    { t: ['kids', 'need'], en: ['Children and staff needed', 'The program works out how many adults are needed from the number of children. Click the pencil to change how many children each adult can have.'], sv: ['Barn och behov', 'Programmet räknar ut hur många vuxna som behövs utifrån antalet barn. Klicka på pennan för att ändra hur många barn varje vuxen kan ha.'] },
-    { t: ['working'], en: ['Who is working', 'Shows how many staff are working at each time. Red means too few, green means enough, yellow means more than needed.'], sv: ['Vem som arbetar', 'Visar hur många som arbetar vid varje tid. Rött betyder för få, grönt betyder tillräckligt, gult betyder fler än behövs.'] },
-    { t: ['settings'], en: ['Settings', 'Import staff and children, export the schedule, set up each person and change the rules the program checks.'], sv: ['Inställningar', 'Importera personal och barn, exportera schemat, ställ in varje person och ändra reglerna som programmet kontrollerar.'] },
-  ];
+  // Guides: each step points at parts of the page (data-guide) and can open a panel first (set) or tell the phone
+  // what to show (cmd). Settings and the phone are separate pages, so their steps point at the whole panel.
+  GUIDES = {
+    plan: [
+      { t: ['gen'], en: ['Make a schedule', 'An empty week offers to make a proposal, draw it yourself or copy last week. Make schedule shows what the proposal is based on (staff, children, rules, priorities), lets you add special days such as an early closing or a public holiday, and keeps shifts you drew yourself. Afterwards a report says what worked and what did not, and why.'], sv: ['Skapa schema', 'En tom vecka erbjuder ett förslag, att rita själv eller att kopiera förra veckan. Skapa schema visar vad förslaget bygger på (personal, barn, regler och vad som går först), låter dig lägga till särskilda dagar som tidig stängning eller röd dag och behåller pass du ritat själv. Efteråt säger en rapport vad som gick, vad som inte gick och varför.'] },
+      { t: ['warnings'], en: ['Things to check', 'Everything that breaks a rule on the day you are looking at shows up here, also too few adults in a unit. Click a card to jump straight to the shift.'], sv: ['Att kontrollera', 'Allt som bryter mot en regel den dag du tittar på visas här, också för få vuxna på en avdelning. Klicka på ett kort för att gå direkt till passet.'] },
+      { t: ['unit'], en: ['Choose a unit', 'Pick a unit to see its staff and children, and who helps there from another unit. The coloured chip next to each name shows the unit.'], sv: ['Välj avdelning', 'Välj en avdelning för att se dess personal och barn, och vem som hjälper till där från en annan avdelning. Den färgade rutan vid varje namn visar avdelningen.'] },
+      { t: ['staff'], en: ['Your staff', 'The bar under each name fills up as their contract hours are planned: yellow means more to plan, green means done, red means too many. Drag a name onto the schedule to add a shift.'], sv: ['Din personal', 'Stapeln under varje namn fylls i takt med att avtalade timmar planeras: gul betyder mer att planera, grön klart, röd för många. Dra ett namn till schemat för att lägga till ett pass.'] },
+      { t: ['card'], open: 'person', en: ['A person\'s card', 'Clicking a name opens this card: contract, unit, the days they can work, who opens or closes that day, and Mark sick today.'], sv: ['Personens kort', 'När du klickar på ett namn öppnas det här kortet: avtal, avdelning, vilka dagar personen kan arbeta, vem som öppnar eller stänger den dagen och Sjukanmäl idag.'] },
+      { t: ['schedule'], en: ['The schedule', 'Drag across an empty part of a row to draw a shift. Drag a shift to move it, or its edges to change the time. A break or planning block can be dragged anywhere in the day. Click a shift to change what kind of time it is.'], sv: ['Schemat', 'Dra över en tom del av en rad för att rita ett pass. Dra ett pass för att flytta det, eller kanterna för att ändra tiden. En rast eller planering kan dras var som helst under dagen. Klicka på ett pass för att ändra vilken sorts tid det är.'] },
+      { t: ['kids', 'need'], en: ['Children and adults needed', 'The adults needed every quarter of an hour come from the number of children and how many children each adult can have (the pencil). The children can come from an example curve or from counted bookings in Edlevo; then the row says Edlevo.'], sv: ['Barn och behov', 'Hur många vuxna som behövs varje kvart räknas från antalet barn och hur många barn varje vuxen kan ha (pennan). Barnen kan komma från en exempelkurva eller från sammanräknade bokningar i Edlevo; då står det Edlevo på raden.'] },
+      { t: ['working'], en: ['Who is working', 'How many are working at each time. Red means too few, green enough, yellow more than needed.'], sv: ['Vem som arbetar', 'Hur många som arbetar vid varje tid. Rött betyder för få, grönt tillräckligt, gult fler än behövs.'] },
+      { t: ['lines'], en: ['Schedule lines', 'The schedule the way Medvind shows a base schedule: one row per schedule line and one time a day, in a rotation of several weeks. Import and export Medvind\'s Excel file here, and see a check against the rules.'], sv: ['Schemarader', 'Schemat så som Medvind visar ett grundschema: en rad per schemarad och en tid per dag, i en rotation på flera veckor. Här importerar och exporterar du Medvinds Excel-fil och ser en kontroll mot reglerna.'] },
+      { t: ['cover'], en: ['Sick cover', 'A sick report becomes a free shift offered to substitutes. The card shows where adults are missing, and the substitute is offered only that part of the day. Show how it works walks through it step by step.'], sv: ['Sjuk och vikarier', 'En sjukanmälan blir ett ledigt pass som erbjuds vikarier. Kortet visar var det saknas vuxna, och vikarien erbjuds bara den delen av dagen. Visa hur det går till går igenom det steg för steg.'] },
+      { t: ['phoneBtn'], en: ['Staff\'s phone', 'Shows the app the staff use, for any person or substitute. There is a guide for it too.'], sv: ['Telefon', 'Visar appen som personalen använder, för vem som helst i personalen eller en vikarie. Det finns en guide för den också.'] },
+      { t: ['settings'], en: ['Settings', 'Staff, children and units, substitutes, rules, import and export. There is a guide for Settings too.'], sv: ['Inställningar', 'Personal, barn och avdelningar, vikarier, regler, import och export. Det finns en guide för Inställningar också.'] },
+    ],
+    settings: [
+      { t: ['settingsPanel'], set: { settings: 'general' }, place: 'br', en: ['General', 'The preschool\'s name, language, how finely time is divided when you drag shifts, which messages you get, and Start over, which puts the demo back to the beginning.'], sv: ['Allmänt', 'Förskolans namn, språk, hur fint tiden delas när du drar pass, vilka meddelanden du får och Börja om, som återställer demon.'] },
+      { t: ['settingsPanel'], set: { settings: 'io' }, place: 'br', en: ['Import and export', 'Bring in staff and children from other systems and send the schedule on (Excel, CSV, PDF, calendar). Medvind\'s base schedule is imported and exported under Schedule lines.'], sv: ['Import och export', 'Hämta personal och barn från andra system och skicka schemat vidare (Excel, CSV, PDF, kalender). Medvinds grundschema importeras och exporteras under Schemarader.'] },
+      { t: ['settingsPanel'], set: { settings: 'staff' }, place: 'br', en: ['Staff', 'Each person: contract hours and changes to them, home unit, may open or close, special-needs training, fixed days off, earliest and latest time, leave and end of contract. Click a name for the details and their hours over time.'], sv: ['Personal', 'Varje person: avtalade timmar och ändringar, hemavdelning, får öppna eller stänga, utbildning för särskilt stöd, fasta lediga dagar, tidigaste och senaste tid, ledighet och när anställningen slutar. Klicka på ett namn för detaljer och timmar över tid.'] },
+      { t: ['settingsPanel'], set: { settings: 'kids' }, place: 'br', en: ['Children and units', 'Where the number of children comes from (example curve or counted bookings from Edlevo, only counts and never child ids), the units with their names, opening hours, children and children per adult, the shared opening and closing unit, and children who need a trained adult.'], sv: ['Barn och avdelningar', 'Var antalet barn kommer ifrån (exempelkurva eller sammanräknade bokningar från Edlevo, bara antal och aldrig barn-id), avdelningarna med namn, öppettider, barn och barn per vuxen, den gemensamma öppnings- och stängningsavdelningen och barn som behöver en utbildad vuxen.'] },
+      { t: ['settingsPanel'], set: { settings: 'subs' }, place: 'br', en: ['Substitutes', 'Who can be offered a free shift: training, may open or close, which days, which unit they are preferred for, and the shortest shift a substitute is offered.'], sv: ['Vikarier', 'Vem som kan erbjudas ett ledigt pass: utbildning, får öppna eller stänga, vilka dagar, vilken avdelning de är föredragna för, och kortaste pass en vikarie erbjuds.'] },
+      { t: ['settingsPanel'], set: { settings: 'rules' }, place: 'br', en: ['Rules', 'The rules the schedule is checked against and the proposal follows: rest, hours per week and on average, breaks, opening and closing, and more. Turn them on or off and change the values, from a chosen week.'], sv: ['Regler', 'Reglerna som schemat kontrolleras mot och förslaget följer: vila, timmar per vecka och i snitt, raster, öppning och stängning med mera. Slå på eller av och ändra värdena, från en vald vecka.'] },
+    ],
+    phone: [
+      { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'me', inbox: false, sheet: null }, en: ['My schedule', 'The week at the top, the chosen day below: times, unit and what the day is made of. Sick, Swap, Cover part of shift and Can\'t work are one tap away.'], sv: ['Mitt schema', 'Veckan överst, den valda dagen under: tider, avdelning och vad dagen består av. Sjuk, Byt pass, Täck del av pass och Kan inte finns ett tryck bort.'] },
+      { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'all', inbox: false, sheet: null }, en: ['Who\'s working', 'Everyone working that day, by unit. Colleagues who are away show as away; only the person and the principal see why.'], sv: ['Vem arbetar', 'Alla som arbetar den dagen, per avdelning. Den som är borta visas som frånvarande; bara personen själv och rektor ser varför.'] },
+      { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'prof', inbox: false, sheet: null }, en: ['Me', 'The round button: the week\'s and month\'s hours against the contract in plain words, hours per day, and a few settings, such as whether to get requests to cover.'], sv: ['Jag', 'Den runda knappen: veckans och månadens timmar mot avtalet i klartext, timmar per dag och några inställningar, till exempel om man vill få förfrågningar om att täcka pass.'] },
+      { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'me', inbox: true, sheet: null }, en: ['Inbox', 'Requests from colleagues to take over a shift, answers from the principal, and the person\'s own requests.'], sv: ['Inkorg', 'Förfrågningar från kollegor om att ta över ett pass, svar från rektor och de egna förfrågningarna.'] },
+      { t: ['phoneFrame'], set: { phone: true, phoneMe: 's1' }, cmd: { inbox: false, sheet: null }, en: ['A substitute', 'A substitute sees free shifts with the time, unit and what they need, never who is sick or why, and their booked shifts with who they work with.'], sv: ['En vikarie', 'En vikarie ser lediga pass med tid, avdelning och vad som krävs, aldrig vem som är sjuk eller varför, och sina bokade pass med vem de arbetar med.'] },
+      { t: ['phoneFrame'], set: { phone: true, phoneMe: 'p1' }, cmd: { bTab: 'me', inbox: false, sheet: null }, en: ['Try it on a phone', 'On the start page, Phone opens the app full screen. Started with start.py --lan, it also opens on a phone on the same Wi-Fi.'], sv: ['Prova på en telefon', 'På startsidan öppnar Telefonen appen i helskärm. Startad med start.py --lan går den också att öppna på en telefon i samma wifi.'] },
+    ],
+  };
+  get STEPS() { return this.GUIDES[this.state.guide || 'plan']; }
   measureTour() {
     const root = this._root, i = this.state.tour; if (!root || i == null) return;
     const els = this.STEPS[i].t.map(k => root.querySelector('[data-guide="' + k + '"]')).filter(Boolean);
@@ -545,15 +577,17 @@ class Component extends DCLogic {
     els.forEach(e => { const b = e.getBoundingClientRect(); x1 = Math.min(x1, b.left); y1 = Math.min(y1, b.top); x2 = Math.max(x2, b.right); y2 = Math.max(y2, b.bottom); });
     this.setState({ tbox: { x: (x1 - rr.left) / sc, y: (y1 - rr.top) / sc, w: (x2 - x1) / sc, h: (y2 - y1) / sc, W: root.offsetWidth, H: root.offsetHeight } });
   }
-  goTour(i, root) {
+  goTour(i, root, guide) {
     if (root) this._root = root;
+    if (guide) this.state.guide = guide;
     const step = this.STEPS[i];
+    if (step.cmd) this.setState(st => ({ phoneCmd: { n: ((st.phoneCmd || {}).n || 0) + 1, ...step.cmd } }));
     if (step.open === 'person') { const list = this.mod.STAFF, p = list[Math.floor(Math.random() * list.length)]; this.ctl.up({ person: p.id, sel: null }); this._tourOpened = true; }
     else if (this._tourOpened) { this.ctl.up({ person: null, sel: null }); this._tourOpened = false; }
-    this.setState({ tour: i, focus: null, settings: false, dd: null, ratioOpen: false, unit: 'all' });
-    setTimeout(() => this.measureTour(), 60);
+    this.setState({ tour: i, guide: guide || this.state.guide || 'plan', guideMenu: false, focus: null, settings: false, phone: false, coverOpen: false, lines: false, reqOpen: false, dd: null, ratioOpen: false, unit: 'all', ...(step.set || {}) });
+    setTimeout(() => this.measureTour(), 120);
   }
-  endTour() { if (this._tourOpened) { this.ctl.up({ person: null, sel: null }); this._tourOpened = false; } this.setState({ tour: null }); }
+  endTour() { if (this._tourOpened) { this.ctl.up({ person: null, sel: null }); this._tourOpened = false; } this.setState(st => ({ tour: null, ...((this.GUIDES[st.guide || 'plan'] || []).some(x => x.set) ? { settings: false, phone: false } : {}) })); }
   tourVals(sv) {
     const i = this.state.tour; if (i == null) return { tourOn: false };
     const st = this.STEPS[i], [title, body] = sv ? st.sv : st.en, n = this.STEPS.length, b = this.state.tbox;
@@ -567,6 +601,7 @@ class Component extends DCLogic {
       else if (b.x - G - BW > 0 && b.x > b.W / 2) { const t = Math.max(16, Math.min(b.H - BH - 16, b.y + 40)); bub = { left: b.x - G - BW, top: t + 'px', bottom: 'auto', hasArrow: true, ax: 'calc(100% - 10px)', ay: '28px' }; }
       else if (b.x + b.w + G + BW < b.W) { const t = Math.max(16, Math.min(b.H - BH - 16, b.y + 40)); bub = { left: b.x + b.w + G, top: t + 'px', bottom: 'auto', hasArrow: true, ax: '-8px', ay: '28px' }; }
       else { bub = { left: Math.max(16, b.x + b.w - BW - 24), top: (b.y + 24) + 'px', bottom: 'auto', hasArrow: false, ax: '0', ay: '0' }; }
+      if (st.place === 'br') bub = { left: b.x + b.w - BW - 24, top: 'auto', bottom: '24px', hasArrow: false, ax: '0', ay: '0' };
     }
     return {
       tourOn: true, tb, bub, tourTitle: title, tourBody: body, tourStep: (i + 1) + ' / ' + n,
@@ -596,7 +631,9 @@ class Component extends DCLogic {
   }
   async runDemo(sv) {
     const run = this._demoRun = (this._demoRun || 0) + 1, ctl = this.ctl, mod = this.mod, alive = () => this._demoRun === run, t = (a, b) => sv ? a : b;
+    // Step by step: each step waits for Next (the demo is a reference, not a show).
     const wait = ms => new Promise(r => setTimeout(r, ms)), W = 42, D = 1;
+    const next = () => new Promise(r => { this._demoGo = r; this.setState({ demoWait: true }); });
     const cap = (n, title, body, done) => alive() && this.setState({ demo: { n, title, body, done: !!done } });
     const cmd = c => this.setState(st => ({ phoneCmd: { n: ((st.phoneCmd || {}).n || 0) + 1, ...c } }));
     const fr = st => (st.free || []).find(x => x.staff === 'p1' && x.week === W && x.day === D);
@@ -617,25 +654,26 @@ class Component extends DCLogic {
     this.setState({ coverOpen: false, focus: null, unit: 'all', settings: false, reqOpen: false, dd: null, tour: null, ratioOpen: false, phone: true, phoneMe: 'p1' });
     cmd({ week: W, day: D, bTab: 'me', inbox: false, sheet: { kind: 'sick', w: W, d: D } });
     cap(1, t('06:40 · Anna Lindqvist är sjuk', '06:40 · Anna Lindqvist is sick'), t('Anna sjukanmäler sig i appen. Hennes pass i dag är ' + span + ' i ' + unitName + '.', 'Anna reports sick in the app. Her shift today is ' + span + ' in ' + unitName + '.'));
-    await wait(3400); if (!alive()) return;
+    await next(); if (!alive()) return;
     ctl.touch(st => mod.submitRequest(st, { staff: 'p1', week: W, day: D, type: 'sick', clock: 400 })); cmd({ sheet: null });
-    await wait(2000); if (!alive()) return;
-    this.setState({ phone: false, unit: 'g3', coverOpen: true, freeTab: 'active', freeOpen: {} });
+    await wait(700); if (!alive()) return;
+    this.setState({ phone: false, unit: unitOf, coverOpen: true, freeTab: 'active', freeOpen: {} });
     const f0 = fr(ctl.store.get()) || {}, firstOffer = (f0.offered || []).map(id => mod.person(id).name), pref = f0.stage === 'preferred';
     const firstNames = firstOffer.map(x => x.split(' ')[0]).join(t(' och ', ' and '));
-    cap(2, t('06:41 · Ledigt pass', '06:41 · Free shift'), t('Passet blir ett ledigt pass.' + (needsSn ? ' Det kräver en vuxen utbildad för särskilt stöd.' : '') + (pref ? ' Först erbjuds det ' + firstOffer.join(' och ') + ', föredragen vikarie för ' + unitName + '.' : ' Det erbjuds alla vikarier som kan ta det.'), 'The shift becomes a free shift.' + (needsSn ? ' It needs an adult trained for special needs.' : '') + (pref ? ' It is first offered to ' + firstOffer.join(' and ') + ', the preferred substitute for ' + unitName + '.' : ' It is offered to every substitute who can take it.')));
-    await wait(5500); if (!alive()) return;
+    const fw = fr(ctl.store.get()) || {}, part = fw.full && (fw.from > fw.full.from || fw.to < fw.full.to), win = fw.from != null ? mod.fmt(fw.from) + '–' + mod.fmt(fw.to) : span;
+    cap(2, t('06:41 · Ledigt pass', '06:41 · Free shift'), t('Passet blir ett ledigt pass. Kortet visar var det nu saknas vuxna, och vikarien behövs ' + win + (part ? ', inte hela passet ' + span : ', hela passet') + '.' + (needsSn ? ' Det kräver en vuxen utbildad för särskilt stöd.' : '') + (pref ? ' Först erbjuds det ' + firstOffer.join(' och ') + ', föredragen vikarie för ' + unitName + '.' : ' Det erbjuds alla vikarier som kan ta det.'), 'The shift becomes a free shift.' + (needsSn ? ' It needs an adult trained for special needs.' : '') + (pref ? ' It is first offered to ' + firstOffer.join(' and ') + ', the preferred substitute for ' + unitName + '.' : ' It is offered to every substitute who can take it.')).replace('The shift becomes a free shift.', 'The shift becomes a free shift. The card shows where adults are now missing, and the substitute is needed ' + win + (part ? ', not the whole shift ' + span : ', the whole shift') + '.'));
+    await next(); if (!alive()) return;
     ctl.touch(st => { const f = fr(st); if (f) mod.skipFree(st, f.id); });
     cap(3, t('06:56 · Inget svar', '06:56 · No answer'), t((pref ? firstNames + ' har inte svarat på 15 minuter. ' : '') + 'Passet går nu till alla vikarier som kan ta det. Kortet visar vilka som inte kan och varför.', (pref ? firstNames + ' has not answered in 15 minutes. ' : '') + 'The shift now goes to every substitute who can take it. The card shows who cannot and why.'));
-    await wait(6000); if (!alive()) return;
+    await next(); if (!alive()) return;
     this.setState({ phone: true, phoneMe: 's1' });
     cap(4, t('07:02 · Sara Ek tar passet', '07:02 · Sara Ek takes the shift'), t('Sara ser ett ledigt pass med tid, avdelning och vad som krävs. Hon ser inte vem som är sjuk eller varför.', 'Sara sees a free shift with the time, unit and what it needs. She does not see who is sick or why.'));
-    await wait(3800); if (!alive()) return;
+    await next(); if (!alive()) return;
     ctl.touch(st => { const f = fr(st); if (f) mod.acceptFree(st, f.id, 's1'); });
-    await wait(3200); if (!alive()) return;
-    this.setState({ phone: false, unit: 'g3' });
+    await wait(900); if (!alive()) return;
+    this.setState({ phone: false, unit: unitOf });
     cap(5, t('Accepterat', 'Accepted'), t('Sara Ek står nu i schemat för tisdag med taggen Vikarie. Hennes timmar räknas in.', 'Sara Ek is now in Tuesday\'s schedule with a Substitute tag. Her hours are counted.'));
-    await wait(5000); if (!alive()) return;
+    await next(); if (!alive()) return;
     ctl.touch(st => { const f = fr(st); if (f) mod.confirmFree(st, f.id); }); this.setState({ freeTab: 'done', freeOpen: {} });
     cap(6, t('Bekräftat', 'Confirmed'), t('Rektor bekräftar med ett klick. Sara får en bekräftelse i appen, och hennes timmar kommer med i exporten.', 'The principal confirms with one click. Sara gets a confirmation in the app, and her hours are included in the export.'), true);
   }
@@ -935,9 +973,10 @@ class Component extends DCLogic {
       phoneOf: sv ? 'Telefon för' : 'Phone of', phoneClose: sv ? 'Stäng' : 'Close', phoneMe: this.state.phoneMe || 'p1', pickPhoneMe: e => this.setState({ phoneMe: e.target.value }),
       phoneOpts: [...this.mod.STAFF.slice().sort((x, y) => x.name.localeCompare(y.name, 'sv')).map(p => ({ v: p.id, name: p.name })), ...this.mod.SUBS.map(p => ({ v: p.id, name: p.name + (sv ? ' (vikarie)' : ' (substitute)') }))].map(o => ({ ...o, sel: o.v === (this.state.phoneMe || 'p1') })).sort((a, b) => b.sel - a.sel),
       phoneCmd: this.state.phoneCmd || null, barLegA: sv ? 'Med barn' : 'Children', barLegB: sv ? 'Utan barn' : 'No children', barLegS: sv ? 'Sjuk' : 'Sick', subTag: sv ? 'Vikarie' : 'Substitute',
-      demoTxt: sv ? 'Demo: vikarie' : 'Demo: substitute', demoBtnBg: this.state.demo ? '#1F7D97' : '#fff', demoBtnFg: this.state.demo ? '#fff' : '#1F7D97',
-      startDemo: () => this.runDemo(sv), stopDemo: () => { this._demoRun = (this._demoRun || 0) + 1; this.setState({ demo: null, phone: false }); },
-      demoOn: !!this.state.demo, demo: this.state.demo || {}, demoStep: this.state.demo ? this.state.demo.n + ' / 6' : '', demoLabel: sv ? 'Demo · sjukanmälan och vikarie' : 'Demo · sick report and substitute',
+      demoTxt: sv ? 'Visa hur det går till' : 'Show how it works', demoBtnBg: this.state.demo ? '#1F7D97' : '#fff', demoBtnFg: this.state.demo ? '#fff' : '#1F7D97',
+      startDemo: () => { this.setState({ guideMenu: false }); this.runDemo(sv); }, stopDemo: () => { this._demoRun = (this._demoRun || 0) + 1; const g = this._demoGo; this._demoGo = null; g && g(); this.setState({ demo: null, phone: false, demoWait: false }); },
+      demoCanNext: !!(this.state.demo && !this.state.demo.done && this.state.demoWait), demoNextTxt: sv ? 'Nästa' : 'Next', demoNext: () => { const g = this._demoGo; this._demoGo = null; this.setState({ demoWait: false }); g && g(); },
+      demoOn: !!this.state.demo, demo: this.state.demo || {}, demoStep: this.state.demo ? this.state.demo.n + ' / 6' : '', demoLabel: sv ? 'Sjukanmälan steg för steg' : 'A sick report step by step',
       demoEndTxt: this.state.demo && this.state.demo.done ? (sv ? 'Klar' : 'Done') : (sv ? 'Stoppa' : 'Stop'), demoEndBg: this.state.demo && this.state.demo.done ? '#2B91AD' : 'rgba(255,255,255,.14)',
       ddMerge: this.state.dd === 'merge',
       mergeDd: { head: sv ? 'Vilken avdelning är de i?' : 'Which unit are they in?', left: 'calc(150px + (100% - 162px) * ' + Math.min(0.8, (this.state.mergeAt || 0) / 100) + ')' },
@@ -960,7 +999,14 @@ class Component extends DCLogic {
       q: this.state.q, hasQ: !!this.state.q, onQ: e => this.setState({ q: e.target.value }), clearQ: () => this.setState({ q: '' }),
       searchPh: sv ? 'Sök på namn' : 'Search by name', clearTxt: sv ? 'Rensa' : 'Clear', noMatchTxt: sv ? 'Ingen matchar sökningen.' : 'Nobody matches the search.',
       staffCount: v.roster.filter(r => !r.isSub).length,
-      showHelp: false, startTour: e => this.goTour(0, e.currentTarget.closest('[data-root]')), helpTxt: sv ? 'Visa guiden' : 'Show the guide',
+      showHelp: false, helpTxt: sv ? 'Visa guiden' : 'Show the guide',
+      toggleGuides: e => { if (e && e.currentTarget) this._root = e.currentTarget.closest('[data-root]') || this._root; this.setState(st => ({ guideMenu: !st.guideMenu })); },
+      guideMenu: !!this.state.guideMenu, guidesHead: sv ? 'Guider' : 'Guides',
+      guides: [['plan', sv ? 'Schemat' : 'The schedule', sv ? 'Planeringsvyn: skapa schema, varningar, avdelningar, schemarader, sjuk och vikarier.' : 'The planner: make a schedule, warnings, units, schedule lines, sick cover.'],
+        ['settings', sv ? 'Inställningar' : 'Settings', sv ? 'Personal, barn och avdelningar, Edlevo, vikarier och regler.' : 'Staff, children and units, Edlevo, substitutes and rules.'],
+        ['phone', sv ? 'Personalens telefon' : "Staff's phone", sv ? 'Mitt schema, vem arbetar, Jag, inkorgen och vikariens vy.' : 'My schedule, who is working, Me, the inbox and the substitute\'s view.'],
+        ['demo', sv ? 'Sjukanmälan steg för steg' : 'A sick report step by step', sv ? 'Från sjukanmälan i appen till bekräftad vikarie. Går vidare när du trycker Nästa.' : 'From a sick report in the app to a confirmed substitute. Moves on when you press Next.']]
+        .map(([k, name, sub]) => ({ name, sub, go: () => k === 'demo' ? (this.setState({ guideMenu: false }), this.runDemo(sv)) : this.goTour(0, this._root, k) })),
       helpBg: '#fff', helpFg: '#1F2D3A', ...this.tourVals(sv),
       toLight: () => { if (DARK) this.props.onTheme ? this.props.onTheme('light') : (window.location.href = 'Schedule-M-Units.dc.html'); },
       toDark: () => { if (!DARK) this.props.onTheme ? this.props.onTheme('dark') : (window.location.href = 'Schedule-M-Units-Dark.dc.html'); },

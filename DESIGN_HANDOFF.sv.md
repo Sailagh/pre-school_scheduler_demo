@@ -75,6 +75,9 @@ Fliken **▦ Schemarader** bredvid veckodagarna visar schemat så som Medvind vi
 ## Vikarie för en del av dagen
 När någon är sjuk visar kortet under *Sjuk och vikarier* **var det saknas vuxna nu**, per avdelning och tid. Vikarien erbjuds bara den delen av passet: från första till sista luckan, men aldrig kortare än **kortaste pass för en vikarie** (Inställningar › Vikarier, 3 timmar från början) och aldrig utanför passet. Den som planerar kan flytta tiden, välja *Hela passet*, eller flytta kollegor i schemat och sedan trycka *Bara där det saknas nu*. Kortet säger om resten av passet redan täcks av personalen eller måste täckas. Vikarien får bara den delen, som barntid.
 
+## Guider
+Knappen **? Visa guiden** (nere till höger, och på kortet för en tom vecka) öppnar fyra guider: *Schemat* (planeringsvyn: skapa schema, varningar, avdelningar, schemarader, sjuk och vikarier, telefonen och inställningarna), *Inställningar* (varje del av inställningarna), *Personalens telefon* (Mitt schema, Vem arbetar, Jag, inkorgen och vikariens vy) och *Sjukanmälan steg för steg*. Den sista är den tidigare demon: den går vidare först när man trycker *Nästa*, och startas också från panelen *Sjuk och vikarier* (*Visa hur det går till*). Den finns inte längre i den övre raden.
+
 ## Telefonen: knappen Jag
 Mellan *Mitt schema* och *Vem arbetar* längst ned finns en rund knapp på en liten vit kulle, med en enkel personikon. Den öppnar en sida för den anställda:
 - **Överst:** namn, hemavdelning, avtalade timmar i veckan och procent, och vad personen får göra (öppna, stänga, utbildad för särskilt stöd) och fasta lediga dagar eller tider.
