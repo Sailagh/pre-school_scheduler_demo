@@ -70,13 +70,13 @@ def scatter(rows, title, W=440, H=260):
     return "".join(out)
 
 
-def cores_chart(rows, title, W=440, H=260):
-    """Median seconds (y) at each budget (x), one line per number of cores."""
-    L, R, T, B = 56, 70, 28, 40
+def cores_chart(rows, title, W=440, H=260, key="cores"):
+    """Median seconds (y) at each budget (x), one line per number of cores (or per computer, with key="computer")."""
+    L, R, T, B = 56, 70 if key == "cores" else 120, 28, 40
     groups = {}
     for r in rows:
-        groups.setdefault(r["cores"], {}).setdefault(r["budget"], []).append(r["wall_s"])
-    order = sorted(groups, key=lambda c: 0 if c == "all" else -int(c))
+        groups.setdefault(r[key], {}).setdefault(r["budget"], []).append(r["wall_s"])
+    order = sorted(groups) if key != "cores" else sorted(groups, key=lambda c: 0 if c == "all" else -int(c))
     budgets = sorted({r["budget"] for r in rows})
     y1 = max(statistics.median(v) for g in groups.values() for v in g.values()) * 1.1
     X = lambda b: L + (W - L - R) * budgets.index(b) / max(1, len(budgets) - 1)
@@ -95,8 +95,8 @@ def cores_chart(rows, title, W=440, H=260):
         col = f"var({SERIES[min(i, 2)]})"
         out.append(f'<polyline points="{" ".join(f"{x:.1f},{y:.1f}" for x, y in pts)}" fill="none" stroke="{col}" stroke-width="2"/>')
         for (x, y), b in zip(pts, [b for b in budgets if b in groups[c]]):
-            out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{col}" stroke="var(--surface-1)" stroke-width="2"><title>{esc(c)} cores, budget {b:g}: {fmt_s(statistics.median(groups[c][b]))}</title></circle>')
-        label = "all cores" if c == "all" else f"{c} core" + ("s" if c != "1" else "")
+            out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{col}" stroke="var(--surface-1)" stroke-width="2"><title>{esc(c)}{" cores" if key == "cores" else ""}, budget {b:g}: {fmt_s(statistics.median(groups[c][b]))}</title></circle>')
+        label = c if key != "cores" else "all cores" if c == "all" else f"{c} core" + ("s" if c != "1" else "")
         out.append(f'<text x="{pts[-1][0] + 8:.1f}" y="{pts[-1][1] + 4:.1f}" class="lab">{esc(label)}</text>')
     out.append("</svg>")
     return "".join(out)
@@ -141,6 +141,14 @@ def main():
         if multi:
             parts.append('<h3>Fewer cores: a slower computer</h3><p class="sub">The same work budget on fewer cores, as on a weaker computer (Linux taskset). Median seconds per week.</p><div class="grid2">'
                          + "".join(f"<figure>{cores_chart([r for r in rc if r['scenario'] == sc], NAMES[sc])}</figure>" for sc in multi) + "</div>")
+    comps = sorted({r["computer"] for r in rows})
+    if len(comps) > 1:
+        both = [sc for sc in NAMES if all(any(r["computer"] == c and r["scenario"] == sc and r["cores"] == "all" for r in rows) for c in comps)]
+        cpu = {c: next(r for r in rows if r["computer"] == c) for c in comps}
+        parts.insert(0, '<h2>The computers side by side</h2><p class="sub">Median seconds per week at each work budget, all cores. '
+                     + "; ".join(f'{esc(c)}: {esc(cpu[c]["cpu"])}, {esc(cpu[c]["logical_cpus"])} logical CPUs' for c in comps)
+                     + '. The solver runs one search per logical CPU, so the same budget is spread over as many searches as the computer has logical CPUs: it is not the same work, and more searches are not always faster.</p><div class="grid2">'
+                     + "".join(f"<figure>{cores_chart([r for r in rows if r['scenario'] == sc and r['cores'] == 'all'], NAMES[sc], key='computer')}</figure>" for sc in both) + "</div>")
     css = """
 :root{color-scheme:light;--surface-0:#f4f4f2;--surface-1:#fcfcfb;--text-primary:#0b0b0b;--text-secondary:#52514e;--grid:#e3e2de;--axis:#b9b8b2;--series-1:#2a78d6;--series-2:#eb6834;--series-3:#1baf7a}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--surface-0:#121211;--surface-1:#1a1a19;--text-primary:#f0efec;--text-secondary:#c3c2b7;--grid:#2c2c2a;--axis:#4a4a46;--series-1:#3987e5;--series-2:#d95926;--series-3:#199e70}}
