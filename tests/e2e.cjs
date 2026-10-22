@@ -178,6 +178,7 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
       await btn(/Show the guide|Guides and demo/).first().click(); await p.waitForTimeout(200);
       await p.getByRole('button', { name: new RegExp('^' + guide + '\\s?(The planner|Staff, children|My schedule)') }).click(); await p.waitForTimeout(500);
       assert.match(await body(), first, guide);
+      assert.doesNotMatch(await body(), /has no schedule yet/, 'the empty-week card steps aside while a guide runs');
       for (let i = 0; i < 20 && await btn('Next', true).count(); i++) { await btn('Next', true).click(); await p.waitForTimeout(250); }
       assert.match(await body(), last, guide + ': last step');
       await btn('Done', true).click(); await p.waitForTimeout(300);
