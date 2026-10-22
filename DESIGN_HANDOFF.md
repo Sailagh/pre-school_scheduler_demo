@@ -43,7 +43,9 @@ SpecialNeedsKid { id, unit, days, from, to }   – only counts and times, never 
 Request         { id, type: 'swap'|'unavail'|'sick'|'cover', staff, week, day, from?, to?, with?, reason? /*principal only*/,
                   status: 'pending'|'new'|'seen'|'approved'|'declined'|'open'|'matched'|'nobody', offered?: staffId[], declined?: staffId[], by? }
 FreeShift       { id, staff /*sick person*/, week, day, from, to, group, needs:{open,close,sn},
-                  status: 'offered'|'accepted'|'confirmed'|'nobody', stage: 'preferred'|'all', offered: subId[], declined: subId[], by?, clock, log: [{t,k,ids?,by?}] }
+                  full:{from,to} /*the whole sick time*/, status: 'draft'|'open'|'awarded'|'covered',
+                  asked: subId[], offers: [{sub,from,to,at}], declined: subId[], won: [{sub,from,to}],
+                  internal: [{staff,from,to,text}] /*cover from inside*/, clock, log: [{t,k,ids?,won?}] }
 Rule            { id: 'r1'.., type, base, versions: [{ from: week, on, p: params }] }   – versioned by week so a law change can start "from week 47"
 Note (inbox)    { id, to, key, p, at, read }
 ```
@@ -71,20 +73,16 @@ The ratio check (adults needed per unit per 15-minute slot = ceil(children/ratio
 - **Sick** days are *not* worked time. They are reported separately as sick hours and days (paid as sick pay after the waiting-day deduction; that goes to payroll as absence). Vacation and leave are counted in days.
 - Substitutes have no contract; their hours appear separately in the export.
 
-### Substitute cascade (sick report)
-1. Staff presses **Sjuk** → absence is added → `makeFree()` turns the day's shifts into a **free shift** (time span, unit, needs: opens/closes/special-needs).
-2. `route()` offers it first to eligible substitutes whose `prefer` includes the unit (`stage: 'preferred'`).
-3. No answer in **15 min** (demo: "⏩ Hoppa fram 15 minuter") → offered to **all eligible** (`stage: 'all'`).
-4. Eligible = available that weekday, has the training/role the shift needs, not booked or working then, rest rule (R1) OK. Excluded substitutes are listed with a reason.
-5. First to press **Ta passet** → `accepted`; shifts are reassigned (`was` keeps the original owner). Principal **Bekräfta** → `confirmed`; the substitute gets an inbox note.
-6. **Privacy:** colleagues see "Frånvarande", substitutes see "Ledigt pass". Only the person and the principal see "Sjuk".
-
-### Partial cover: a substitute only where it is short
-A sick day does not always need a substitute for the whole shift: colleagues often cover the start or the end, and the gap is a busy middle of the day.
-- The free-shift card shows **where adults are missing now** (`shortfall`): per unit, and for the whole preschool while units are merged, as time ranges with how many are missing. It updates as the planner moves people.
-- The substitute is offered a **window** (`subWindow`): from the first to the last gap in the sick person's unit inside their shift, at least the **shortest substitute shift** (Settings › Substitutes, default 3 h), never outside the shift. The card says what the rest of the shift needs ("already covered by the staff" or "must be covered – adults are missing there now").
-- The planner can move the window (±15 min), choose **Whole shift**, or **Only where it is short now**, which works the window out again after colleagues have been moved. Who can take it is worked out again (`setFreeWindow`); opening/closing is only required if the window starts/ends the shift.
-- When a substitute accepts, only the part inside the window becomes theirs, as time with the children (`acceptFree`); the rest stays uncovered for colleagues. Taking the sick report back restores the day.
+### Vikarieförmedling: sick cover as a call for proposals
+Covering a sick day is often done by someone other than the person who makes the schedule: a principal, or a staffing function for several preschools. It works like a *contract net* (call for proposals): the job is published, substitutes answer with offers, and a person chooses.
+1. Staff presses **Sjuk** → absence is added → `makeFree()` turns the day's shifts into a free shift with status **draft**. Nothing is sent yet.
+2. **Cover from inside** (`internalOptions`): colleagues who already work that day can start earlier, stay later (at most 3 h), or take over opening/closing. Each option says what it means ("Peter Lindgren börjar 06:00 i stället för 06:15 och öppnar (+0,3 h), 0,3 h över avtalet denna vecka"). Rest, the week limit with flex, and availability are checked. **Gör det** (`coverInternally`) writes it straight into the schedule. The planner can also change the schedule by hand.
+3. **How much from outside:** the card shows where adults are still missing (`shortfall`, per unit, and for the whole preschool while units are merged). The window (`subWindow`, `setFreeWindow`) starts as the span of the gaps, at least the **shortest substitute shift** (Settings › Substitutes, default 3 h), never outside the shift. It can be moved ±15 min, set to **Whole shift**, or to **Only where it is short now**. Opening/closing is only required if the window starts/ends the shift. When nothing is missing: **Klart utan vikarie** (`closeFree` → `covered`).
+4. **Publish** (`publishFree` → `open`): a person presses **Publicera till vikarier (n)**. Eligible = available that weekday, has the training/role the window needs, has at least the shortest shift free inside the window (not booked or working), rest rule (R1) OK. Excluded substitutes are listed with a reason. *A real system could publish without this human step; the demo keeps it on purpose and says so in the card.*
+5. **Offers** (`offerFree`, `declineFree`): on the phone each substitute sees when they are free inside the window and offers **the whole time**, **part of it** (steppers, at least the shortest shift), or **Kan inte**. An offer can be changed until it is awarded.
+6. **Award** (`suggestOffers`, `awardFree` → `awarded`): the desk lists the offers with coverage bars, pre-ticks a suggestion (one offer covering everything, preferred substitute first; otherwise the offers that add the most coverage), and says what the chosen offers leave uncovered. **Tilldela (n)** splits the sick person's shifts per chosen offer (`was` keeps the original owner). Winners get "Passet är ditt", the others a thank-you note.
+7. Taking the sick report back (`removeFree`) restores the day and removes the extra time added inside.
+8. **Privacy:** colleagues see "Frånvarande", substitutes see "Ledigt pass". Only the person and the principal see "Sjuk".
 
 ### Cover part of a shift (internal)
 Staff picks a from/to range inside their shift and a reason, which only the principal sees. `coverCands()` sends it to colleagues who are present, available, not working then, and would not break R1–R4. The first yes → `matched`. The principal approves under **Notiser** → the shift is split, the colleague gets the covered piece (`cover` = original staff), and hours are recounted.
@@ -96,7 +94,8 @@ Staff picks a from/to range inside their shift and a reason, which only the prin
 ### 1. Planner — `Schedule Demo.dc.html`
 Fixed 1440 px wide canvas, scaled to fit the viewport with no page scroll. Font **IBM Plex Sans** (UI) and **IBM Plex Mono** (times and numbers).
 
-- **Top bar** (height ~57 px, white, bottom border `#D3DDEA`): school name, week ‹ › with date range, Undo / Redo, Copy to next week, **▶ Demo**, **Sjuk och vikarier** (badge = active free shifts, `#D9A23A`), **Notiser** (badge), **Personalens telefon**, **Inställningar**, **SV/EN**. Buttons are 32 px tall, 6 px radius, 1 px `#C9D5E0` border, 13 px text.
+- **Top bar** (height ~57 px, white, bottom border `#D3DDEA`): school name, week ‹ › with date range, Undo / Redo, Copy to next week, **Notiser** (badge), **Inställningar**, **SV/EN**. Buttons are 32 px tall, 6 px radius, 1 px `#C9D5E0` border, 13 px text.
+- **Side rail "Andra roller"** (84 px, `#1F2D3A`, right edge under the top bar): things that are not part of making the schedule. **Personalens telefon**, **Vikarieförmedling** (badge `#D9A23A` = drafts plus published shifts with offers waiting), and **Guider och demo** (a menu: guide to the planner, Settings and the phone, and the step-by-step sick-day demo). Panels open to the left of the rail.
 - **Day tabs** Mon–Fri, with **unit tabs** (Alla / Avd 1 / Avd 2 / Avd 3, each with a coloured chip; the chip shows the unit's number, or the first letter of a name).
 - **Warnings strip** "Att kontrollera" (`#EEF4F7` background, min-height 52 px): a count and a list of rule-coded warnings. Tapping one jumps to the shift. Show nothing extra when it is clear.
 - **Left: staff roster** (~300 px). A search box, a sort control (A–Ö / fill / contract), and a legend (Med barn / Utan barn / Sjuk). Each row has the name, a unit chip, hours/contract, and a **two-part fill bar**:
@@ -120,17 +119,21 @@ Fixed 1440 px wide canvas, scaled to fit the viewport with no page scroll. Font 
   - A break, planning or meeting block can be dragged anywhere in that person's working day: only the time with children closes up around it, other blocks stay put, and the day keeps its start, end and minutes of each kind. Dropped onto another block, it settles next to it.
   - Undo/Redo covers all edits.
 - **Notiser** panel (popover ~552 px wide, 20% larger than the old requests window): staff requests (swap / can't work / sick / cover), each with Godkänn / Neka, "Okej" for sick reports, and "Visa dagen". For cover requests it shows the reason (principal only), who it was sent to, and who accepted.
-- **Sjuk och vikarier** drawer (right side, 600 px, full height under the top bar, closes with ×):
-  - Tabs **Pågående (n)** / **Bekräftade (n)**.
-  - Each free shift is an expandable card. Its header shows a unit chip, date and time, "Name sick → Substitute", and a status pill: Erbjudet `#FFF1CF`, Accepterat `#DDF1F5`, Bekräftat `#E2F6D4`, Ingen vikarie `#FFDAD8`.
-  - Expanded, the card shows the needs tags, a 3-step progress bar (6 px), the status line, a timed log (mono times), "Kan inte ta passet" (name + reason in `#8E2A27`), and the buttons Bekräfta / ⏩ Skip 15 min / Visa i schemat.
-- **▶ Demo autoplay**, six captioned steps in a dark caption card (`#1F2D3A`) at the bottom-left:
-  1. Anna Lindqvist reports sick at 06:40.
-  2. The shift becomes a free shift and is offered to the unit's preferred substitute (Karin for Avd 3).
-  3. No answer, so it goes to everyone eligible.
-  4. Sara Ek takes the shift on her phone.
-  5. Accepted: Sara is in the schedule.
-  6. Confirmed.
+- **Vikarieförmedling** drawer (right side, 600 px, full height under the top bar, left of the rail, closes with ×). A line says it is for whoever arranges substitutes and is not part of making the schedule.
+  - Tabs **Att göra (n)** / **Klara (n)**.
+  - Each free shift is an expandable card. Its header shows a unit chip, date and time, the sick person, and a status pill: Utkast `#EEF3F6`, Publicerat `#FFF1CF`, Tilldelat / Täckt inifrån `#E2F6D4`.
+  - Expanded: a 4-step strip (Täck inifrån · Behov utifrån · Publicera · Tilldela), the box of where adults are missing, then by status:
+    - **Draft:** "1. Kan ni täcka något inifrån?" with options and **Gör det**, what was already done, and "Eller ändra själv i schemat ›"; "2. Hur mycket behövs utifrån?" with the window steppers, **Bara där det saknas nu**, **Hela passet**; "3. Publicera till vikarier (n)" (or **Klart utan vikarie**), and the note that publishing could be automatic.
+    - **Published:** who it went to, "4. Erbjudanden" with a checkbox and coverage bar per offer, who said no or has not answered, a sentence on what the chosen offers cover, **Tilldela (n)**, and in the demo **⏩ Simulera svar från vikarier**.
+    - **Done:** who got which part.
+  - Then a timed log (mono times), "Kan inte ta passet" (name + reason in `#8E2A27`), and **Visa i schemat**.
+- **Sick-day demo** (from Guider och demo; also "▶ Visa hur det går till" in the drawer), six captioned steps in a dark caption card (`#1F2D3A`) at the bottom-left. It waits for **Nästa** at each step:
+  1. A staff member reports sick from the phone.
+  2. The report is a draft at the substitute desk.
+  3. A colleague who already works covers the start from inside.
+  4. Published: the first asked substitute's phone shows the offer.
+  5. Offers come in (simulated); the desk suggests a combination.
+  6. Awarded: the chosen substitutes are in the schedule.
 
   Has a Stop / Klar button. Keep it as a sales/demo feature or drop it in production. If week 42 is empty, the demo first loads the saved OR-Tools schedule, and its captions use Anna's actual shift.
 
@@ -176,7 +179,7 @@ Opened from **Personalens telefon** in the planner, with a person picker ("Telef
 - **Inkorg:** "Kan du ta över?" offers with **Ta passet** / **Avböj**, then the status (waiting for principal / approved / declined). Below are notes (published weeks, changed shifts, approvals) and the person's own requests with their status.
 - **Substitute view** (when the picked person is a substitute):
   - Dark header `#1F2D3A`.
-  - **Erbjudanden:** "Ledigt pass" cards with day, a big mono time, unit chip, needs tags, sent time, and **Ta passet** / **Avböj** (48 px).
+  - **Erbjudanden:** "Ledigt pass" cards with day, a big mono time, unit chip, needs tags, sent time, when the substitute is free inside it ("Du är ledig hela tiden" / "Du kan 10:30–13:30"), and **Erbjud hela tiden** (or **Erbjud HH:MM–HH:MM**), **En del av tiden** (From/To steppers, at least the shortest shift, **Skicka erbjudande**), **Kan inte** (48 px). After sending: "Ditt erbjudande: …", waiting / yours / someone else got it, and **Ändra**.
   - **Mina pass:** each day with range, unit, a Confirmed / Waiting badge, the shift parts, and "Du arbetar med" (colleagues in that unit with their times).
   - Inbox notes.
 
@@ -208,7 +211,7 @@ Opened from **Personalens telefon** in the planner, with a person picker ("Telef
 ## State / backend requirements (production)
 - Server-side persistence for units, staff, substitutes, shifts, absences, requests, free shifts, rules (versioned), and notes. The prototype stores everything in `localStorage` key `schema-demo-v5`.
 - Run the rule engine server-side and share it with the client, so warnings are computed in one place.
-- Real-time updates between the phone and planner (WebSocket or push). Push notifications to staff and substitutes. A real 15-minute timer for the cascade.
+- Real-time updates between the phone and planner (WebSocket or push). Push notifications to staff and substitutes. Optional automatic publishing of sick reports, and a deadline for offers.
 - Roles and privacy: the reasons for sickness and cover are visible only to the principal. Store no child names.
 - Integrations: HR import, the child register (Edlevo, PDF or CSV), payroll export (worked hours, sick hours, substitute hours), and ICS export.
 - Audit log of changes (who moved which shift when).
@@ -217,7 +220,7 @@ Opened from **Personalens telefon** in the planner, with a person picker ("Telef
 No images or icons. The only glyphs are text characters (‹ › × ▶ ⏩ ▾ ▴). The fonts are IBM Plex Sans and Mono from Google Fonts. The iPhone frame in `ios-frame.jsx` is a prototype-only bezel.
 
 ## Files (`web/`, `solver/`, `tests/`)
-- `Schedule Demo.dc.html` — planner, Notiser, Sjuk och vikarier drawer, demo autoplay; mounts settings and phone.
+- `Schedule Demo.dc.html` — planner, side rail, Notiser, Vikarieförmedling drawer, guides and sick-day demo; mounts settings and phone.
 - `Demo Settings.dc.html` — settings shell and menu; General, Import/Export, Children & units, Substitutes.
 - `Demo Settings Staff.dc.html` — staff list and person detail (calendar, hours, contract, availability, leave, roles, phone).
 - `Demo Settings Rules.dc.html` — rules list, editing, versioning, add rule.
