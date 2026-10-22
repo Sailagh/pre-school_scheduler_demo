@@ -274,3 +274,83 @@ test('sick cover as a call for proposals: draft, cover inside, publish, offers, 
   assert.equal(back.reduce((a, x) => a + x.end - x.start, 0), day.reduce((a, x) => a + x.end - x.start, 0));
   assert.ok(back.every(x => !x.was && !x.wasType));
 });
+
+const dayOf = (s, pid, w, d) => s.shifts.filter(x => x.staff === pid && x.week === w && x.day === d).sort((a, b) => a.start - b.start);
+const longestRun = segs => { let run = 0, mx = 0, prev = null; for (const x of segs) { if (x.type === 'break' || (prev != null && x.start - prev >= 15)) run = 0; if (x.type !== 'break') { run += x.end - x.start; mx = Math.max(mx, run); } prev = x.end; } return mx; };
+
+test('a long substitute piece gets its own break, and awarding follows the planner rules', () => {
+  const s = solvedState();
+  dayOf(s, 'p8', 42, 1).forEach(x => { if (x.type === 'break') x.type = 'contact'; });  // no break inside the piece
+  const f = m.reportSick(s, 'p8', 42, 1, 400);
+  m.setFreeWindow(s, f.id, f.full.from, f.full.to); m.publishFree(s, f.id);
+  const sub = f.asked[0];
+  assert.ok(m.offerFree(s, f.id, sub, f.from, f.from + 420), 'a 7 h offer');
+  assert.deepEqual(m.awardIssues(s, f.id, [f.offers[0].id]), []);
+  assert.equal(m.awardFree(s, f.id, [f.offers[0].id]), true);
+  const day = dayOf(s, sub, 42, 1);
+  assert.equal(day[0].start, f.from); assert.equal(day[day.length - 1].end, f.from + 420, 'the piece keeps its start and end');
+  assert.ok(day.some(x => x.type === 'break'), 'the substitute has a break');
+  assert.ok(longestRun(day) <= 300, 'no more than 5 h without a break');
+  assert.deepEqual(m.personIssues(s, sub, 42, 1), [], 'the planner finds nothing to warn about');
+});
+
+test("a colleague's longer day is only suggested if it keeps the rules, with a break moved or added", () => {
+  const s = solvedState(), f = m.reportSick(s, 'p8', 42, 1, 400), opts = m.internalOptions(s, f, 'sv');
+  assert.ok(opts.length > 0);
+  for (const o of opts) {
+    const c = structuredClone(s), before = m.personIssues(c, o.pid, 42, 1).map(x => x.text);
+    assert.ok(m.coverInternally(c, f.id, o), o.name + o.text);
+    assert.deepEqual(m.personIssues(c, o.pid, 42, 1).filter(x => !before.includes(x.text)), [], 'no new rule warning for ' + o.name);
+    assert.ok(longestRun(dayOf(c, o.pid, 42, 1)) <= 300);
+  }
+  const withBreak = opts.find(o => o.brk);
+  assert.ok(withBreak, 'a day that gets longer than 5 h without a break gets one'); assert.match(withBreak.text, /rast/);
+  // If no break can be placed (the whole day is planning), the longer day is not suggested.
+  const t = structuredClone(s); dayOf(t, withBreak.pid, 42, 1).forEach(x => { x.type = 'planning'; });
+  assert.ok(!m.internalOptions(t, t.free.find(x => x.id === f.id), 'sv').some(o => o.pid === withBreak.pid && o.kind === withBreak.kind));
+});
+
+test('colleagues are asked, and only a yes changes the schedule', () => {
+  const s = solvedState(), f = m.reportSick(s, 'p8', 42, 1, 400), [o1, o2] = m.internalOptions(s, f, 'sv');
+  const snap = () => JSON.stringify([s.shifts, s.roles]), gaps = () => JSON.stringify(m.shortfall(s, 42, 1)), before = snap(), gapsBefore = gaps();
+  const a1 = m.askInternal(s, f.id, o1);
+  assert.equal(a1.status, 'sent'); assert.equal(snap(), before, 'asking changes nothing');
+  assert.ok(!m.internalOptions(s, f, 'sv').some(o => o.pid === o1.pid), 'nobody is asked twice');
+  m.answerInternal(s, f.id, a1.id, false);
+  assert.equal(a1.status, 'no'); assert.equal(snap(), before, 'a no changes nothing'); assert.equal(gaps(), gapsBefore, 'the gap remains');
+  const a2 = m.askInternal(s, f.id, o2);
+  assert.equal(m.answerInternal(s, f.id, a2.id, true), true);
+  assert.equal(a2.status, 'yes'); assert.notEqual(snap(), before, 'a yes is written into the schedule'); assert.equal(f.internal.length, 1);
+  const a3 = m.askInternal(s, f.id, m.internalOptions(s, f, 'sv')[0]);
+  m.publishFree(s, f.id);
+  assert.equal(a3.status, 'withdrawn', 'publishing withdraws unanswered questions');
+  m.removeFree(s, 'p8', 42, 1); s.absences = s.absences.filter(z => z.staff !== 'p8');
+  assert.equal(JSON.stringify(dayOf(s, o2.pid, 42, 1).map(x => [x.start, x.end, x.type])), JSON.stringify(dayOf(solvedState(), o2.pid, 42, 1).map(x => [x.start, x.end, x.type])), 'taking the sick report back restores the colleague');
+});
+
+test('sick from a given time: the hours before stay worked time', () => {
+  const s = solvedState(), orig = dayOf(s, 'p8', 42, 1).map(x => [x.start, x.end, x.type]), start = orig[0][0], end = orig[orig.length - 1][1];
+  const f = m.reportSick(s, 'p8', 42, 1, 600, 600);
+  assert.deepEqual(f.full, { from: 600, to: end }); assert.equal(f.sickFrom, 600);
+  const d = m.personWeek(s, 'p8', 42).days[1];
+  assert.equal(d.child + d.non, 600 - start, 'worked before 10:00'); assert.equal(d.sick, end - 600, 'sick after');
+  const cover = m.checkWeek(s, 42).filter(w => w.kind === 'cover' && w.day === 1 && w.staff === 'p8');
+  assert.ok(cover.length && cover.every(w => w.text.includes('10:00')), 'only the time from 10:00 needs cover');
+  m.removeFree(s, 'p8', 42, 1); s.absences = s.absences.filter(z => z.staff !== 'p8');
+  assert.deepEqual(dayOf(s, 'p8', 42, 1).map(x => [x.start, x.end, x.type]), orig, 'taking it back gives the day back as it was');
+});
+
+test('a deadline for offers, escalation, and warnings when it is late', () => {
+  const s = solvedState(), f = m.reportSick(s, 'p8', 42, 1, 400);
+  m.publishFree(s, f.id);
+  assert.equal(f.deadline, f.clock + m.OFFER_MINS); assert.ok(m.freeNow(f) < f.deadline);
+  m.skipToDeadline(s, f.id); assert.ok(m.freeNow(f) >= f.deadline, 'the demo can jump to the deadline');
+  m.escalateFree(s, f.id, 'portal'); m.escalateFree(s, f.id, 'nonsense');
+  assert.deepEqual(f.escalated.map(e => e.to), ['portal']); assert.equal(f.log[f.log.length - 1].k, 'escalated');
+  assert.equal(m.lateness({ from: 450 }, 420), null, 'half an hour or more before is not late');
+  assert.deepEqual(m.lateness({ from: 450 }, 430), { started: false, mins: 20 });
+  assert.deepEqual(m.lateness({ from: 450 }, 460), { started: true, mins: 10 });
+  assert.equal(m.lateness({ from: 450, today: false }, 460), null, 'only for a sick report made the same day');
+  s.prefs.offerMins = 30; const g = m.reportSick(s, 'p1', 42, 2, 400); m.publishFree(s, g.id);
+  assert.equal(g.deadline, g.clock + 30, 'the deadline is a setting');
+});

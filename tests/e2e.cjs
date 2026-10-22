@@ -91,7 +91,7 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     assert.match(t, /Keep them and fill in around them/); assert.match(t, /Start over: replace the whole week/);
     await btn('Close', true).click();
   });
-  await step('substitute desk: a sick report is a draft; cover inside, publish, offers, award', async () => {
+  await step('substitute desk: a draft; ask a colleague, publish, deadline, escalate, offers, award', async () => {
     assert.equal(await btn('Sick cover', true).count(), 0, 'not in the top bar any more');
     await p.locator('[data-row="p8"]').first().click({ position: { x: 60, y: 20 } }).catch(() => {}); await p.getByText('Ahmed Karimi').first().click(); await p.waitForTimeout(300);
     await btn(/Mark sick today/).click(); await p.waitForTimeout(400); await btn(/Substitute desk/).click(); await p.waitForTimeout(600);
@@ -102,15 +102,25 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     await btn('Whole shift', true).click(); await p.waitForTimeout(300);
     assert.match(await body(), /A substitute is needed 06:00–13:30 \(7\.5 h\) – the whole shift\./);
     await btn('Only where it is short now', true).click(); await p.waitForTimeout(300);
-    await btn('Do it', true).first().click(); await p.waitForTimeout(400);
-    assert.match(await body(), /✓ .* opens/, 'taking over the opening is done in the schedule');
+    const before = await p.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('schema-demo-v5')).s.shifts));
+    await btn('Ask', true).first().click(); await p.waitForTimeout(400);
+    assert.match(await body(), /Asked .* opens|Waiting/, 'the colleague is asked');
+    assert.equal(await p.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('schema-demo-v5')).s.shifts)), before, 'asking does not change the schedule');
+    await btn('Answer yes (demo)', true).first().click(); await p.waitForTimeout(400);
+    assert.match(await body(), /Yes, in the schedule/); assert.match(await body(), /said yes: .*opens/, 'a yes is written into the schedule');
     await btn(/3\. Publish to substitutes/).click(); await p.waitForTimeout(400);
-    assert.match(await body(), /Published to /); assert.match(await body(), /No offers yet/);
+    assert.match(await body(), /Published\. Staffing has 0 offers/, 'the principal hands it over');
+    await btn('View as staffing ›', true).click(); await p.waitForTimeout(400);
+    t = await body(); assert.match(t, /Published to /); assert.match(t, /No offers yet/); assert.match(t, /Answers by \d\d:\d\d · \d+ min left/);
+    await btn(/Skip to the deadline/).click(); await p.waitForTimeout(400);
+    assert.match(await body(), /5\. Not covered in time: next step/);
+    await btn(/Send to the municipality's substitute portal/).click(); await p.waitForTimeout(300);
+    assert.match(await body(), /✓ Send to the municipality's substitute portal/); assert.match(await body(), /Next step: Send to/);
     await btn(/Simulate answers from substitutes/).click(); await p.waitForTimeout(400);
     t = await body(); assert.match(t, /The chosen offers cover all of|The chosen offers leave/);
     await btn(/^Award \(\d\)/).click(); await p.waitForTimeout(400);
     assert.match(await body(), /Awarded/);
-    await btn(/Substitute desk/).click(); await p.waitForTimeout(300);
+    await btn('Principal', true).click(); await btn(/Substitute desk/).click(); await p.waitForTimeout(300);
   });
   await step('Copy last week appears once the week before has a schedule', async () => {
     for (let i = 0; i < 2; i++) await btn('›').click(); await p.waitForTimeout(300);
@@ -178,12 +188,29 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
     await p.getByRole('button', { name: /^A sick report step by step/ }).click(); await p.waitForTimeout(2500);
     assert.match(await body(), /Her shift today is \d\d:\d\d–\d\d:\d\d in /);
     await p.waitForTimeout(2500);
-    assert.match(await body(), /1 \/ 6/, 'waits for Next');
+    assert.match(await body(), /1 \/ 7/, 'waits for Next');
     await btn('Next', true).click(); await p.waitForTimeout(1500);
     assert.match(await body(), /To do \(1\)/, 'the free shift shows up as a draft');
     assert.match(await body(), /A draft at the substitute desk/);
+    await btn('Next', true).click(); await p.waitForTimeout(1500);
+    assert.match(await body(), /The principal asks a colleague/); assert.match(await body(), /The principal asks if you can help/, "the colleague's phone shows the question");
     for (let i = 0; i < 4; i++) { await btn('Next', true).click(); await p.waitForTimeout(1500); }
-    assert.match(await body(), /6 \/ 6/); await btn('Done', true).click();
+    assert.match(await body(), /7 \/ 7/); assert.match(await body(), /Awarded/); await btn('Done', true).click();
+  });
+  await step('on the phone, a sick report can start at a given time; the time before stays worked', async () => {
+    await btn("Staff's phone", true).click(); await p.waitForTimeout(1000);
+    try {
+      await p.locator('select:has(option[value="p2"])').first().selectOption('p2'); await p.waitForTimeout(800);
+      await btn('Sick', true).click(); await p.waitForTimeout(300);
+      await btn('From a time', true).click(); await p.waitForTimeout(200);
+      assert.match(await body(), /Sick from/); assert.match(await body(), /The time before counts as worked/);
+      await p.getByRole('button', { name: 'Report sick', exact: true }).click(); await p.waitForTimeout(400);
+    } finally { await btn('Close', true).click(); }
+    await btn(/Substitute desk/).click(); await p.waitForTimeout(600);
+    await btn('Principal', true).click(); await p.waitForTimeout(300);
+    if (!/sick from \d\d:\d\d/.test(await body())) { await p.getByText(/Erik Johansson sick/).first().click(); await p.waitForTimeout(400); }
+    assert.match(await body(), /\(sick from \d\d:\d\d, the time before counts as worked\)/);
+    await btn(/Substitute desk/).click();
   });
   await step('Swedish', async () => {
     await btn('SV', true).click(); await btn('Skapa schema', true).click(); await p.waitForTimeout(300);

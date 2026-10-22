@@ -323,7 +323,8 @@
                 <div style="font-size:13px;color:#5A6B7A">{{ o.who }}</div>
                 <div style="font-size:17px;font-weight:600">{{ o.when }}</div>
                 <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#3C4B5A"><span style="width:16px;height:16px;border-radius:4px;background:{{ o.ub }};color:{{ o.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ o.letter }}</span>{{ o.unit }}</div>
-                <sc-if value="{{ o.canAnswer }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px"><button onClick="{{ o.yes }}" style="height:44px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ tx.take }}</button><button onClick="{{ o.no }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ tx.decline }}</button></div></sc-if>
+                <sc-if value="{{ o.hasWhat }}"><div style="font-size:15px;line-height:1.45;font-weight:500">{{ o.what }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A">{{ o.whatSub }}</div></sc-if>
+                <sc-if value="{{ o.canAnswer }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px"><button onClick="{{ o.yes }}" style="height:44px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ o.yesTxt }}</button><button onClick="{{ o.no }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ o.noTxt }}</button></div></sc-if>
                 <sc-if value="{{ o.hasNote }}"><div style="font-size:13px;font-weight:600;color:{{ o.noteFg }}">{{ o.note }}</div></sc-if>
               </div>
             </sc-for>
@@ -467,6 +468,24 @@
       </sc-if>
 
       <sc-if value="{{ sh.isSick }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;background:#E3EAF0;border-radius:10px">
+          <sc-for list="{{ sickOpts }}" as="x"><button onClick="{{ x.pick }}" style="height:38px;border:0;border-radius:8px;font:inherit;font-size:14px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer">{{ x.name }}</button></sc-for>
+        </div>
+        <sc-if value="{{ isPart }}">
+          <div style="display:flex;flex-direction:column;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+            <sc-for list="{{ sickSteps }}" as="r">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px">
+                <div style="flex:1;font-size:15px">{{ r.label }}</div>
+                <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:8px;overflow:hidden">
+                  <button onClick="{{ r.dec }}" style="width:44px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">−</button>
+                  <div style="min-width:70px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div>
+                  <button onClick="{{ r.inc }}" style="width:44px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">+</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:13px;line-height:1.45;color:#5A6B7A">{{ sickPartTxt }}</div>
+        </sc-if>
         <button onClick="{{ sendSick }}" style="height:50px;border:0;border-radius:10px;background:#C2413D;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.sendSick }}</button>
         <button onClick="{{ closeSheet }}" style="height:44px;border:0;background:transparent;color:#1F2D3A;font:inherit;font-size:15px;font-weight:500;cursor:pointer">{{ tx.cancel }}</button>
       </sc-if>
@@ -658,10 +677,20 @@ class Component extends DCLogic {
     const offers = offersAll.map(r => { const rq = mod.person(r.staff) || {}, gs = shifts(r.staff, r.week, r.day).find(x => x.start < r.to && x.end > r.from) || s.shifts.find(x => x.cover === r.staff && x.week === r.week && x.day === r.day && x.staff === r.by), g = G((gs || {}).group || rq.group);
       const canAnswer = r.status === 'open', NT = { matched: [t('Du har tackat ja. Väntar på rektor.', 'You said yes. Waiting for the principal.'), '#8A5F0C'], approved: [t('Godkänt. Tiden ligger i ditt schema.', 'Approved. The time is in your schedule.'), '#2D6A1F'], declined: [t('Rektor godkände inte bytet.', 'The principal did not approve it.'), '#8E2A27'] }[r.status] || ['', '#5A6B7A'];
       return { who: t(rq.name + ' frågar om du kan ta över', rq.name + ' asks if you can take over'), when: LD(r.day) + ' ' + dLab(r.week, r.day) + ' · ' + mod.fmt(r.from) + '–' + mod.fmt(r.to), unit: g ? g.name : '', ...(g ? UC[g.id] : { letter: '', ub: 'transparent', uf: '#000' }),
-        canAnswer, hasNote: !canAnswer && !!NT[0], note: NT[0], noteFg: NT[1],
+        canAnswer, hasNote: !canAnswer && !!NT[0], note: NT[0], noteFg: NT[1], hasWhat: false, yesTxt: t('Ta passet', 'Take it'), noTxt: t('Avböj', 'Decline'),
         yes: () => { ctl.touch(x => mod.coverRespond(x, r.id, me, true)); this.flash(t('Du har tackat ja', 'You said yes')); }, no: () => ctl.touch(x => mod.coverRespond(x, r.id, me, false)) }; });
+    const FR = s.free || [], hh = m => mod.fmtN(Math.round(m / 6) / 10, lang) + ' h';
+    // The principal asks: start earlier, stay later, or open/close instead of a sick colleague. Only a yes changes the day.
+    FR.forEach(f => (f.asks || []).filter(a => a.pid === me && a.status !== 'withdrawn').forEach(a => { const g = G(f.group);
+      const what = a.kind === 'role' ? (a.role === 'open' ? t('Öppna i stället', 'Open instead') : t('Stänga i stället', 'Close instead')) : (a.kind === 'earlier' ? t('Börja ' + mod.fmt(a.from) + ' i stället för ' + mod.fmt(a.to), 'Start at ' + mod.fmt(a.from) + ' instead of ' + mod.fmt(a.to)) : t('Stanna till ' + mod.fmt(a.to) + ' i stället för ' + mod.fmt(a.from), 'Stay until ' + mod.fmt(a.to) + ' instead of ' + mod.fmt(a.from)))
+        + (a.kind !== 'role' && a.role ? (a.role === 'open' ? t(' och öppna', ' and open') : t(' och stänga', ' and close')) : '');
+      const NT = { yes: [t('Du har sagt ja. Det står i ditt schema.', 'You said yes. It is in your schedule.'), '#2D6A1F'], no: [t('Du har sagt nej.', 'You said no.'), '#5A6B7A'], stale: [t('Det gick inte längre att lägga in, schemat hade ändrats.', 'It could no longer be added; the schedule had changed.'), '#8E2A27'] }[a.status] || ['', '#5A6B7A'];
+      offers.unshift({ who: t('Rektor frågar om du kan hjälpa till', 'The principal asks if you can help'), when: LD(f.day) + ' ' + dLab(f.week, f.day), unit: g ? g.name : '', ...(g ? UC[g.id] : { letter: '', ub: 'transparent', uf: '#000' }),
+        hasWhat: true, what, whatSub: (a.ext ? t('Det blir ' + hh(a.ext) + ' mer', 'That is ' + hh(a.ext) + ' more') + (a.over ? t(', ' + hh(a.over) + ' över ditt avtal denna vecka.', ', ' + hh(a.over) + ' over your contract this week.') : '.') : t('Ingen extra tid.', 'No extra time.')) + t(' En kollega är sjuk.', ' A colleague is sick.'),
+        canAnswer: a.status === 'sent', hasNote: a.status !== 'sent', note: NT[0], noteFg: NT[1], yesTxt: t('Ja', 'Yes'), noTxt: t('Nej', 'No'),
+        yes: () => { let ok = true; ctl.touch(x => { ok = mod.answerInternal(x, f.id, a.id, true, lang); }); this.flash(ok ? t('Tack! Det står nu i ditt schema.', 'Thank you! It is now in your schedule.') : t('Det går inte längre', 'It is no longer possible')); },
+        no: () => ctl.touch(x => mod.answerInternal(x, f.id, a.id, false, lang)) }); }));
     const openOffers = offers.filter(o => o.canAnswer).length;
-    const FR = s.free || [], lastOffer = f => { const l = (f.log || []).filter(x => x.k === 'offerPref' || x.k === 'offerAll'); return l.length ? l[l.length - 1].t : f.clock; };
     const needTags = f => [...(f.needs.open ? [{ t: t('Öppnar', 'Opens') }] : []), ...(f.needs.close ? [{ t: t('Stänger', 'Closes') }] : []), ...(f.needs.sn ? [{ t: t('Särskilt stöd', 'Special needs') }] : [])];
     // A call for proposals: offer the whole time, a part of it (at least the shortest substitute shift), or say no.
     const subMin = Math.min((s.prefs || {}).subMin ?? mod.SUB_MIN, 1440);
@@ -766,7 +795,12 @@ class Component extends DCLogic {
       newReq: () => open('pick', W, D),
       hasSheet: !!SH, sh: shVM, closeSheet: () => this.setState({ sheet: null }), stop: e => e.stopPropagation(),
       swapList, swapBg: st.swapWith ? '#1F7D97' : '#A9C9D2',
-      sendSick: () => { send({ type: 'sick' }); this.flash(t('Sjukanmälan skickad', 'Sick report sent')); },
+      sendSick: () => { send({ type: 'sick', from: st.part ? st.from : null, today: SH.w === tw && SH.d === TD }); this.flash(t('Sjukanmälan skickad', 'Sick report sent')); },
+      sickOpts: (() => { const l = SH && SH.kind === 'sick' ? shifts(me, SH.w, SH.d) : [], a = l.length ? l[0].start + 15 : 480, b = l.length ? l[l.length - 1].end - 15 : 960;
+        const now = Math.round(new Date().getHours() * 4 + new Date().getMinutes() / 15) * 15, at = Math.max(a, Math.min(b, SH && SH.w === tw && SH.d === TD ? now : Math.round((a + b) / 30) * 15));
+        return [segOpt(!st.part, t('Hela dagen', 'Whole day'), () => this.setState({ part: false })), segOpt(st.part, t('Från en tid', 'From a time'), () => this.setState({ part: true, from: at, sickA: a, sickB: b }))]; })(),
+      sickSteps: [{ label: t('Sjuk från', 'Sick from'), val: mod.fmt(st.from), dec: () => this.setState(x => ({ from: Math.max(x.sickA ?? 0, x.from - 15) })), inc: () => this.setState(x => ({ from: Math.min(x.sickB ?? 1440, x.from + 15) })) }],
+      sickPartTxt: t('Tiden före räknas som arbetad. Resten av passet blir ett ledigt pass.', 'The time before counts as worked. The rest of the shift becomes a free shift.'),
       sendSwap: () => { if (!st.swapWith) return; send({ type: 'swap', with: st.swapWith }); this.flash(t('Förfrågan skickad', 'Request sent')); },
       sendUn: () => { send({ type: 'unavail', from: st.part ? st.from : 0, to: st.part ? st.to : 1440 }); this.flash(t('Förfrågan skickad', 'Request sent')); },
       partOpts: [segOpt(!st.part, t('Hela dagen', 'Whole day'), () => this.setState({ part: false })), segOpt(st.part, t('Del av dagen', 'Part of the day'), () => this.setState({ part: true }))], isPart: st.part,
