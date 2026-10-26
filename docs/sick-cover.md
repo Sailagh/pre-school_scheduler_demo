@@ -1,6 +1,6 @@
-# How the demo handles sick days: a brief for review
+# Sick cover: how the flow works
 
-This describes the sick-cover flow in the preschool scheduling demo "Förskolans schema" as it is built now, after the review in `sick-cover-feedback.md`. It is meant to be checked by someone who knows how Swedish municipalities staff preschools. All names and numbers in the demo are made up.
+This describes the sick-cover flow in the preschool scheduling demo "Förskolans schema" as it is built now. It is written so that someone who knows how Swedish municipalities staff preschools can check it. All names and numbers in the demo are made up.
 
 The flow is a description of the need and of how the work could flow, for Medvind/Visma to compare with their own functions for sick leave. It is not meant to replace Medvind.
 
@@ -123,18 +123,17 @@ Substitutes are now part of the planner's rule check. Before, only regular staff
 - **Substitutes:** have no contract. Their hours appear separately in the export.
 - **Extra time inside:** counted as worked time and shown as hours over contract.
 
-## What changed after the review
+## Design decisions
 
-| Feedback item | Now |
+| Decision | How it is built |
 |---|---|
-| 1. Never break the Working Hours Act | Every internal suggestion and every award is checked with the planner's rule check. Breaks are moved or added, or the change is not suggested; an award that breaks a rule is refused. Substitute pieces over 5 h get a break. The desk shows rule warnings for the people involved. Tests: a 7 h substitute piece gets a break; a colleague's longer day gets a break or is not suggested. |
-| 2. Ask colleagues | Suggestions are questions to the colleague's phone (Ja/Nej). The desk shows the status. Only a yes is written; a no leaves the gap. |
-| 3. Deadline and escalation | Settable deadline, countdown, and a next-step list (Open-E portal, a preschool nearby, other) when it is not covered in time. Simulated answers kept. |
-| 4. Sick from a given time | The phone has *Hela dagen* / *Från en tid*. Hours before stay worked. |
-| 5. Late warnings | A warning when publishing or awarding after the shift has started or within 30 minutes of it. Not blocking. |
+| Never break the Working Hours Act | Every internal suggestion and every award is checked with the planner's rule check. Breaks are moved or added, or the change is not suggested; an award that breaks a rule is refused. Substitute pieces over 5 h get a break. The desk shows rule warnings for the people involved. Tests: a 7 h substitute piece gets a break; a colleague's longer day gets a break or is not suggested. |
+| Ask colleagues, do not assign them | Suggestions are questions to the colleague's phone (Ja/Nej). The desk shows the status. Only a yes is written; a no leaves the gap. |
+| Deadline and escalation | Settable deadline, countdown, and a next-step list (Open-E portal, a preschool nearby, other) when it is not covered in time. Simulated answers kept. |
+| Sick from a given time | The phone has *Hela dagen* / *Från en tid*. Hours before stay worked. |
+| Late warnings | A warning when publishing or awarding after the shift has started or within 30 minutes of it. Not blocking. |
 | Roles on the desk | *Visa som: Rektor / Bemanning*. Bemanning's view is labelled as one that could be shared by several preschools. |
 | Positioning | The desk and the documents describe the flow as something to compare with Medvind's own functions, not a replacement. |
-| Report reference | Smith (1980), above. |
 
 ## Limits that remain
 These need HR or collective-agreement expertise. They are kept as open questions for the municipality and are not modelled:
@@ -148,7 +147,7 @@ Two simplifications in the demo:
 - **Deadline clock:** the deadline counts down in real minutes from the moment of publishing, while the demo's own story times start at 06:40.
 - **"Today":** the late warning is only shown for a sick report made for the same day.
 
-## Questions for review
+## Open questions for the municipality
 - Is 15 minutes a sensible default deadline, and should it depend on how soon the shift starts?
 - Should the next step after the deadline be automatic (for example, always send to Open-E), or always a person's choice?
 - When a colleague says yes, should Rektor confirm before it goes into the schedule, or is the colleague's yes enough?

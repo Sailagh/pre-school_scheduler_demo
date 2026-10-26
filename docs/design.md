@@ -1,4 +1,4 @@
-# Handoff: Preschool Schedule (Förskolans schema)
+# Design: Förskolans schema (preschool staff scheduling)
 
 ## Overview
 A scheduling tool for a Swedish preschool (förskola). The principal (rektor) plans staff shifts per unit (avdelning), sees at a glance whether every hour has enough adults for the number of children, and is warned when a rule (rest, weekly hours, breaks, roles, special-needs coverage) is broken. Staff use a phone app to see their week, see who works when, report sick, ask for swaps, and ask colleagues to cover part of a shift. Substitutes (vikarier) get free shifts offered through the same app.
@@ -14,8 +14,6 @@ The UI is bilingual (Swedish and English, toggled with **SV / EN** in the top ba
 The files in `web/` are **design references built in HTML**: working prototypes that show the intended look and behaviour. They are **not production code to copy directly**. Rebuild them in the target codebase's own environment (framework, state management, API layer) using its established patterns. If no codebase exists yet, pick a suitable stack. A sensible default is React + TypeScript for the planner and settings, and React Native or a responsive PWA for the phone app, with a server holding the real data and rule engine.
 
 `.dc.html` files are a proprietary "Design Component" format: an HTML template with `{{ }}` holes plus a `class Component extends DCLogic` logic block. They open in a browser (they load `support.js`). Read them as a declarative template plus a React-class-like `renderVals()`. **`schedule-core-demo.js` holds all the domain logic** (data model, rule checks, staffing need, cover candidates, substitute cascade, hours accounting). It is the most valuable file to port, ideally to a shared TypeScript module or the backend.
-
-`Schema Demo.html` is the single-file offline bundle of the whole prototype. Open it in any browser to click through.
 
 ## Fidelity
 **High-fidelity** for layout, colour, typography, copy and interaction. Recreate it closely. The data model and rule engine are **functional mocks**. The logic is correct for the demo, but it runs client-side on one week's data in `localStorage`. The real system needs persistence, auth, multi-user concurrency and audit trails.
@@ -263,7 +261,6 @@ No images or icons. The only glyphs are text characters (‹ › × ▶ ⏩ ▾ 
 - `schedule-core-demo.js` — **domain model, seed data, rule engine, staffing need, cover/substitute logic, hours accounting, EN/SV strings, store with undo, drag controller.**
 - `support.js` — runtime for `.dc.html` files (prototype only).
 - `ios-frame.jsx` — phone bezel (prototype only).
-- `Schema Demo.html` — self-contained offline build of the **original** prototype, before schedule generation was added; open it in a browser to click through.
 - `Phone.dc.html` — the phone app on its own page (`?me=p1`, `?me=s1`, `&lang=en`). `index.html` — landing page.
 - `solved-schedule.json` — weeks 41–52 solved ahead of time by OR-Tools for the demo data; used when the solver is not running.
 - `solver/` — the OR-Tools solver (`schedule_solver.py`), a small HTTP server (`server.py`), and scripts to rebuild and check the saved schedule.
@@ -273,7 +270,7 @@ No images or icons. The only glyphs are text characters (‹ › × ▶ ⏩ ▾ 
 
 ## Schedule generation with OR-Tools (added October 2026)
 
-*A Swedish version of this section is in `DESIGN_HANDOFF.sv.md`.*
+*A Swedish version of this section is in [`schemalaggning.sv.md`](schemalaggning.sv.md).*
 
 An empty week shows no warnings (they would only list what is missing). The demo starts with an empty schedule. Staff, units, substitutes and children data are made up and kept. The principal can have a schedule suggested, with the main design goal that **it must not feel like a black box**: the person scheduling (think of an experienced administrator, not a programmer) should see what the suggestion is based on, be able to say what is different this week, and get a plain explanation of the result.
 

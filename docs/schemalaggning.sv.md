@@ -1,6 +1,6 @@
-# Överlämning: schemaläggning med OR-Tools (tillägg oktober 2026)
+# Schemaläggning med OR-Tools (oktober 2026)
 
-*Det här är den svenska versionen av avsnittet "Schedule generation with OR-Tools" i `DESIGN_HANDOFF.md`. Resten av det dokumentet finns bara på engelska.*
+*Det här är den svenska versionen av avsnittet "Schedule generation with OR-Tools" i [`design.md`](design.md). Resten av det dokumentet finns bara på engelska.*
 
 En tom vecka visar inga varningar (de skulle bara räkna upp vad som saknas). Demon börjar med ett tomt schema. Personal, avdelningar, vikarier och barndata är påhittade och finns kvar. Rektorn kan få ett förslag på schema, och det viktigaste designmålet är att **det inte får kännas som en svart låda**: den som lägger schemat (tänk en erfaren administratör, inte en programmerare) ska se vad förslaget bygger på, kunna säga vad som är annorlunda den här veckan och få en begriplig förklaring av resultatet.
 
@@ -110,4 +110,4 @@ Det är en demo och en guide, inte en produkt:
 - lösarens server har ingen åtkomstkontroll eller begränsningar och är tänkt att köras lokalt;
 - lösaren använder fasta vikter; en riktig produkt skulle låta organisationen justera dem, och kanske lägga till önskemål per person (t.ex. att bara viss personal behöver sluta tidigt) och fasta händelser som ett personalmöte.
 
-Se *State / backend requirements* i `DESIGN_HANDOFF.md` för vad ett riktigt system behöver.
+Se *State / backend requirements* i [`design.md`](design.md) för vad ett riktigt system behöver.
