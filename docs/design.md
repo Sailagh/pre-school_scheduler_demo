@@ -1,0 +1,351 @@
+# Design: Förskolans schema (preschool staff scheduling)
+
+## Overview
+A scheduling tool for a Swedish preschool (förskola). The principal (rektor) plans staff shifts per unit (avdelning), sees at a glance whether every hour has enough adults for the number of children, and is warned when a rule (rest, weekly hours, breaks, roles, special-needs coverage) is broken. Staff use a phone app to see their week, see who works when, report sick, ask for swaps, and ask colleagues to cover part of a shift. Substitutes (vikarier) get free shifts offered through the same app.
+
+Three surfaces:
+1. **Planner (iPad / desktop, 1440×~900 design canvas, scaled to fit)** — the main schedule.
+2. **Settings** — general, import/export, staff, children & units, substitutes, rules.
+3. **Phone app (iPhone, 402×874)** — staff view and substitute view.
+
+The UI is bilingual (Swedish and English, toggled with **SV / EN** in the top bar). All names and data are made up.
+
+## About the design files
+The files in `web/` are **design references built in HTML**: working prototypes that show the intended look and behaviour. They are **not production code to copy directly**. Rebuild them in the target codebase's own environment (framework, state management, API layer) using its established patterns. If no codebase exists yet, pick a suitable stack. A sensible default is React + TypeScript for the planner and settings, and React Native or a responsive PWA for the phone app, with a server holding the real data and rule engine.
+
+`.dc.html` files are a proprietary "Design Component" format: an HTML template with `{{ }}` holes plus a `class Component extends DCLogic` logic block. They open in a browser (they load `support.js`). Read them as a declarative template plus a React-class-like `renderVals()`. **`schedule-core-demo.js` holds all the domain logic** (data model, rule checks, staffing need, cover candidates, substitute cascade, hours accounting). It is the most valuable file to port, ideally to a shared TypeScript module or the backend.
+
+## Fidelity
+**High-fidelity** for layout, colour, typography, copy and interaction. Recreate it closely. The data model and rule engine are **functional mocks**. The logic is correct for the demo, but it runs client-side on one week's data in `localStorage`. The real system needs persistence, auth, multi-user concurrency and audit trails.
+
+---
+
+## Domain model (from `schedule-core-demo.js`)
+Times are **minutes from midnight** (e.g. 390 = 06:30). Days are `0–4` = Mon–Fri. Weeks are ISO week numbers. The demo covers weeks **41–52**, in planning periods of **4 weeks** (`BLOCK_WEEKS`). The Staff page's time calendar shows **7-week blocks**, because real schedules are made in 7-week cycles. **Make the period length one configurable value**; the rest of the prototype still uses 4.
+
+```ts
+Unit (GROUPS)   { id, name, ages, open, close, ratio /*children per adult*/, max /*enrolled*/, sn /*special-needs kids*/ }
+  g1 Avd 1   1–3 yrs 06:30–17:30 ratio 5
+  g2 Avd 2   3–4 yrs 06:15–18:00 ratio 7
+  g3 Avd 3   4–5 yrs 06:00–18:30 ratio 10
+Staff           { id, name, pct /*employment %*/, hours, group /*home unit*/, open, close /*may open/close*/, sn /*trained for special needs*/,
+                  off: day[] /*fixed days off*/, earliest?, latest? /*availability*/, end? /*last week*/,
+                  changes: [{from: week, pct}] /*future % changes, e.g. 75% from w.47*/, leave: [{w1,d1,w2,d2,kind:'vacation'|'leave'}],
+                  phone, phoneSrc: 'app'|'manual', nonChild?: hours /*override of non-child target*/ }
+Substitute      { id, name, phone, days: day[], sn, open, close, prefer: unitId[] /*preferred for*/, booked: [{week,day,from,to,where}] }
+Shift           { id, staff, week, day, start, end, type: 'contact'|'break'|'planning'|'meeting', group, was? /*original owner if taken over*/, cover? /*covering for*/ }
+Absence         { staff, week, day, from, to, reason: 'sick'|... }
+Roles           roles["week-day"] = { open: staffId, close: staffId }
+Merge (opening/closing unit)  { on, am: 450 /*07:30*/, pm: 960 /*16:00*/, ratio: 8, room: 'g3' }  – before am / after pm all children are together in one unit
+SpecialNeedsKid { id, unit, days, from, to }   – only counts and times, never names
+Request         { id, type: 'swap'|'unavail'|'sick'|'cover', staff, week, day, from?, to?, with?, reason? /*principal only*/,
+                  status: 'pending'|'new'|'seen'|'approved'|'declined'|'open'|'matched'|'nobody', offered?: staffId[], declined?: staffId[], by? }
+FreeShift       { id, staff /*sick person*/, week, day, from, to, group, needs:{open,close,sn},
+                  full:{from,to} /*the sick time*/, sickFrom?: minute /*sick from a given time*/, today?: false,
+                  status: 'draft'|'open'|'awarded'|'covered', orig: Shift[] /*the day before, for undo*/,
+                  asks: [{id,pid,kind:'earlier'|'later'|'role',from,to,role?,ext,over,status:'sent'|'yes'|'no'|'withdrawn'|'stale'}],
+                  internal: [{pid,from,to,role?,brk,orig,prevRole}] /*accepted asks*/,
+                  asked: subId[], offers: [{id,sub,from,to,status:'sent'|'won'|'lost',t}], declined: subId[], won: [{sub,from,to}],
+                  pubClock, pubAt /*ms*/, deadline /*minute*/, escalated: [{to:'portal'|'nearby'|'other',t}], clock, log: [{t,k,...}] }
+Rule            { id: 'r1'.., type, base, versions: [{ from: week, on, p: params }] }   – versioned by week so a law change can start "from week 47"
+Note (inbox)    { id, to, key, p, at, read }
+```
+
+### Rules (codes shown in the UI as R1…)
+| Code | type | Default | Check |
+|---|---|---|---|
+| R1 | rest | 11 h | rest between end of one day and start of next |
+| R2 | week | 40 h, flex 2 h | max hours in a week; up to `flex` more if the next week is that much shorter (see *Schedule generation*) |
+| R3 | avg | 40 h | average over the period |
+| R4 | cont | 5 h | max continuous work without a break (gap ≥15 min resets) |
+| R5 | breakLen | 15–30 min | break length |
+| R6 | count | – | contract hours = contact + break + planning + meeting |
+| R7 | openClose | – | someone opens and someone closes each day |
+| R8 | avail | – | nobody works outside availability |
+| R9 | absent | – | nobody works while absent |
+| R10 | sn | – | a trained adult is in the unit while a special-needs child is there |
+| user-added | breaks, dayMax, minStaff | see `ADDABLE` | e.g. "2 breaks of 15 min on days > 6 h" |
+
+The ratio check (adults needed per unit per 15-minute slot = ceil(children/ratio), using the merged ratio during opening and closing) drives the **Barn / Behövs / I tjänst** rows. Every warning carries its rule code so the principal can see which rule fired. Each rule card in Settings explains in plain words what is checked.
+
+### Hours accounting (`personWeek`, `nonChildTarget`)
+- **Contract minutes** `C` = 40 h × employment % (adjusted for future `changes`, fixed days off, leave).
+- **Non-child target** `N` = 5 h at 100% (default `prefs.nonChild`), scaled by %, overridable per person. **Child target** `A = C − N`. With children counts contact + breaks; without children counts planning + meetings.
+- **Sick** days are *not* worked time. They are reported separately as sick hours and days (paid as sick pay after the waiting-day deduction; that goes to payroll as absence). Vacation and leave are counted in days.
+- Substitutes have no contract; their hours appear separately in the export.
+
+### Vikarieförmedling: sick cover as a call for proposals
+Covering a sick day is often done by someone other than the person who makes the schedule. In the municipality the principal (**Rektor**) covers in-house first, and what cannot be covered goes to the staffing unit (**Bemanning**), which finds a substitute. The flow follows the Contract Net Protocol (R. G. Smith, *IEEE Transactions on Computers* C-29(12), 1980): the need is published, substitutes answer with offers, and a person awards. It describes the need and how the work could flow, for Medvind/Visma to compare with their own sick-leave functions; it is not meant to replace them.
+
+**Steps:**
+1. **Sick report.** Staff presses **Sjuk**, for the whole day or **from a given time** (`reportSick`). The shifts are split at that time, and the hours before stay worked time. The rest becomes a free shift with status **draft**. Nothing is sent yet.
+2. **Cover from inside (Rektor).** `internalOptions` suggests colleagues who already work that day: start earlier, stay later (at most 3 h), or take over opening/closing.
+   - Each suggestion is tried on a copy of the schedule with the **planner's own rule check** (`personRules`, shared with the planner's warning list). It is kept only if it adds no warning.
+   - A longer day gets its break moved or added (`placeBreaks`), keeping start, end and minutes. If no break fits, it is not suggested.
+   - **Fråga** (`askInternal`) sends it to the colleague's phone. Only their **Ja** (`answerInternal`, checked again) writes it into the schedule; **Nej** leaves the schedule and the gap as they were.
+3. **How much from outside (Rektor).**
+   - The card shows where adults are still missing (`shortfall`, per unit, and for the whole preschool while units are merged).
+   - The window (`subWindow`, `setFreeWindow`) starts as the span of the gaps. It is at least the **shortest substitute shift** (Settings › Substitutes, default 3 h) and never outside the shift. It can be moved ±15 min, set to **Whole shift**, or to **Only where it is short now**.
+   - When nothing is missing: **Klart utan vikarie** (`closeFree` → `covered`).
+4. **Publish (Rektor)** (`publishFree` → `open`).
+   - A person presses **Publicera till vikarier (n)**. Unanswered questions to colleagues are withdrawn.
+   - Eligible substitutes are asked: available that weekday, the training or role the window needs, at least the shortest shift free inside the window, and the rest rule (R1) OK. Excluded substitutes are listed with a reason.
+   - A **deadline** is set: Settings › Substitutes › response time, default 15 min (`OFFER_MINS`).
+   - *A real system could publish without this human step; the card says so.*
+5. **Offers** (`offerFree`, `declineFree`). On the phone each substitute sees when they are free inside the window and offers **the whole time**, **part of it**, or **Kan inte**, until it is awarded.
+6. **Award (Bemanning)** (`suggestOffers`, `awardIssues`, `awardFree` → `awarded`).
+   - The desk shows the deadline with a countdown (`freeNow`), and the offers with coverage bars.
+   - It pre-ticks a suggestion and says what is left uncovered.
+   - Awarding is checked with the planner's rules first. A substitute piece over 5 h gets its own break, and an award that would break a rule is refused, with the reasons listed.
+   - Winners get "Passet är ditt", the others a thank-you note.
+7. **Not covered in time (Bemanning)** (`escalateFree`). When the deadline has passed (or nobody could be asked, or all have answered) and time is still uncovered, a next step is chosen: the municipality's substitute portal (Open-E), a preschool nearby, or other. In the demo this is a marked step, not an integration.
+8. **Late warnings** (`lateness`). Publishing or awarding after the shift has started, or less than 30 minutes before it, shows a warning. It does not block. This applies only to a sick report for the same day.
+9. **Undo.** Taking the sick report back (`removeFree`) restores the sick person's day and every colleague's day as they were.
+10. **Privacy.** Colleagues see "Frånvarande" (a colleague asked to help sees "a colleague is sick"), substitutes see "Ledigt pass". Only the person and the principal see "Sjuk".
+
+The planner's rule check now covers substitutes too (rest, breaks, hours a day and week).
+
+### Cover part of a shift (internal)
+Staff picks a from/to range inside their shift and a reason, which only the principal sees. `coverCands()` sends it to colleagues who are present, available, not working then, and would not break R1–R4. The first yes → `matched`. The principal approves under **Notiser** → the shift is split, the colleague gets the covered piece (`cover` = original staff), and hours are recounted.
+
+---
+
+## Screens
+
+### 1. Planner — `Schedule Demo.dc.html`
+Fixed 1440 px wide canvas, scaled to fit the viewport with no page scroll. Font **IBM Plex Sans** (UI) and **IBM Plex Mono** (times and numbers).
+
+- **Top bar** (height ~57 px, white, bottom border `#D3DDEA`): school name, week ‹ › with date range, Undo / Redo, Copy to next week, **Notiser** (badge), **Inställningar**, **SV/EN**. Buttons are 32 px tall, 6 px radius, 1 px `#C9D5E0` border, 13 px text.
+- **Side rail "Andra roller"** (84 px, `#1F2D3A`, right edge under the top bar): things that are not part of making the schedule. **Personalens telefon**, **Vikarieförmedling** (badge `#D9A23A` = drafts plus published shifts with offers waiting), and **Guider och demo** (a menu: guide to the planner, Settings and the phone, and the step-by-step sick-day demo). Panels open to the left of the rail.
+- **Day tabs** Mon–Fri, with **unit tabs** (Alla / Avd 1 / Avd 2 / Avd 3, each with a coloured chip; the chip shows the unit's number, or the first letter of a name).
+- **Warnings strip** "Att kontrollera" (`#EEF4F7` background, min-height 52 px): a count and a list of rule-coded warnings. Tapping one jumps to the shift. Show nothing extra when it is clear.
+- **Left: staff roster** (~300 px). A search box, a sort control (A–Ö / fill / contract), and a legend (Med barn / Utan barn / Sjuk). Each row has the name, a unit chip, hours/contract, and a **two-part fill bar**:
+  - Left segment (width = A/C): children time, filling red→green (`color-mix(in oklch, #6CC24A p%, #F59A93)`, full = `#6CC24A`). Sick time shows as red stripes (`#F2A9A3/#FBE3E1` 45°).
+  - A **2 px solid `#1F2D3A` divider**.
+  - Right segment: non-child time on `#ECE6F5`, filling `#8E6CCF` (`#5B3F9E` if over).
+  - The whole bar turns `#E5534B` if total > contract. The tooltip shows exact numbers.
+  - Tapping a name opens that person's single view and highlights them in the list.
+- **Timeline grid**: 06:00–18:30 (`DS=360`, `DE=1110`), one row per person, 15-minute snapping. Shift blocks are coloured by type (table below), and they show unit chips and opener/closer markers. A **"Vikarie"** tag (`#FFF1CF` / `#6B5214`) marks substitutes.
+  - **Ghost shifts:** when someone else took the shift, a dashed outline (`#B4C3D0`, hatched) shows the crossed-out original time and "→ New name". Hidden with `@media print`.
+  - **Opening/closing unit label** above the grid, in the room unit's colour. Tap it to choose the unit from a dropdown. Drag its edges to change the 07:30 / 16:00 times in 15-minute steps.
+- **Bottom rows:** Barn (children), Behövs (needed), I tjänst (on duty) per slot. Green `#E2F6D4` / `#2D6A1F` means enough, red `#FFDAD8` / `#8E2A27` too few, yellow `#FFF1CF` / `#6B5214` more than needed.
+- **Floating card** (300 px, top-right): opens for a selected shift or person.
+  - **Shift:** type (Barntid / Rast / Planering / Möte), a **Unit:** dropdown, start/end, delete.
+  - **Person:** day picker, unit, opens/closes, "Sjukanmäl idag", and a link to edit them in Settings.
+  - **Cover suggestions:** for uncovered sick time, staff who can take it and why others can't.
+- **Interactions:**
+  - Drag a block to move it in time; drag its left or right edge to resize.
+  - Drag onto another person's row to reassign it. This is blocked in single-person view.
+  - Drag from empty space to create a shift.
+  - A break, planning or meeting block can be dragged anywhere in that person's working day: only the time with children closes up around it, other blocks stay put, and the day keeps its start, end and minutes of each kind. Dropped onto another block, it settles next to it.
+  - Undo/Redo covers all edits.
+- **Notiser** panel (popover ~552 px wide, 20% larger than the old requests window): staff requests (swap / can't work / sick / cover), each with Godkänn / Neka, "Okej" for sick reports, and "Visa dagen". For cover requests it shows the reason (principal only), who it was sent to, and who accepted.
+- **Vikarieförmedling** drawer (right side, 600 px, full height under the top bar, left of the rail, closes with ×).
+  - **Header:** a role switch **Visa som: Rektor / Bemanning** (dark segment = active, kept in localStorage `schema-desk-role`), **▶ Visa hur det går till**, and a muted line: the flow is something to compare with Medvind's own functions.
+  - **Tabs:** **Att göra (n)** / **Klara (n)**. Bemanning sees only published shifts, plus a line with how many drafts the principal has. Its sub-text says the view could be shared by several preschools.
+  - **Each free shift** is an expandable card. Its header shows a unit chip, date and time, the sick person, and a status pill: Utkast `#EEF3F6`, Publicerat `#FFF1CF`, Tilldelat / Täckt inifrån `#E2F6D4`.
+  - **Expanded, always:** "Ersätter … (sjuk från 11:00, tiden före räknas som arbetad)", a 4-step strip (Täck inifrån · Behov utifrån · Publicera · Tilldela), the box of where adults are missing, and, if any, a red box with the planner's rule warnings for the people involved.
+  - **Draft, Rektor:**
+    - **"1. Kan ni täcka något inifrån?"** Suggestions with **Fråga**, and the questions sent, each with a status pill (Väntar på svar `#FFF1CF`, Ja, inlagt i schemat `#E2F6D4`, Nej / Dragen tillbaka `#EEF3F6`, Går inte längre `#FFDAD8`) and demo buttons to answer.
+    - **"2. Hur mycket behövs utifrån?"** Window steppers.
+    - **"3. Publicera till vikarier (n)"** with a note on the deadline and on withdrawn questions, a late warning (`#FFF5F4` / `#8E2A27`), and the note that publishing could be automatic.
+  - **Draft, Bemanning:** "Rektor is working on this" (only if opened).
+  - **Published, Rektor:** "Bemanning has n offers…" and **Visa som bemanning ›**.
+  - **Published, Bemanning:**
+    - who it went to, the deadline in mono ("Svar senast 06:59 · 11 min kvar", red after the deadline) and **⏩ Hoppa till svarstiden (demo)**;
+    - "4. Erbjudanden": a checkbox and coverage bar per offer, plus who said no or has not answered;
+    - the coverage sentence, rule problems with the award, a late warning, **Tilldela (n)** and **⏩ Simulera svar från vikarier**;
+    - when needed, **"5. Inte täckt i tid: nästa steg"** (amber box `#FFFBF0`, three option buttons, ✓ when chosen).
+  - **Done:** who got which part.
+  - **Then:** a timed log (mono times), "Kan inte ta någon del" (name + reason in `#8E2A27`), and **Visa i schemat**.
+- **Sick-day demo** (from Guider och demo, or "▶ Visa hur det går till" in the drawer). Seven captioned steps in a dark caption card (`#1F2D3A`) at the bottom-left; it waits for **Nästa** at each step, and the times come from the desk's clock:
+  1. A staff member reports sick from the phone.
+  2. The report is a draft at the substitute desk (Rektor).
+  3. Rektor asks a colleague; the colleague's phone shows the question.
+  4. The colleague says yes, and it is in the schedule.
+  5. Published: the first asked substitute's phone shows the offer and the deadline.
+  6. The desk switches to Bemanning; offers come in (simulated) and the app suggests a combination.
+  7. Awarded: the chosen substitutes are in the schedule, with a break if the shift is long.
+
+  Has a Stop / Klar button. Keep it as a sales/demo feature or drop it in production. If week 42 is empty, the demo first loads the saved OR-Tools schedule, and its captions use Anna's actual shift.
+
+### 2. Settings — `Demo Settings.dc.html` (+ `Demo Settings Staff`, `Demo Settings Rules`)
+A full-screen overlay with a **left side menu** (keep as designed) and a content column (max ~1000 px, padding 36/48 px). Section titles are 22 px/600, the subtitle 14 px `#5A6B7A`, and section labels 12 px uppercase `.06em` `#5A6B7A`. Content sits in bordered lists (1 px `#D3DDEA`, radius 8, rows 60 px min with 1 px `#E3EAF0` separators). The style is calm and consistent across sections.
+- **Allmänt (General):** school name, language, time step for dragging, notifications, Börja om (reset demo).
+- **Import och export:**
+  - **Import:** staff from HR, child counts from the child register (no child names), each shown as a preview before anything changes. Note: the municipality system (Edlevo) currently exports **PDF**. Plan a parser for a text-based PDF layout, but prefer asking for CSV/Excel or an API.
+  - **Export:** Excel / CSV / PDF / Calendar (ICS), for the week shown in the planner ("Den här veckan") or a chosen range of weeks ("Välj veckor", From/To week steppers, weeks 41–52). A "Timmar i filen" table lists staff total plus each substitute's hours.
+- **Personal (Staff):** a list (sort by Namn / Avdelning / Avtal %) and a detail view per person:
+  - **Tid och frånvaro:**
+    - **Calendar:** two 7-week blocks side by side, with ‹ › arrows moving 7 weeks (about 35 weeks of history). Day cells are 20 px tall, colours below.
+    - **Selected week:** tap a week to see its one-line stats: with children x / target, without children x / target, total / contract, sick, away.
+    - **Summaries:** for the two visible blocks, or **Per månad** for the months in view (two per row).
+    - **Note:** a line on how sick pay works.
+  - **Anställning:**
+    - **Telefon:** an input with "Från appen" / "Inskrivet här" source tag and a "Ring" tel: link.
+    - **Contract:** employment %, with future changes ("75 % from w.47").
+    - **Non-child time:** "Tid utan barn per vecka" stepper (0.5 h steps, "Använd standard" reset).
+    - **End of employment.**
+  - **Availability:** fixed days off, earliest and latest times.
+  - **Leave:** vacation and other leave ahead of time.
+  - **Roles:** may open, may close, trained for special needs.
+- **Barn och avdelningar:** for each unit, opening hours, enrolled children and children per adult. On/off for the opening/closing unit, with room, times and ratio. Special-needs children are counts only: unit, days and times.
+- **Vikarier:** a 5-person substitute pool table showing name and phone (plus any existing booking), training/role chips (Särskilt stöd / Får öppna / Får stänga), weekday toggles, and "Föredragen för" unit chips. All are toggleable.
+- **Regler:** each rule has a code chip (R1…), the plain-words label, "how it is checked", an on/off toggle, parameter steppers, and **"gäller från vecka"** (versioning). "Lägg till regel" adds from `ADDABLE`.
+
+### 3. Phone app — `Staff App.dc.html` (iPhone frame from `ios-frame.jsx`, 402×874)
+Opened from **Personalens telefon** in the planner, with a person picker ("Telefon för") that includes substitutes.
+- **Mitt schema (staff):**
+  - A week strip with a mini bar per day showing when the shift is.
+  - Today's times, shift parts and unit.
+  - Action grid (2×2, 44 px buttons): **Sjuk** (red outline `#E8B4B1` / `#C2413D`), **Byt pass**, **Täck del av pass**, **Kan inte arbeta**.
+  - A banner when colleagues ask for help.
+- **Bottom bar:** *Mitt schema* and *Vem arbetar* with a round 60 px button between them, raised on a small white hill above the bar, with a simple person icon (round head, torso). It is teal; dark `#1F2D3A` with a light ring while its page is open.
+- **Jag (the round button): overview and settings for the worker.**
+  - Header: initials avatar, name, home unit, contract hours a week and %, and tags: may open, may close, trained for special needs, fixed days off, earliest/latest time.
+  - **Week card** with ‹ › to move between weeks: hours scheduled of the week's target (the contract, less any extra hours from the week before), a progress bar (amber when over), a plain sentence (exactly your contract / X more, next week is that much shorter / X fewer / last week was longer so this one is shorter / no schedule yet), a mini bar per weekday with hours or Sick/Holiday/Off, and the split: with children, planning (of the planning target), meeting, break.
+  - **Month card** (weeks whose Thursday is in the month): each week's hours of target with a bar, or "Not scheduled yet"; tapping a week shows it above. Total so far, and days sick / on holiday / away.
+  - **Settings**, kept per person (`state.phonePrefs[id]`): requests to cover a shift (when off, `coverCands()` skips the person with "Does not want requests"), changes to my schedule, reminder the evening before. A note says the contract, unit and times are changed by the planner.
+- **Vem arbetar:** everyone working that day grouped by unit, own unit first. Off and away people are listed at the bottom. Others' sickness shows as "Frånvarande".
+- **Täck del av pass sheet:** From/To steppers (±15 min, clamped to own shift), reason chips (Läkarbesök / Tandläkare / Hämta barn / Annat) plus free text marked "Syns bara för rektor", a preview of who it goes to with rule explanation, and Skicka.
+- **Inkorg:** "Kan du ta över?" offers with **Ta passet** / **Avböj**, then the status (waiting for principal / approved / declined). Questions from the substitute desk come first: "Rektor frågar om du kan hjälpa till", what it means ("Börja 06:00 i stället för 06:15 och öppna"), the extra time and how far over contract it goes, and **Ja** / **Nej**; then the outcome.
+- **Sjuk sheet:** **Hela dagen** / **Från en tid** with a "Sjuk från" stepper (±15 min inside the shift) and a note that the time before counts as worked. Below are notes (published weeks, changed shifts, approvals) and the person's own requests with their status.
+- **Substitute view** (when the picked person is a substitute):
+  - Dark header `#1F2D3A`.
+  - **Erbjudanden:** "Ledigt pass" cards with day, a big mono time, unit chip, needs tags, sent time, when the substitute is free inside it ("Du är ledig hela tiden" / "Du kan 10:30–13:30"), and **Erbjud hela tiden** (or **Erbjud HH:MM–HH:MM**), **En del av tiden** (From/To steppers, at least the shortest shift, **Skicka erbjudande**), **Kan inte** (48 px). After sending: "Ditt erbjudande: …", waiting / yours / someone else got it, and **Ändra**.
+  - **Mina pass:** each day with range, unit, a Confirmed / Waiting badge, the shift parts, and "Du arbetar med" (colleagues in that unit with their times).
+  - Inbox notes.
+
+---
+
+## Design tokens
+**Type:** IBM Plex Sans 400/500/600/700, IBM Plex Mono 500/600. Sizes used: 11, 12, 13, 14, 15, 16, 17, 18, 20, 22, 28 px. Section labels are 12 px/600 uppercase, letter-spacing .06em.
+
+**Neutrals:** ink `#1F2D3A` · secondary `#3C4B5A` · muted `#5A6B7A` · faint `#8796A5` · border strong `#C9D5E0` · border `#D3DDEA` · divider `#E3EAF0` · subtle bg `#EEF3F6` · panel bg `#F7FAFB` / `#F4F7F9` · strip bg `#EEF4F7` · white.
+
+**Accent:** `#1F7D97` (primary buttons, links), hover `#16627A`, light `#EAF6F8` / `#DDF1F5`, border `#9FCFDB`, bright `#2B91AD`.
+
+**Shift types:** Barntid (contact) `#CDECEF` / `#134E5E` · Rast (break) `#FFDAD8` / `#7A2A26` · Planering (planning) `#D8F4C0` / `#2F5A17` · Möte (meeting) `#D3DDEA` / `#2A3A52`.
+
+**Units:** Avd 1 `#C9DDF5` / `#1E3F73` · Avd 2 `#FFD3D0` / `#8E2A27` · Avd 3 `#FFE3B8` / `#7A4A0C`. Names are editable in Settings › Children and units (so they can match Edlevo's departments); the chip shows the number at the end of the name, or its first letter (`unitBadge`). Units must be data-driven; there will be more than three.
+
+**Status:** ok `#E2F6D4` / `#2D6A1F` · under `#FFDAD8` / `#8E2A27` · over / warning `#FFF1CF` / `#6B5214` · error `#E5534B`, `#C2413D`, `#B33A35` · amber badge `#D9A23A`.
+
+**Fill bar:** green `#6CC24A` · low `#F59A93` · non-child `#8E6CCF` on `#ECE6F5` · over `#5B3F9E` · sick stripes `#F2A9A3` / `#FBE3E1` · divider `#1F2D3A`.
+
+**Calendar cells:** working `#9FD8DE` · sick `#F28C84` · vacation `#9DB8E8` · other leave `#E3CFA4` · fixed day off `#EEF3F6` · no shift white with an inset `#D3DDEA` ring · no data hatched `#F4F7F9`.
+
+**Radius:** 3 (bar/cells), 4–6 (chips, buttons), 8 (inputs, lists, cards), 10–12 (panels, phone cards), 14 (demo caption), 999 (badges).
+
+**Shadows:** popover `0 16px 40px rgba(15,30,45,.18)` · drawer `-16px 0 40px rgba(15,30,45,.12)` · selected-tab `0 1px 2px rgba(15,30,45,.12)` · selection ring `0 0 0 2px #1F2D3A` · warning ring `0 0 0 2px #D9534F`.
+
+**Touch:** the planner is used on an iPad, so hit targets are at least 32 px in the top bar and at least 44 px on the phone. Use pointer events, not mouse events.
+
+## State / backend requirements (production)
+- Server-side persistence for units, staff, substitutes, shifts, absences, requests, free shifts, rules (versioned), and notes. The prototype stores everything in `localStorage` key `schema-demo-v5`.
+- Run the rule engine server-side and share it with the client, so warnings are computed in one place.
+- Real-time updates between the phone and planner (WebSocket or push). Push notifications to staff and substitutes. Optional automatic publishing of sick reports; a real link to the municipality's substitute portal for the next step; roles and login for Rektor and Bemanning.
+- Roles and privacy: the reasons for sickness and cover are visible only to the principal. Store no child names.
+- Integrations: HR import, the child register (Edlevo, PDF or CSV), payroll export (worked hours, sick hours, substitute hours), and ICS export.
+- Audit log of changes (who moved which shift when).
+
+## Assets
+No images or icons. The only glyphs are text characters (‹ › × ▶ ⏩ ▾ ▴). The fonts are IBM Plex Sans and Mono from Google Fonts. The iPhone frame in `ios-frame.jsx` is a prototype-only bezel.
+
+## Files (`web/`, `solver/`, `tests/`)
+- `Schedule Demo.dc.html` — planner, side rail, Notiser, Vikarieförmedling drawer, guides and sick-day demo; mounts settings and phone.
+- `Demo Settings.dc.html` — settings shell and menu; General, Import/Export, Children & units, Substitutes.
+- `Demo Settings Staff.dc.html` — staff list and person detail (calendar, hours, contract, availability, leave, roles, phone).
+- `Demo Settings Rules.dc.html` — rules list, editing, versioning, add rule.
+- `Staff App.dc.html` — phone app (staff + substitute views).
+- `schedule-core-demo.js` — **domain model, seed data, rule engine, staffing need, cover/substitute logic, hours accounting, EN/SV strings, store with undo, drag controller.**
+- `support.js` — runtime for `.dc.html` files (prototype only).
+- `ios-frame.jsx` — phone bezel (prototype only).
+- `Phone.dc.html` — the phone app on its own page (`?me=p1`, `?me=s1`, `&lang=en`). `index.html` — landing page.
+- `solved-schedule.json` — weeks 41–52 solved ahead of time by OR-Tools for the demo data; used when the solver is not running.
+- `solver/` — the OR-Tools solver (`schedule_solver.py`), a small HTTP server (`server.py`), and scripts to rebuild and check the saved schedule.
+- `tests/` — tests for the shared logic, solver scenarios checked with the planner's own rules, and a browser walkthrough.
+
+---
+
+## Schedule generation with OR-Tools (added October 2026)
+
+*A Swedish version of this section is in [`schemalaggning.sv.md`](schemalaggning.sv.md).*
+
+An empty week shows no warnings (they would only list what is missing). The demo starts with an empty schedule. Staff, units, substitutes and children data are made up and kept. The principal can have a schedule suggested, with the main design goal that **it must not feel like a black box**: the person scheduling (think of an experienced administrator, not a programmer) should see what the suggestion is based on, be able to say what is different this week, and get a plain explanation of the result.
+
+### Empty week
+When the week on screen has no shifts, the schedule is dimmed and a card in front of it offers:
+- **Make a suggestion for me**: opens the *Make schedule* form.
+- **Draw it myself**: removes the card for that week; shifts are drawn by hand as before.
+- **Copy week N−1**: only shown when the week before has a schedule.
+
+The **Make schedule** button in the top bar opens the same form at any time.
+
+### The Make schedule form (right drawer, 600 px)
+1. **Which weeks?** Only this week, or 2, 4 or 7 weeks (cut off at the last demo week). If a week already has shifts, the form names the people who have them and offers two choices: **Keep them and fill in around them** (default), where those people keep their shifts and an opener/closer already set stays, and everyone else is scheduled to cover what is still missing; or **Start over: replace the whole week** (can be undone). This lets the principal schedule a few people by hand and have the rest filled in.
+2. **Is anything different from usual?** A list of special days and absences in the chosen weeks, each removable, and four buttons that open a short form (week, weekday buttons, time or percentage from a list, optional note):
+   - *Staff hope to finish early*, e.g. a concert. A **wish**: the solver tries, and the report says who could not and why.
+   - *The preschool closes early*, e.g. the day before a holiday. No children and no staff after that time; the closer works until then.
+   - *Fewer children than usual*, e.g. a school break: about 25–90 % of the children. Fewer adults are needed.
+   - *Someone is away*: holiday, or a course or other. Saved as leave on the person (Settings › Staff), one entry per run of days.
+   - *The preschool is closed*, e.g. a public holiday: no children and nobody works all day, and contract hours for the week shrink as for a day of leave. Public holidays that fall on weekdays in the chosen weeks are offered as one-click buttons (in the demo period: Christmas Eve and Christmas Day). Someone with a shift on a closed day gets a warning; no opener or closer is needed.
+   Special days are stored as `special: [{ id, kind: 'finishBy'|'closeEarly'|'fewer'|'closed', week, days[], time?, pct?, note }]` and shown as a ★ note on the day in the planner.
+3. **What the schedule follows**, read from Settings with a link to change each part: staff (contract hours, fixed days off, who may open or close), children (per unit: number, ratio, opening hours, children who need a trained adult), the rules that are on, and the **order of priority** when not everything fits:
+   1. enough adults with the children **in every unit** (not only in the preschool as a whole), and a trained adult for children who need special support;
+   2. everyone's contract hours, going over the weekly limit only if the children need it;
+   3. wishes such as finishing early;
+   4. planning time.
+
+The footer button says what will happen (“Make schedule for weeks 42–43”) and roughly how long it takes (about 40 s per week; longer on a slower computer). While it runs, a progress bar shows which week is being made and the schedule cannot be edited.
+
+### The report
+After solving, the drawer shows per week, with ✓ or !:
+- enough adults all day in every unit, or the times with too few (and a hint: a substitute, or adjust by hand);
+- who helped in another unit than their own, and on which days;
+- other broken rules, as in *Things to check*;
+- contract hours: everyone on target, or who works more (because the children needed it) and who gets less. Hours over contract one week (also for part-timers) are taken back the next week; the report says who got a shorter week to even out, and who could not because the children needed them;
+- the flexible week: who works a little over the limit and how short the next week must be;
+- less planning time than usual, and for whom;
+- each special day: included, or for *finish early* how many finish in time and who stays (e.g. “Ida Forsberg (closes)”).
+
+**Undo the schedule** removes everything that was made, in one step. If the solver could not be reached, the weeks are loaded from the saved schedule; a note says so, and special days are listed as *not included*.
+
+### The flexible week (rule R2)
+No more than 40 hours in a week, or up to `flex` hours more (default 2, settable 0–4 in Settings › Rules) if the **next** week is that much shorter: 41 then at most 39, 42 then at most 38.
+- The planner warns on both weeks if the next week is not shorter, and above 40 + `flex` as a plain rule break.
+- The solver only goes over when the children would otherwise have too few adults. Going over is tiring, so every quarter hour over costs, and doubly so past one extra hour.
+- Weeks are made in order, so a week after a long one gets a lower target and cap. An already scheduled next week also limits how far a week may go over.
+
+### How the solver works
+- `solverProblem(state, weeks)` in `schedule-core-demo.js` turns the app's data into one self-contained problem per week. Per person: home unit, may open/close, trained for special needs, contract and planning minutes, available days, earliest/latest time, the weekly cap. Per day and 15-minute slot: adults needed (from the same children forecast and ratios the planner shows, adjusted for special days and the *minimum adults* rule), the closing slot, the finish-by slot, and the slots where a trained adult must be in a unit. The rules from Settings that are on are passed along.
+- **No names, phone numbers, reasons for absence or notes are sent.** People are ids (`p1`); absences are only “not available that day”.
+- `solver/schedule_solver.py` (OR-Tools CP-SAT) models every person-day as 15-minute slots of time with children, break or planning. Hard: one continuous shift of 4–9 h inside availability, breaks of the rule's length inside the shift (more if the *breaks* rule asks), no more than the rule's hours without a break, the optional daily limit, rest between days, planning in one block of at least 30 min, the weekly cap, an opener at opening and a closer at closing (or at an early closing). Each working day a person is in one unit, their own or another; helping elsewhere costs a little, so it happens only when a unit would otherwise be short. Every unit's need (outside the merged opening and closing hours) counts as strictly as the total. Everything else is a weighted cost, in the priority order above.
+- It solves each day first with an even share of the week's hours, then the whole week from that starting point so hours can move between days; the week is kept only if it is better than the days put together.
+- Each step gets a fixed amount of work (CP-SAT's deterministic time), not a number of seconds, so a slow computer reaches the same quality and just takes longer, with a generous clock limit as a safety net. With a seconds limit, a slow computer got much worse schedules.
+- `solver/server.py` serves `POST /solve`. The page calls `http://localhost:8000` (or `?solver=…`).
+- Every result is checked with the planner's own rule engine in the tests (`tests/`); the saved schedule for weeks 41–52 has no warnings and everyone gets their contract hours.
+
+### Children from Edlevo (counts only)
+Settings › Children and units › *Children during the day*: the example curve, or **From Edlevo (counted)**, the number of children booked in each unit each quarter of an hour. The need, warnings and solver then use the bookings, and the planner's *Barn* row is tagged *Edlevo*.
+- The Tieto Education Calendar API v2 (`GetPreschoolCalendarEvents`) returns one child's events per call. `edlevo/aggregate.py` counts them per department and quarter and discards every child id; it is meant to run inside the municipality, and its output (`barnantal-v1`) is all the planner accepts. Raw XML or anything with `childid` is refused with an explanation.
+- For counted days the curve's Friday dip and *fewer children* do not apply; *closes early* and *closed* still do. A day inside the counted period with no bookings has no children. Units are matched to departments by name.
+
+### Schedule lines and rotation (as in Medvind)
+**▦ Schemarader**, a tab after the weekdays, opens a full-width page (`Schedule Lines.dc.html`): the schedule as Medvind shows a base schedule, one row per schedule line and one range per day (first start to last end), in a rotation of N weeks (1–8) from a chosen week, with hours per week and the average (scheduled with breaks · worked).
+- *Repeat to week 52* (`repeatRotation`) copies the rotation over the following weeks, replacing what is there; undoable.
+- *Export to Medvind (.xlsx)* and *Import from Medvind…* go through the local server (`POST /medvind/write`, `/medvind/read`, `medvind/medvind.py`). Hand-typed times are tolerated; a readable typo is flagged yellow (guessed), an unreadable cell red and left out, a line without a unit number flagged at its edge. An import is kept only in the browser (`state.medvindImport`).
+- *Check against the rules* (`checkRotation`): hours averaged over the rotation (R3), daily rest including the wrap from the last week to the first (R1), and breaks (R4). The export has no breaks, so for breaks it says how many each day needs rather than passing it. Worked time = range less 30 min per 5-hour stretch.
+
+### Guides
+**? Show the guide** (bottom right, and on the empty-week card) opens a menu of four guides: *The schedule* (the planner, updated for schedule generation, schedule lines, sick cover, Edlevo), *Settings* (each section, by opening it), *Staff's phone* (My schedule, Who's working, Me, the inbox, a substitute's view) and *A sick report step by step*. The last is the former ▶ Demo, removed from the top bar: it waits for **Next** at every step, and also starts from the Sick cover panel (*Show how it works*). Guides are data (`GUIDES` in `Schedule Demo.dc.html`): each step names `data-guide` targets and can open a panel first (`set`) or tell the phone what to show (`cmd`).
+
+### What the demo does not do
+It is a demo and a guide, not a product:
+- no login or roles; anyone who opens it sees everything, including sick reasons;
+- data lives only in the browser's local storage, and only made-up data belongs in it;
+- the solver server has no access control or limits and is meant to run locally;
+- the solver uses fixed weights; a real product would let the organisation tune them, and might add wishes per person (e.g. only some staff need to finish early) and fixed events such as a staff meeting.
+
+See *State / backend requirements* above for what a real system needs.
+

@@ -119,6 +119,22 @@
                 <sc-for list="{{ ranges }}" as="x"><button onClick="{{ x.pick }}" style="height:34px;padding:0 14px;border:0;border-radius:5px;font:inherit;font-size:13px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer;white-space:nowrap">{{ x.name }}</button></sc-for>
               </div>
             </div>
+            <sc-if value="{{ isRange }}">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding:12px 16px;box-shadow:0 -1px 0 #E3EAF0">
+                <div style="font-size:13px;color:#5A6B7A">{{ rangeTxt }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:16px">
+                  <sc-for list="{{ weekSteps }}" as="r">
+                    <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:#3C4B5A">{{ r.label }}</span>
+                      <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+                        <button onClick="{{ r.dec }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0">−</button>
+                        <div style="min-width:48px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div>
+                        <button onClick="{{ r.inc }}" style="width:36px;border:0;background:#fff;color:#3C4B5A;font-size:16px;cursor:pointer;padding:0">+</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
             <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;padding:12px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0;background:#F7FAFB">
               <div style="font-size:13px;line-height:1.45;color:#2D6A1F">{{ expTxt }}</div>
               <button onClick="{{ doExport }}" style="height:40px;padding:0 16px;border:0;border-radius:6px;background:#1F7D97;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap">{{ io.exportBtn }}</button>
@@ -153,6 +169,22 @@
               </div>
             </sc-for>
           </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;max-width:720px;border:1px solid #D3DDEA;border-radius:8px;padding:12px 16px">
+            <div><div style="font-size:14px;font-weight:500">{{ sb.minTitle }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px;max-width:520px">{{ sb.minSub }}</div></div>
+            <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+              <button onClick="{{ subMin.dec }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0">−</button>
+              <div style="min-width:76px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ subMin.val }}</div>
+              <button onClick="{{ subMin.inc }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0">+</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;max-width:720px;border:1px solid #D3DDEA;border-radius:8px;padding:12px 16px">
+            <div><div style="font-size:14px;font-weight:500">{{ sb.dlTitle }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A;margin-top:2px;max-width:520px">{{ sb.dlSub }}</div></div>
+            <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+              <button onClick="{{ offerMins.dec }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0">−</button>
+              <div style="min-width:76px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ offerMins.val }}</div>
+              <button onClick="{{ offerMins.inc }}" style="width:40px;border:0;background:#fff;color:#3C4B5A;font-size:17px;cursor:pointer;padding:0">+</button>
+            </div>
+          </div>
           <div style="font-size:13px;line-height:1.5;color:#5A6B7A;max-width:720px;text-wrap:pretty">{{ sb.note }}</div>
         </div>
       </div>
@@ -165,7 +197,30 @@
           <div style="font-size:14px;line-height:1.5;color:#5A6B7A;max-width:600px;text-wrap:pretty">{{ k.sub }}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ ed.title }}</div>
+          <div style="border:1px solid #D3DDEA;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;max-width:760px">
+            <div style="display:inline-flex;gap:2px;padding:2px;background:#EEF3F6;border-radius:7px;width:fit-content">
+              <sc-for list="{{ ed.opts }}" as="x"><button onClick="{{ x.pick }}" style="height:34px;padding:0 14px;border:0;border-radius:5px;font:inherit;font-size:13px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer;white-space:nowrap">{{ x.name }}</button></sc-for>
+            </div>
+            <div style="font-size:14px;line-height:1.5;color:#3C4B5A;text-wrap:pretty">{{ ed.what }}</div>
+            <sc-if value="{{ ed.loaded }}">
+              <div style="display:flex;flex-direction:column;border-top:1px solid #EEF3F6">
+                <sc-for list="{{ ed.lines }}" as="l"><div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #EEF3F6;font-size:14px"><span style="flex:none;width:16px;color:{{ l.fg }};font-weight:700">{{ l.mark }}</span><span style="flex:1;line-height:1.45">{{ l.t }}</span></div></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ ed.isEdlevo }}">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+                <label style="display:inline-flex;align-items:center;height:36px;padding:0 14px;border:1px solid #C9D5E0;border-radius:6px;background:#fff;font-size:14px;font-weight:500;color:#1F2D3A;cursor:pointer">{{ ed.pick }}<input type="file" accept=".json,application/json" onChange="{{ ed.onFile }}" style="display:none"></label>
+                <sc-if value="{{ ed.hasErr }}"><span style="font-size:13px;line-height:1.45;color:#C2413D;max-width:480px">{{ ed.err }}</span></sc-if>
+              </div>
+            </sc-if>
+            <div style="font-size:13px;line-height:1.5;color:#5A4410;background:#FFF6E0;border:1px solid #F0D9A0;border-radius:6px;padding:10px 12px;text-wrap:pretty">{{ ed.note }}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
           <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A">{{ k.secUnits }}</div>
+          <div style="font-size:13px;line-height:1.45;color:#5A6B7A;max-width:700px">{{ k.namesSub }}</div>
+          <sc-if value="{{ hasDupNames }}"><div style="font-size:13px;color:#8E2A27">{{ k.dupNames }}</div></sc-if>
           <div style="border:1px solid #D3DDEA;border-radius:8px;overflow-x:auto;overflow-y:hidden;display:flex;flex-direction:column">
             <div style="display:grid;grid-template-columns:minmax(160px,1fr) repeat(4,150px);min-width:820px;align-items:center;column-gap:16px;padding:0 16px;height:38px;background:#F7FAFB;font-size:12px;font-weight:600;color:#5A6B7A">
               <div>{{ k.colUnit }}</div><div>{{ k.colOpens }}</div><div>{{ k.colCloses }}</div><div>{{ k.colKids }}</div><div>{{ k.colRatio }}</div>
@@ -174,7 +229,7 @@
               <div style="display:grid;grid-template-columns:minmax(160px,1fr) repeat(4,150px);min-width:820px;align-items:center;column-gap:16px;padding:10px 16px;min-height:60px;box-sizing:border-box;box-shadow:0 -1px 0 #E3EAF0">
                 <div style="display:flex;align-items:center;gap:10px;min-width:0">
                   <span style="flex:none;width:20px;height:20px;border-radius:4px;background:{{ u.ub }};color:{{ u.uf }};font:700 10px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ u.letter }}</span>
-                  <div style="min-width:0"><div style="font-size:14px;font-weight:500">{{ u.name }}</div><div style="font-size:12px;color:#5A6B7A">{{ u.ages }}</div></div>
+                  <div style="min-width:0;display:flex;flex-direction:column;gap:2px"><input value="{{ u.name }}" onInput="{{ u.rename }}" onBlur="{{ u.done }}" aria-label="{{ k.colUnit }}" style="width:100%;max-width:200px;height:32px;box-sizing:border-box;border:1px solid #C9D5E0;border-radius:6px;padding:0 8px;font:inherit;font-size:14px;font-weight:500;color:#1F2D3A;outline-color:#1F7D97"><div style="font-size:12px;color:#5A6B7A">{{ u.ages }}</div></div>
                 </div>
                 <sc-for list="{{ u.rows }}" as="r">
                   <div style="display:inline-flex;align-items:stretch;height:36px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff;width:fit-content">
@@ -258,7 +313,6 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;ctl&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;mod&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;section&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;general&quot;,&quot;io&quot;,&quot;staff&quot;,&quot;kids&quot;,&quot;rules&quot;],&quot;default&quot;:&quot;general&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;pid&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;rev&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onNav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(s:string)=&gt;void&quot;},&quot;onClose&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;},&quot;onShow&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(pid:string)=&gt;void&quot;},&quot;setLang&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(l:string)=&gt;void&quot;}}">
-const UC = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
 const mkP = (id, name, group, pct) => ({ id, name, pct, hours: 40 * pct / 100, group, open: false, close: false, sn: false, off: [], earliest: null, latest: null, end: null, changes: [], leave: [] });
 const seg = (a, name, pick) => ({ name, pick, bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#3C4B5A', fw: a ? 600 : 500, sh: a ? '0 1px 2px rgba(15,30,45,.12),0 0 0 1px #D3DDEA' : 'none' });
 const tog = (on, flip) => ({ tb: on ? '#1F7D97' : '#C9D5E0', kx: on ? '21px' : '3px', flip });
@@ -273,6 +327,7 @@ class Component extends DCLogic {
     const solo = !this.props.ctl, ctl = this.props.ctl || this._ctl, mod = this.props.mod || this._mod;
     const lang = solo ? this.state.lang : this.props.lang, sv = lang === 'sv', t = (a, b) => sv ? a : b;
     if (!ctl || !mod) return { ready: false };
+    const UC = mod.UNITS;  // unit badges: colour and a letter from the unit's name
     const s = ctl.store.get(), sec = (solo ? this.state.sec : this.props.section) || 'general', nav = k => solo ? this.setState({ sec: k }) : this.props.onNav && this.props.onNav(k);
     const setLang = l => solo ? this.setState({ lang: l }) : this.props.setLang && this.props.setLang(l);
     const P = s.prefs || {}, setP = (k, v) => ctl.touch(st => { st.prefs = { ...(st.prefs || {}), [k]: v }; });
@@ -284,7 +339,8 @@ class Component extends DCLogic {
       .map(([k, name, sub]) => ({ name, sub, ...tog(P[k], () => setP(k, !P[k])) }));
     const G = mod.GROUPS, fmt = mod.fmt, ch = (g, k, d, lo, hi) => ctl.touch(() => { g[k] = Math.max(lo, Math.min(hi, g[k] + d)); });
     const unitOpts = G.map(g => ({ v: g.id, name: g.name }));
-    const units = G.map(g => ({ ...UC[g.id], name: g.name, ages: g.ages + ' ' + t('år', 'years'), rows: [
+    const rename = (g, v) => ctl.touch(() => { g.name = v; });
+    const units = G.map((g, i) => ({ ...UC[g.id], name: g.name, rename: e => rename(g, e.target.value), done: () => { if (!g.name.trim()) rename(g, 'Avd ' + (i + 1)); else if (g.name !== g.name.trim()) rename(g, g.name.trim()); }, ages: g.ages + ' ' + t('år', 'years'), rows: [
       { val: fmt(g.open), dec: () => ch(g, 'open', -15, 360, g.close - 60), inc: () => ch(g, 'open', 15, 360, g.close - 60) },
       { val: fmt(g.close), dec: () => ch(g, 'close', -15, g.open + 60, 1110), inc: () => ch(g, 'close', 15, g.open + 60, 1110) },
       { val: g.max, dec: () => ch(g, 'max', -1, 1, 60), inc: () => ch(g, 'max', 1, 1, 60) },
@@ -302,6 +358,33 @@ class Component extends DCLogic {
         { val: fmt(c.to), dec: () => kmod(c.id, k => { k.to = Math.max(k.from + 15, k.to - 15); }), inc: () => kmod(c.id, k => { k.to = Math.min(1110, k.to + 15); }) }],
       remove: () => ctl.touch(st => { st.snKids = st.snKids.filter(x => x.id !== c.id); }),
     }));
+    // Where the number of children comes from: the example curve, or counts from Edlevo (never child ids).
+    const C = s.childCounts, isEd = P.childSource === 'edlevo', D = mod.isoDate;
+    const useCounts = doc => ctl.touch(st => { st.childCounts = doc; st.prefs = { ...(st.prefs || {}), childSource: 'edlevo' }; });
+    const loadText = text => { const r = mod.checkCounts(text); if (r.error) this.setState({ edErr: r.error }); else { this.setState({ edErr: null }); useCounts(r.doc); } };
+    const fmtD = x => { if (!x) return '–'; const [y, m, d] = x.split('-').map(Number); return d + ' ' + (sv ? ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'] : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])[m - 1] + ' ' + y; };
+    const deps = C ? (C.departments && C.departments.length ? C.departments : Object.keys(Object.values(C.counts)[0] || {}).map(n => ({ departmentname: n }))) : [];
+    const known = new Set(G.map(g => g.name.toLowerCase())), have = new Set(deps.map(x => x.departmentname.trim().toLowerCase()));
+    const inWeeks = C ? [...Array(mod.W1 - mod.W0 + 1).keys()].map(i => mod.W0 + i).filter(w => [0, 1, 2, 3, 4].some(d => { const x = D(w, d); return C.period && C.period.start <= x && x <= C.period.end; })) : [];
+    const ed = {
+      title: t('Antal barn under dagen', 'Children during the day'),
+      opts: [seg(!isEd, t('Exempelkurva', 'Example curve'), () => ctl.touch(st => { st.prefs = { ...(st.prefs || {}), childSource: 'forecast' }; })),
+        seg(isEd, t('Från Edlevo (sammanräknat)', 'From Edlevo (counted)'), () => { if (C) ctl.touch(st => { st.prefs = { ...(st.prefs || {}), childSource: 'edlevo' }; }); else fetch(new URL('edlevo-counts.json', document.baseURI)).then(r => r.text()).then(loadText).catch(() => this.setState({ edErr: 'missing' })); })],
+      isEdlevo: isEd, loaded: isEd && !!C,
+      what: isEd ? t('Behovet av vuxna räknas från barnens bokade tider i Edlevo: hur många barn som är på varje avdelning varje kvart. Exempelkurvans fredagar och ”färre barn än vanligt” används inte, eftersom bokningarna redan visar det. Veckor utan data använder exempelkurvan.', "Staff needed is worked out from the children's booked times in Edlevo: how many children are in each unit each quarter of an hour. The example curve's Fridays and \u201cfewer children than usual\u201d are not used, since the bookings already show that. Weeks without data use the example curve.")
+        : t('En påhittad vanlig dag: inskrivna barn gånger en kurva med flest barn mitt på dagen och färre tidigt och sent, och 70 % på fredagar.', 'An invented typical day: children enrolled times a curve with most children in the middle of the day and fewer early and late, and 70% on Fridays.'),
+      lines: !C ? [] : [
+        { mark: '✓', fg: '#2D6A1F', t: t('Period ', 'Period ') + fmtD(C.period && C.period.start) + ' – ' + fmtD(C.period && C.period.end) + ' · ' + Object.keys(C.counts).length + t(' dagar med bokningar', ' days with bookings') + (inWeeks.length ? ' · ' + t('vecka ', 'weeks ') + inWeeks[0] + '–' + inWeeks[inWeeks.length - 1] : '') },
+        ...G.map(g => { const d = deps.find(x => x.departmentname.trim().toLowerCase() === g.name.toLowerCase()); return d ? { mark: '✓', fg: '#2D6A1F', t: g.name + ': ' + (d.children != null ? d.children + t(' barn med bokningar', ' children with bookings') : t('med i filen', 'in the file')) } : { mark: '!', fg: '#B5602B', t: g.name + ': ' + t('finns inte i filen, så avdelningen får inga barn de dagarna. Ge den samma namn som i Edlevo under Avdelningar nedan.', 'not in the file, so the unit has no children on those days. Give it the same name as in Edlevo under Units below.') }; }),
+        ...deps.filter(x => !known.has(x.departmentname.trim().toLowerCase())).map(x => ({ mark: '!', fg: '#B5602B', t: x.departmentname + ': ' + t('finns inte som avdelning här och räknas inte.', 'is not a unit here and is not counted.') })),
+        { mark: 'i', fg: '#1F7D97', t: (C.about || '') + (C.made ? ' ' + t('Sammanräknad ', 'Counted ') + C.made.slice(0, 10) + '.' : '') }],
+      pick: t('Välj en annan fil med antal…', 'Choose another counts file…'),
+      onFile: e => { const f = e.target.files && e.target.files[0]; if (!f) return; f.text().then(loadText); e.target.value = ''; },
+      hasErr: !!this.state.edErr, err: { raw: t('Filen innehåller barnens id (rådata från Edlevo) och används inte. Räkna ihop den först, inom kommunen, med edlevo/aggregate.py.', "The file has the children's ids (raw Edlevo data) and is not used. Count it first, inside the municipality, with edlevo/aggregate.py."),
+        format: t('Det här är inte en fil med antal barn från edlevo/aggregate.py.', 'This is not a counts file from edlevo/aggregate.py.'), missing: t('Exempelfilen edlevo-counts.json hittades inte.', 'The example file edlevo-counts.json was not found.') }[this.state.edErr] || '',
+      note: t('Bara antal barn per avdelning och kvart når schemat, inga namn eller barn-id. Exempelfilen är påhittad. På riktigt måste sammanräkningen köras inom kommunens egna system, så att barnens uppgifter aldrig lämnar dem, och det krävs en licens för Calendar API från Tieto.',
+        'Only the number of children per unit and quarter of an hour reaches the schedule, no names or child ids. The example file is invented. For real use the counting must run inside the municipality\u2019s own systems, so the children\u2019s data never leaves them, and a Calendar API licence from Tieto is needed.'),
+    };
     const imp = this.state.imp, setImp = (k, v) => this.setState(st => ({ imp: { ...st.imp, [k]: v } }));
     const has19 = mod.STAFF.some(p => p.id === 'p19'), nStaff = mod.STAFF.length;
     const imports = [
@@ -312,17 +395,21 @@ class Component extends DCLogic {
         apply: () => { ctl.touch(() => { if (!mod.STAFF.some(p => p.id === 'p19')) mod.STAFF.push(mkP('p19', 'Alva Strand', 'g1', 100), mkP('p20', 'Kenan Demir', 'g3', 75)); }); setImp('staff', 'done'); } },
       { key: 'kids', title: t('Barn', 'Children'), sub: t('Antal barn per avdelning och vistelsetider från barnregistret. Inga namn importeras.', 'Number of children per unit and attendance times from the child register. No names are imported.'),
         file: 'barn_v' + s.week + '.csv', canApply: true,
-        result: t('84 barn: Blåbär 18, Lingon 28, Hjortron 38. 1 barn med särskilda behov i Lingon.', '84 children: Blåbär 18, Lingon 28, Hjortron 38. 1 child with special needs in Lingon.'),
+        result: t('84 barn: ' + G[0].name + ' 18, ' + G[1].name + ' 28, ' + G[2].name + ' 38. 1 barn med särskilda behov i ' + G[1].name + '.', '84 children: ' + G[0].name + ' 18, ' + G[1].name + ' 28, ' + G[2].name + ' 38. 1 child with special needs in ' + G[1].name + '.'),
         applyTxt: t('Använd de här siffrorna', 'Use these numbers'), doneTxt: t('Antalet barn är uppdaterat.', 'The number of children is updated.'),
         apply: () => { ctl.touch(() => { const m = { g1: 18, g2: 28, g3: 38 }; G.forEach(g => { if (m[g.id]) g.max = m[g.id]; }); }); setImp('kids', 'done'); } },
     ].map(x => { const st = imp[x.key]; return { ...x, idle: !st, preview: st === 'preview', done: st === 'done', subTxt: st === 'done' ? x.doneTxt : x.sub, subFg: st === 'done' ? '#2D6A1F' : '#5A6B7A', choose: () => setImp(x.key, 'preview'), cancel: () => setImp(x.key, null) }; });
-    const F = this.state.fmt, Rg = this.state.range, b0 = mod.blockOf(s.week);
+    // Which weeks to export: the week shown in the planner, or a range of weeks the user picks.
+    const F = this.state.fmt, Rg = this.state.range === 'range' ? 'range' : 'week';
+    const wA = Math.max(mod.W0, Math.min(mod.W1, this.state.expFrom ?? s.week)), wB = Math.max(wA, Math.min(mod.W1, this.state.expTo ?? Math.min(mod.W1, s.week + 3)));
     const FM = { xlsx: ['Excel', t('För att ändra eller skicka till kontoret.', 'To edit or send to the office.')], csv: ['CSV', t('För lön- och tidrapporteringssystem.', 'For payroll and time-reporting systems.')],
       pdf: ['PDF', t('För att skriva ut eller sätta upp på väggen.', 'To print or put on the wall.')], ics: [t('Kalender', 'Calendar'), t('En fil per person som öppnas i telefonens kalender.', 'One file per person that opens in their phone calendar.')] };
     const formats = Object.entries(FM).map(([k, [name]]) => seg(k === F, name, () => this.setState({ fmt: k, exp: null })));
-    const ranges = [['week', t('Vecka ', 'Week ') + s.week], ['block', t('Period v.', 'Period w.') + b0 + '–' + (b0 + 3)]].map(([k, name]) => seg(k === Rg, name, () => this.setState({ range: k, exp: null })));
-    const span = Rg === 'week' ? 'v' + s.week : 'v' + b0 + '-' + (b0 + 3), people = mod.STAFF.length;
-    const inR = x => Rg === 'week' ? x.week === s.week : x.week >= b0 && x.week < b0 + 4, hh = m => fmtH(m, sv);
+    const ranges = [['week', t('Den här veckan (v.', 'This week (w.') + s.week + ')'], ['range', t('Välj veckor', 'Choose weeks')]].map(([k, name]) => seg(k === Rg, name, () => this.setState({ range: k, exp: null })));
+    const setW = (a, b) => this.setState({ expFrom: Math.max(mod.W0, Math.min(mod.W1, a)), expTo: Math.max(mod.W0, Math.min(mod.W1, b)), exp: null });
+    const weekSteps = [{ label: t('Från vecka', 'From week'), val: wA, dec: () => setW(wA - 1, wB), inc: () => setW(wA + 1, Math.max(wB, wA + 1)) }, { label: t('Till vecka', 'To week'), val: wB, dec: () => setW(Math.min(wA, wB - 1), wB - 1), inc: () => setW(wA, wB + 1) }];
+    const span = Rg === 'week' ? 'v' + s.week : wA === wB ? 'v' + wA : 'v' + wA + '-' + wB, people = mod.STAFF.length;
+    const inR = x => Rg === 'week' ? x.week === s.week : x.week >= wA && x.week <= wB, hh = m => fmtH(m, sv);
     const minsOf = id => s.shifts.filter(x => x.staff === id && inR(x)).reduce((a, x) => a + x.end - x.start, 0);
     const expRows = !this.state.exp || F === 'ics' ? [] : [{ name: t('Personal', 'Staff') + ' (' + people + ')', role: t('Anställda', 'Employees'), h: hh(mod.STAFF.reduce((a, p) => a + minsOf(p.id), 0)) },
       ...mod.SUBS.filter(p => minsOf(p.id) > 0).map(p => ({ name: p.name, role: t('Vikarie', 'Substitute'), h: hh(minsOf(p.id)) }))];
@@ -349,17 +436,22 @@ class Component extends DCLogic {
       io: { title: t('Import och export', 'Import and export'), sub: t('Hämta personal och barn från andra system, och skicka schemat vidare.', 'Bring in staff and children from other systems, and send the schedule on.'),
         secImport: t('Importera', 'Import'), secExport: t('Exportera schemat', 'Export the schedule'), choose: t('Välj fil', 'Choose file'), cancel: t('Avbryt', 'Cancel'), again: t('Importera igen', 'Import again'),
         format: t('Format', 'Format'), which: t('Veckor', 'Weeks'), exportBtn: t('Exportera', 'Export'), inFile: t('Timmar i filen', 'Hours in the file') },
-      imports, formats, ranges, fmtSub: FM[F][1], doExport: () => this.setState({ exp: Date.now() }), expTxt, expRows, hasExpRows: expRows.length > 0, subs,
+      subMin: (() => { const v = P.subMin ?? mod.SUB_MIN; return { val: fmtH(v, sv), dec: () => setP('subMin', Math.max(60, v - 30)), inc: () => setP('subMin', Math.min(480, v + 30)) }; })(),
+      offerMins: (() => { const v = P.offerMins ?? mod.OFFER_MINS; return { val: v + ' min', dec: () => setP('offerMins', Math.max(5, v - 5)), inc: () => setP('offerMins', Math.min(120, v + 5)) }; })(),
+      imports, formats, ranges, isRange: Rg === 'range', weekSteps, rangeTxt: wA === wB ? t('Vecka ', 'Week ') + wA : t(wB - wA + 1 + ' veckor, v.' + wA + '–' + wB, wB - wA + 1 + ' weeks, w.' + wA + '–' + wB), fmtSub: FM[F][1], doExport: () => this.setState({ exp: Date.now() }), expTxt, expRows, hasExpRows: expRows.length > 0, subs,
       sb: { title: t('Vikarier', 'Substitutes'), sub: t('Vikarier som kan få lediga pass när någon är sjuk. Ett ledigt pass erbjuds först den som är föredragen för avdelningen, och efter 15 minuter utan svar till alla som kan ta det.', 'Substitutes who can get free shifts when someone is sick. A free shift is first offered to the substitute preferred for the unit, and after 15 minutes without an answer to everyone who can take it.'),
+        dlTitle: t('Svarstid för vikarier', 'Time for substitutes to answer'), dlSub: t('Hur länge vikarierna har på sig att svara när ett ledigt pass har publicerats. Är det inte täckt då visas nästa steg, till exempel kommunens vikarieportal.', 'How long substitutes have to answer once a free shift is published. If it is not covered by then, the next steps are shown, such as the municipality\'s substitute portal.'),
+        minTitle: t('Kortaste pass för en vikarie', 'Shortest shift for a substitute'), minSub: t('När någon är sjuk erbjuds vikarien bara den del av passet där det saknas vuxna, men aldrig kortare än så här.', 'When someone is sick, the substitute is offered only the part of the shift where adults are missing, but never shorter than this.'),
         sec: t('Vikariepool', 'Substitute pool'), colName: t('Namn', 'Name'), colSkill: t('Utbildning och roller', 'Training and roles'), colDays: t('Kan arbeta', 'Can work'), colPref: t('Föredragen för', 'Preferred for'),
         note: t('Ett pass går bara till vikarier som har rätt utbildning för passet, inte redan arbetar då och får tillräcklig vila (R1). Vikarier ser aldrig vem som är sjuk eller varför, bara ”ledigt pass”.', 'A shift only goes to substitutes who have the training the shift needs, are not already working then and get enough rest (R1). Substitutes never see who is sick or why, only “free shift”.') },
       k: { title: t('Barn och avdelningar', 'Children and units'), sub: t('Antalet barn, öppettiderna och hur många barn varje vuxen kan ha avgör hur många vuxna som behövs.', 'The number of children, the opening hours and how many children each adult can have decide how many adults are needed.'),
-        secUnits: t('Avdelningar', 'Units'), colUnit: t('Avdelning', 'Unit'), colOpens: t('Öppnar', 'Opens'), colCloses: t('Stänger', 'Closes'), colKids: t('Inskrivna barn', 'Children enrolled'), colRatio: t('Barn per vuxen', 'Children per adult'),
+        secUnits: t('Avdelningar', 'Units'), namesSub: t('Namnen kan ändras. Används barnens tider från Edlevo måste namnen vara samma som avdelningarna där.', "The names can be changed. When children's times come from Edlevo, the names must be the same as the departments there."),
+        dupNames: t('Två avdelningar har samma namn. Ge dem olika namn.', 'Two units have the same name. Give them different names.'), colUnit: t('Avdelning', 'Unit'), colOpens: t('Öppnar', 'Opens'), colCloses: t('Stänger', 'Closes'), colKids: t('Inskrivna barn', 'Children enrolled'), colRatio: t('Barn per vuxen', 'Children per adult'),
         mTitle: t('Öppnings- och stängningsavdelning', 'Opening and closing unit'), mOn: t('Slå ihop avdelningarna morgon och kväll', 'Join the units in the morning and evening'),
         mSub: t('Alla barn är i en avdelning. Alla som arbetar räknas för hela gruppen, och behovet räknas på alla barn tillsammans.', 'All children are in one unit. Everyone working counts for the whole group, and the staff needed is worked out from all the children together.'), mWhere: t('Avdelning', 'Unit'),
         snTitle: t('Barn med särskilda behov', 'Children with special needs'), snSub: t('Bara antal och tider, inga namn. När barnet är på plats måste en vuxen utbildad för särskilt stöd arbeta på den avdelningen.', 'Only counts and times, no names. While the child is there, an adult trained in special needs must be working in that unit.'),
         colDays: t('Dagar', 'Days'), colFrom: t('Från', 'From'), colTo: t('Till', 'To'), add: t('Lägg till barn', 'Add a child'), remove: t('Ta bort', 'Remove') },
-      units, unitOpts, kids, mg, addKid: () => ctl.touch(st => { st.snKids = [...(st.snKids || []), { id: 'k' + Date.now(), unit: 'g1', days: [0, 1, 2, 3, 4], from: 480, to: 840 }]; }),
+      hasDupNames: new Set(G.map(g => g.name.trim().toLowerCase())).size < G.length, ed, units, unitOpts, kids, mg, addKid: () => ctl.touch(st => { st.snKids = [...(st.snKids || []), { id: 'k' + Date.now(), unit: 'g1', days: [0, 1, 2, 3, 4], from: 480, to: 840 }]; }),
     };
   }
 }

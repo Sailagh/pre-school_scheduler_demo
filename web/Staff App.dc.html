@@ -7,7 +7,7 @@
 </head>
 <body>
 <x-dc>
-<helmet><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#134e5e}</style></helmet>
+<helmet><link href="vendor/fonts/plex.css" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#134e5e}</style></helmet>
 <div style="position:relative;height:100%;display:flex;flex-direction:column;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#F4F7F9;overflow:hidden;font-variant-numeric:tabular-nums">
 <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
 
@@ -118,6 +118,7 @@
 
 <sc-if value="{{ isB }}">
   <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;background:#fff">
+    <sc-if value="{{ notProf }}">
     <div style="background:#1F2D3A;color:#fff;padding:62px 16px 16px;display:flex;flex-direction:column;gap:14px">
       <div style="display:flex;align-items:flex-start;gap:12px">
         <div style="flex:1;min-width:0">
@@ -141,6 +142,66 @@
       </div>
     </div>
     <sc-if value="{{ hasOfferBanner }}"><button onClick="{{ openInbox }}" style="display:flex;align-items:center;gap:10px;margin:14px 16px 0;padding:12px 14px;border:1px solid #9FCFDB;border-radius:10px;background:#EAF6F8;font:inherit;color:#1F2D3A;text-align:left;cursor:pointer;width:calc(100% - 32px);box-sizing:border-box"><span style="flex:1;font-size:14px;font-weight:600">{{ offerBanner }}</span><span style="font-size:13px;font-weight:600;color:#1F7D97">{{ tx.show }} ›</span></button></sc-if>
+    </sc-if>
+    <sc-if value="{{ showProf }}">
+      <div style="background:#1F2D3A;color:#fff;padding:62px 16px 18px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="flex:none;width:48px;height:48px;border-radius:50%;background:#9FD8DE;color:#1F2D3A;font-size:17px;font-weight:600;display:inline-flex;align-items:center;justify-content:center">{{ prof.initials }}</span>
+          <div style="flex:1;min-width:0"><div style="font-size:20px;font-weight:600;letter-spacing:-.01em">{{ prof.name }}</div><div style="font-size:13px;color:#A9B9C8;margin-top:2px">{{ prof.meta }}</div></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ prof.tags }}" as="tg"><span style="font-size:12px;font-weight:500;padding:4px 8px;border-radius:6px;background:#2C3B4A;color:#DCE6EE">{{ tg.t }}</span></sc-for></div>
+      </div>
+      <div style="padding:18px 16px 0;display:flex;flex-direction:column;gap:14px">
+        <div style="border:1px solid #E3EAF0;border-radius:12px;padding:14px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:600">{{ prof.weekTitle }}</div><div style="font-size:13px;color:#5A6B7A">{{ prof.weekRange }}</div></div>
+            <button onClick="{{ prof.prev }}" aria-label="‹" style="width:36px;height:36px;border:1px solid #D3DDEA;border-radius:8px;background:#fff;color:{{ prof.prevFg }};font-size:16px;cursor:pointer;padding:0">‹</button>
+            <button onClick="{{ prof.next }}" aria-label="›" style="width:36px;height:36px;border:1px solid #D3DDEA;border-radius:8px;background:#fff;color:{{ prof.nextFg }};font-size:16px;cursor:pointer;padding:0">›</button>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-size:30px;font-weight:600;letter-spacing:-.02em">{{ prof.worked }}</span><span style="font-size:15px;color:#5A6B7A">{{ prof.goal }}</span></div>
+          <div style="height:8px;border-radius:4px;background:#EEF3F6;overflow:hidden;margin-top:8px"><div style="height:100%;width:{{ prof.fill }};background:{{ prof.fillBg }}"></div></div>
+          <div style="font-size:13px;line-height:1.45;color:#3C4B5A;margin-top:8px">{{ prof.weekNote }}</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px">
+            <sc-for list="{{ prof.days }}" as="d">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+                <span style="position:relative;width:14px;height:54px;border-radius:3px;background:#EEF3F6;overflow:hidden"><span style="position:absolute;left:0;right:0;bottom:0;height:{{ d.h }};background:#9FD8DE"></span></span>
+                <span style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#5A6B7A">{{ d.short }}</span>
+                <span style="font-size:12px;font-weight:500;color:{{ d.fg }}">{{ d.val }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:12px;border-top:1px solid #EEF3F6">
+            <sc-for list="{{ prof.parts }}" as="x"><div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #EEF3F6"><span style="width:10px;height:10px;border-radius:2px;background:{{ x.sw }}"></span><span style="flex:1;font-size:14px">{{ x.name }}</span><span style="font-size:14px;font-weight:500">{{ x.val }}</span></div></sc-for>
+          </div>
+        </div>
+        <div style="border:1px solid #E3EAF0;border-radius:12px;padding:14px">
+          <div style="font-size:16px;font-weight:600">{{ prof.monthTitle }}</div>
+          <div style="display:flex;flex-direction:column;margin-top:8px">
+            <sc-for list="{{ prof.monthRows }}" as="r">
+              <button onClick="{{ r.pick }}" style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;column-gap:10px;padding:8px 0;border:0;border-bottom:1px solid #EEF3F6;background:transparent;font:inherit;color:#1F2D3A;text-align:left;cursor:pointer">
+                <span style="font-size:13px;font-weight:{{ r.fw }}">{{ r.label }}</span>
+                <span style="height:6px;border-radius:3px;background:#EEF3F6;overflow:hidden"><span style="display:block;height:100%;width:{{ r.fill }};background:{{ r.fillBg }}"></span></span>
+                <span style="font-size:13px;color:{{ r.valFg }};white-space:nowrap">{{ r.val }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:10px"><span style="flex:1;font-size:13px;color:#5A6B7A">{{ prof.monthSumLbl }}</span><span style="font-size:15px;font-weight:600">{{ prof.monthSum }}</span></div>
+          <sc-if value="{{ prof.hasAway }}"><div style="font-size:13px;color:#5A6B7A;margin-top:4px">{{ prof.monthAway }}</div></sc-if>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#5A6B7A;padding:4px 4px 8px">{{ tx.settings }}</div>
+          <div style="border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+            <sc-for list="{{ prof.prefs }}" as="x">
+              <button onClick="{{ x.toggle }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border:0;border-bottom:1px solid #EEF3F6;background:#fff;font:inherit;color:#1F2D3A;text-align:left;cursor:pointer">
+                <span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:500">{{ x.name }}</span><span style="display:block;font-size:12px;color:#5A6B7A;margin-top:2px">{{ x.sub }}</span></span>
+                <span style="position:relative;flex:none;width:44px;height:26px;border-radius:13px;background:{{ x.track }}"><span style="position:absolute;top:2px;left:{{ x.knob }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)"></span></span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font-size:12px;line-height:1.45;color:#5A6B7A;padding:8px 4px 0">{{ tx.setNote }}</div>
+        </div>
+      </div>
+    </sc-if>
     <sc-if value="{{ showMe }}">
     <div style="padding:20px 16px 8px;display:flex;flex-direction:column;gap:4px">
       <div style="display:flex;align-items:center;gap:8px"><div style="flex:1;font-size:13px;color:#5A6B7A">{{ sel.long }} {{ sel.date }}</div><sc-if value="{{ sel.hasStatus }}"><span style="font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:{{ sel.sBg }};color:{{ sel.sFg }};white-space:nowrap">{{ sel.status }}</span></sc-if></div>
@@ -235,10 +296,16 @@
     <div style="height:40px"></div>
   </div>
   <sc-if value="{{ isSplit }}">
-    <div style="flex:none;display:grid;grid-template-columns:repeat(2,1fr);background:#fff;border-top:1px solid #E3EAF0;padding:4px 8px 28px">
+    <div style="position:relative;flex:none;display:grid;grid-template-columns:1fr 84px 1fr;background:#fff;border-top:1px solid #E3EAF0;padding:4px 8px 28px">
       <sc-for list="{{ bTabs }}" as="tb">
-        <button onClick="{{ tb.pick }}" style="height:52px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:{{ tb.fw }};color:{{ tb.fg }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px"><span style="width:20px;height:3px;border-radius:2px;background:{{ tb.bar }}"></span>{{ tb.name }}</button>
+        <button onClick="{{ tb.pick }}" style="grid-column:{{ tb.col }};grid-row:1;height:52px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:{{ tb.fw }};color:{{ tb.fg }};cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px"><span style="width:20px;height:3px;border-radius:2px;background:{{ tb.bar }}"></span>{{ tb.name }}</button>
       </sc-for>
+      <div style="grid-column:2;grid-row:1;position:relative">
+        <div style="position:absolute;left:50%;top:-30px;width:84px;height:42px;margin-left:-42px;box-sizing:border-box;border:1px solid #E3EAF0;border-bottom:0;border-radius:42px 42px 0 0;background:#fff"></div>
+        <button onClick="{{ pickProf }}" aria-label="{{ profLabel }}" title="{{ profLabel }}" style="position:absolute;left:50%;top:-22px;width:60px;height:60px;margin-left:-30px;border:0;border-radius:50%;background:{{ profBg }};box-shadow:{{ profRing }};cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><circle cx="12" cy="7.5" r="4"></circle><path d="M4 21c0-4.4 3.6-7.5 8-7.5s8 3.1 8 7.5z"></path></svg>
+        </button>
+      </div>
     </div>
   </sc-if>
   <sc-if value="{{ inbox }}">
@@ -256,7 +323,8 @@
                 <div style="font-size:13px;color:#5A6B7A">{{ o.who }}</div>
                 <div style="font-size:17px;font-weight:600">{{ o.when }}</div>
                 <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#3C4B5A"><span style="width:16px;height:16px;border-radius:4px;background:{{ o.ub }};color:{{ o.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ o.letter }}</span>{{ o.unit }}</div>
-                <sc-if value="{{ o.canAnswer }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px"><button onClick="{{ o.yes }}" style="height:44px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ tx.take }}</button><button onClick="{{ o.no }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ tx.decline }}</button></div></sc-if>
+                <sc-if value="{{ o.hasWhat }}"><div style="font-size:15px;line-height:1.45;font-weight:500">{{ o.what }}</div><div style="font-size:13px;line-height:1.45;color:#5A6B7A">{{ o.whatSub }}</div></sc-if>
+                <sc-if value="{{ o.canAnswer }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px"><button onClick="{{ o.yes }}" style="height:44px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ o.yesTxt }}</button><button onClick="{{ o.no }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ o.noTxt }}</button></div></sc-if>
                 <sc-if value="{{ o.hasNote }}"><div style="font-size:13px;font-weight:600;color:{{ o.noteFg }}">{{ o.note }}</div></sc-if>
               </div>
             </sc-for>
@@ -301,8 +369,22 @@
           <div style="font-size:15px;font-weight:600">{{ o.when }}</div>
           <div style="font:600 28px 'IBM Plex Mono',monospace;letter-spacing:-.02em">{{ o.time }}</div>
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;color:#3C4B5A"><span style="flex:none;width:16px;height:16px;border-radius:4px;background:{{ o.ub }};color:{{ o.uf }};font:700 9px 'IBM Plex Mono',monospace;display:inline-flex;align-items:center;justify-content:center">{{ o.letter }}</span>{{ o.unit }}<sc-for list="{{ o.tags }}" as="tg"><span style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:#EEF3F6;color:#3C4B5A">{{ tg.t }}</span></sc-for></div>
-          <sc-if value="{{ o.canTake }}"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px"><button onClick="{{ o.take }}" style="height:48px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.takeShift }}</button><button onClick="{{ o.decline }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer;height:48px;font-size:15px">{{ tx.decline }}</button></div></sc-if>
-          <sc-if value="{{ o.taken }}"><div style="font-size:13px;font-weight:600;color:#5A6B7A">{{ tx.taken }}</div></sc-if>
+          <div style="font-size:13px;line-height:1.45;color:#3C4B5A">{{ o.freeTxt }}</div>
+          <sc-if value="{{ o.canOffer }}">
+            <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:4px">
+              <button onClick="{{ o.offerAll }}" style="height:48px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ o.offerAllTxt }}</button>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onClick="{{ o.editPart }}" style="height:44px;border:1px solid #9FCFDB;border-radius:8px;background:#EAF6F8;color:#16627A;font:inherit;font-size:14px;font-weight:600;cursor:pointer">{{ tx.partOffer }}</button><button onClick="{{ o.decline }}" style="height:44px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;color:#1F2D3A;font:inherit;font-size:14px;font-weight:500;cursor:pointer">{{ tx.cantOffer }}</button></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ o.editing }}">
+            <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid #EEF3F6;padding-top:10px">
+              <sc-for list="{{ o.steps }}" as="r"><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:14px">{{ r.label }}</span><div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:8px;overflow:hidden"><button onClick="{{ r.dec }}" style="width:44px;border:0;background:#fff;font-size:18px;cursor:pointer">−</button><div style="min-width:70px;display:flex;align-items:center;justify-content:center;font:600 15px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div><button onClick="{{ r.inc }}" style="width:44px;border:0;background:#fff;font-size:18px;cursor:pointer">+</button></div></div></sc-for>
+              <div style="font-size:12px;color:#5A6B7A">{{ o.minTxt }}</div>
+              <button onClick="{{ o.sendPart }}" style="height:46px;border:0;border-radius:8px;background:#1F7D97;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ o.sendPartTxt }}</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ o.hasMine }}"><div style="display:flex;align-items:center;gap:8px;background:#EAF6F8;border-radius:8px;padding:10px 12px"><div style="flex:1;font-size:14px;line-height:1.4"><b>{{ o.mineTxt }}</b><br><span style="color:#3C4B5A">{{ o.mineSub }}</span></div><sc-if value="{{ o.canChange }}"><button onClick="{{ o.editPart }}" style="height:36px;padding:0 12px;border:1px solid #9FCFDB;border-radius:8px;background:#fff;color:#16627A;font:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ tx.change }}</button></sc-if></div></sc-if>
+          <sc-if value="{{ o.done }}"><div style="font-size:14px;font-weight:600;color:{{ o.doneFg }}">{{ o.doneTxt }}</div></sc-if>
         </div>
       </sc-for>
     </div>
@@ -386,6 +468,24 @@
       </sc-if>
 
       <sc-if value="{{ sh.isSick }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;background:#E3EAF0;border-radius:10px">
+          <sc-for list="{{ sickOpts }}" as="x"><button onClick="{{ x.pick }}" style="height:38px;border:0;border-radius:8px;font:inherit;font-size:14px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer">{{ x.name }}</button></sc-for>
+        </div>
+        <sc-if value="{{ isPart }}">
+          <div style="display:flex;flex-direction:column;border:1px solid #E3EAF0;border-radius:12px;overflow:hidden">
+            <sc-for list="{{ sickSteps }}" as="r">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px">
+                <div style="flex:1;font-size:15px">{{ r.label }}</div>
+                <div style="display:inline-flex;align-items:stretch;height:40px;border:1px solid #C9D5E0;border-radius:8px;overflow:hidden">
+                  <button onClick="{{ r.dec }}" style="width:44px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">−</button>
+                  <div style="min-width:70px;display:flex;align-items:center;justify-content:center;font:500 14px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0">{{ r.val }}</div>
+                  <button onClick="{{ r.inc }}" style="width:44px;border:0;background:#fff;color:#3C4B5A;font-size:18px;cursor:pointer;padding:0">+</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:13px;line-height:1.45;color:#5A6B7A">{{ sickPartTxt }}</div>
+        </sc-if>
         <button onClick="{{ sendSick }}" style="height:50px;border:0;border-radius:10px;background:#C2413D;color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer">{{ tx.sendSick }}</button>
         <button onClick="{{ closeSheet }}" style="height:44px;border:0;background:transparent;color:#1F2D3A;font:inherit;font-size:15px;font-weight:500;cursor:pointer">{{ tx.cancel }}</button>
       </sc-if>
@@ -457,7 +557,6 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:402,&quot;height&quot;:874},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;a&quot;,&quot;b&quot;],&quot;default&quot;:&quot;a&quot;,&quot;tsType&quot;:&quot;'a'|'b'&quot;},&quot;others&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;timeline&quot;,&quot;time&quot;,&quot;unit&quot;],&quot;default&quot;:&quot;timeline&quot;,&quot;tsType&quot;:&quot;'timeline'|'time'|'unit'&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;me&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;p1&quot;,&quot;p2&quot;,&quot;p5&quot;,&quot;p9&quot;],&quot;default&quot;:&quot;p1&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
-const UC = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
 const PAL = { contact: '#9FD8DE', break: '#F6B7B3', planning: '#B9E59A', meeting: '#AFC0D6' };
 const TODAY = (() => { const n = new Date(), base = new Date(2026, 9, 12); let diff = Math.floor((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - base) / 864e5), w = 42 + Math.floor(diff / 7), d = ((diff % 7) + 7) % 7; if (d > 4) { w++; d = 0; } if (w < 41 || w > 52) { w = 42; d = 1; } return { w, d }; })();
 const TW = TODAY.w, TD = TODAY.d;
@@ -474,9 +573,18 @@ class Component extends DCLogic {
   flash(msg) { clearTimeout(this._tt); this.setState({ toast: msg }); this._tt = setTimeout(() => this.setState({ toast: null }), 2400); }
   renderVals() {
     const ctl = this.props.ctl || this.ctl, mod = this.props.mod || this.mod; if (!ctl || !mod) return { ready: false };
+    const UC = mod.UNITS;  // unit badges: colour and a letter from the unit's name
     const lang = this.props.lang === 'sv' ? 'sv' : 'en', sv = lang === 'sv', t = (a, b) => sv ? a : b, V = this.props.variant === 'b' ? 'b' : 'a';
     const s = ctl.store.get(), me = this.props.me || 'p1', P = mod.person(me) || mod.STAFF[0], st = this.state, W = st.week, D = st.day;
-    const b0 = mod.blockOf(TW), weeksArr = [b0, b0 + 1, b0 + 2, b0 + 3];
+    // Today's week may not be scheduled yet in the demo: then the planner's week (or the nearest scheduled one)
+    // plays "this week", keeping today's weekday, so the phone shows shifts and today's actions (report sick etc.).
+    if (!this._weekChecked && s.shifts.length) {
+      this._weekChecked = true; this._tw = TW;
+      const has = w => s.shifts.some(x => x.week === w), weeks = [...new Set(s.shifts.map(x => x.week))];
+      if (!has(TW)) { const w = has(s.week) ? s.week : weeks.reduce((a, b) => Math.abs(b - TW) < Math.abs(a - TW) ? b : a); this._tw = w; Promise.resolve().then(() => this.setState({ week: w })); }
+    }
+    const tw = this._tw ?? TW;
+    const b0 = mod.blockOf(W), weeksArr = [b0, b0 + 1, b0 + 2, b0 + 3];
     const MON = sv ? ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'] : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const dt = (w, d) => new Date(2026, 9, 12 + (w - 42) * 7 + d);
     const dLab = (w, d) => { const x = dt(w, d); return x.getDate() + ' ' + MON[x.getMonth()]; };
@@ -494,10 +602,10 @@ class Component extends DCLogic {
     const segsOf = list => list.map(x => ({ left: pc(x.start) + '%', width: (pc(x.end) - pc(x.start)) + '%', bg: PAL[x.type] }));
     const rangeOf = list => list.length ? mod.fmt(list[0].start) + '–' + mod.fmt(list[list.length - 1].end) : '';
     const unitOf = list => { const c = list.find(x => x.type === 'contact') || list[0]; return c ? G(c.group) : null; };
-    const past = (w, d) => w < TW || (w === TW && d < TD);
+    const past = (w, d) => w < tw || (w === tw && d < TD);
     const open = (kind, w, d) => this.setState({ sheet: { kind, w, d }, swapWith: null, part: false, from: 780, to: 1110 });
     const dayVM = (w, d) => {
-      const sh = shifts(me, w, d), ab = absOf(me, w, d), pend = reqs.find(r => r.staff === me && r.week === w && r.day === d && r.status === 'pending'), u = unitOf(sh), today = w === TW && d === TD;
+      const sh = shifts(me, w, d), ab = absOf(me, w, d), pend = reqs.find(r => r.staff === me && r.week === w && r.day === d && r.status === 'pending'), u = unitOf(sh), today = w === tw && d === TD;
       let status = '', sBg = 'transparent', sFg = '#5A6B7A', dot = 'transparent';
       if (ab) { status = WHY[ab.reason] || WHY.leave; sBg = ab.reason === 'sick' ? '#FFDAD8' : '#E6EEF4'; sFg = ab.reason === 'sick' ? '#8E2A27' : '#3C4B5A'; dot = ab.reason === 'sick' ? '#E5534B' : '#8796A5'; }
       else if (pend) { status = t('Väntar', 'Waiting') + ': ' + TYPE[pend.type]; sBg = '#FFF1CF'; sFg = '#6B5214'; dot = '#E0A93B'; }
@@ -569,18 +677,43 @@ class Component extends DCLogic {
     const offers = offersAll.map(r => { const rq = mod.person(r.staff) || {}, gs = shifts(r.staff, r.week, r.day).find(x => x.start < r.to && x.end > r.from) || s.shifts.find(x => x.cover === r.staff && x.week === r.week && x.day === r.day && x.staff === r.by), g = G((gs || {}).group || rq.group);
       const canAnswer = r.status === 'open', NT = { matched: [t('Du har tackat ja. Väntar på rektor.', 'You said yes. Waiting for the principal.'), '#8A5F0C'], approved: [t('Godkänt. Tiden ligger i ditt schema.', 'Approved. The time is in your schedule.'), '#2D6A1F'], declined: [t('Rektor godkände inte bytet.', 'The principal did not approve it.'), '#8E2A27'] }[r.status] || ['', '#5A6B7A'];
       return { who: t(rq.name + ' frågar om du kan ta över', rq.name + ' asks if you can take over'), when: LD(r.day) + ' ' + dLab(r.week, r.day) + ' · ' + mod.fmt(r.from) + '–' + mod.fmt(r.to), unit: g ? g.name : '', ...(g ? UC[g.id] : { letter: '', ub: 'transparent', uf: '#000' }),
-        canAnswer, hasNote: !canAnswer && !!NT[0], note: NT[0], noteFg: NT[1],
+        canAnswer, hasNote: !canAnswer && !!NT[0], note: NT[0], noteFg: NT[1], hasWhat: false, yesTxt: t('Ta passet', 'Take it'), noTxt: t('Avböj', 'Decline'),
         yes: () => { ctl.touch(x => mod.coverRespond(x, r.id, me, true)); this.flash(t('Du har tackat ja', 'You said yes')); }, no: () => ctl.touch(x => mod.coverRespond(x, r.id, me, false)) }; });
+    const FR = s.free || [], hh = m => mod.fmtN(Math.round(m / 6) / 10, lang) + ' h';
+    // The principal asks: start earlier, stay later, or open/close instead of a sick colleague. Only a yes changes the day.
+    FR.forEach(f => (f.asks || []).filter(a => a.pid === me && a.status !== 'withdrawn').forEach(a => { const g = G(f.group);
+      const what = a.kind === 'role' ? (a.role === 'open' ? t('Öppna i stället', 'Open instead') : t('Stänga i stället', 'Close instead')) : (a.kind === 'earlier' ? t('Börja ' + mod.fmt(a.from) + ' i stället för ' + mod.fmt(a.to), 'Start at ' + mod.fmt(a.from) + ' instead of ' + mod.fmt(a.to)) : t('Stanna till ' + mod.fmt(a.to) + ' i stället för ' + mod.fmt(a.from), 'Stay until ' + mod.fmt(a.to) + ' instead of ' + mod.fmt(a.from)))
+        + (a.kind !== 'role' && a.role ? (a.role === 'open' ? t(' och öppna', ' and open') : t(' och stänga', ' and close')) : '');
+      const NT = { yes: [t('Du har sagt ja. Det står i ditt schema.', 'You said yes. It is in your schedule.'), '#2D6A1F'], no: [t('Du har sagt nej.', 'You said no.'), '#5A6B7A'], stale: [t('Det gick inte längre att lägga in, schemat hade ändrats.', 'It could no longer be added; the schedule had changed.'), '#8E2A27'] }[a.status] || ['', '#5A6B7A'];
+      offers.unshift({ who: t('Rektor frågar om du kan hjälpa till', 'The principal asks if you can help'), when: LD(f.day) + ' ' + dLab(f.week, f.day), unit: g ? g.name : '', ...(g ? UC[g.id] : { letter: '', ub: 'transparent', uf: '#000' }),
+        hasWhat: true, what, whatSub: (a.ext ? t('Det blir ' + hh(a.ext) + ' mer', 'That is ' + hh(a.ext) + ' more') + (a.over ? t(', ' + hh(a.over) + ' över ditt avtal denna vecka.', ', ' + hh(a.over) + ' over your contract this week.') : '.') : t('Ingen extra tid.', 'No extra time.')) + t(' En kollega är sjuk.', ' A colleague is sick.'),
+        canAnswer: a.status === 'sent', hasNote: a.status !== 'sent', note: NT[0], noteFg: NT[1], yesTxt: t('Ja', 'Yes'), noTxt: t('Nej', 'No'),
+        yes: () => { let ok = true; ctl.touch(x => { ok = mod.answerInternal(x, f.id, a.id, true, lang); }); this.flash(ok ? t('Tack! Det står nu i ditt schema.', 'Thank you! It is now in your schedule.') : t('Det går inte längre', 'It is no longer possible')); },
+        no: () => ctl.touch(x => mod.answerInternal(x, f.id, a.id, false, lang)) }); }));
     const openOffers = offers.filter(o => o.canAnswer).length;
-    const FR = s.free || [], lastOffer = f => { const l = (f.log || []).filter(x => x.k === 'offerPref' || x.k === 'offerAll'); return l.length ? l[l.length - 1].t : f.clock; };
     const needTags = f => [...(f.needs.open ? [{ t: t('Öppnar', 'Opens') }] : []), ...(f.needs.close ? [{ t: t('Stänger', 'Closes') }] : []), ...(f.needs.sn ? [{ t: t('Särskilt stöd', 'Special needs') }] : [])];
-    const subOffers = isSubMe ? FR.filter(f => (f.offered || []).includes(me) && !(f.declined || []).includes(me) && f.by !== me && f.status !== 'nobody').sort((a, b) => b.clock - a.clock).map(f => { const g = G(f.group);
-      return { when: LD(f.day) + ' ' + dLab(f.week, f.day), time: mod.fmt(f.from) + '–' + mod.fmt(f.to), unit: g ? g.name : '', ...(g ? UC[g.id] : {}), tags: needTags(f), sent: t('Skickat ', 'Sent ') + mod.fmt(lastOffer(f)),
-        canTake: f.status === 'offered', taken: f.status !== 'offered', op: f.status === 'offered' ? 1 : .6,
-        take: () => { ctl.touch(x => mod.acceptFree(x, f.id, me)); this.flash(t('Passet är ditt', 'The shift is yours')); }, decline: () => ctl.touch(x => mod.declineFree(x, f.id, me)) }; }) : [];
-    const subDays = isSubMe ? [...new Set(s.shifts.filter(x => x.staff === me).map(x => x.week * 10 + x.day))].sort((a, b) => a - b).map(k => { const w = Math.floor(k / 10), d = k % 10, sh = shifts(me, w, d), u = unitOf(sh), f = FR.find(z => z.by === me && z.week === w && z.day === d);
+    // A call for proposals: offer the whole time, a part of it (at least the shortest substitute shift), or say no.
+    const subMin = Math.min((s.prefs || {}).subMin ?? mod.SUB_MIN, 1440);
+    const subOffers = isSubMe ? FR.filter(f => (f.asked || []).includes(me) && (f.status === 'open' ? !(f.declined || []).includes(me) : (f.offers || []).some(o => o.sub === me))).sort((a, b) => b.clock - a.clock).map(f => { const g = G(f.group);
+      const mine = (f.offers || []).find(o => o.sub === me), c = mod.subCands(s, { ...f, declined: [] }, lang).find(x => x.id === me) || { free: [] }, fr = c.free[0] || { from: f.from, to: f.to };
+      const ed = st.offerEdit && st.offerEdit.id === f.id ? st.offerEdit : null, min = Math.min(subMin, f.to - f.from), open = f.status === 'open';
+      const whole = c.free.length === 1 && fr.from === f.from && fr.to === f.to, rng = (a, b) => mod.fmt(a) + '–' + mod.fmt(b);
+      const stepE = (k, dd) => this.setState(x => { const e = { ...x.offerEdit }; e[k] = Math.max(f.from, Math.min(f.to, e[k] + dd)); if (e.to - e.from < min) return {}; return { offerEdit: e }; });
+      return { when: LD(f.day) + ' ' + dLab(f.week, f.day), time: rng(f.from, f.to), unit: g ? g.name : '', ...(g ? UC[g.id] : {}), tags: needTags(f), sent: t('Skickat ', 'Sent ') + mod.fmt(f.clock), op: open ? 1 : .75,
+        freeTxt: !open ? '' : whole ? t('Du är ledig hela tiden.', 'You are free the whole time.') : c.free.length ? t('Du kan ', 'You can do ') + c.free.map(x => rng(x.from, x.to)).join(t(' och ', ' and ')) + '.' : '',
+        canOffer: open && !mine && !ed, offerAllTxt: whole ? t('Erbjud hela tiden', 'Offer the whole time') : t('Erbjud ', 'Offer ') + rng(fr.from, fr.to),
+        offerAll: () => { ctl.touch(x => mod.offerFree(x, f.id, me, fr.from, fr.to)); this.flash(t('Erbjudandet är skickat', 'Your offer is sent')); },
+        editPart: () => this.setState({ offerEdit: { id: f.id, from: mine ? mine.from : fr.from, to: mine ? mine.to : Math.min(fr.to, fr.from + Math.max(min, 300)) } }),
+        decline: () => ctl.touch(x => mod.declineFree(x, f.id, me)), editing: open && !!ed,
+        steps: ed ? [{ label: t('Från', 'From'), val: mod.fmt(ed.from), dec: () => stepE('from', -15), inc: () => stepE('from', 15) }, { label: t('Till', 'To'), val: mod.fmt(ed.to), dec: () => stepE('to', -15), inc: () => stepE('to', 15) }] : [],
+        minTxt: (h => t('Minst ' + h + '.', 'At least ' + h + '.'))(mod.fmtN(Math.round(min / 6) / 10, lang) + ' h'), sendPartTxt: ed ? t('Skicka erbjudande ', 'Send offer ') + rng(ed.from, ed.to) : '',
+        sendPart: () => { if (!ed) return; ctl.touch(x => mod.offerFree(x, f.id, me, ed.from, ed.to)); this.setState({ offerEdit: null }); this.flash(t('Erbjudandet är skickat', 'Your offer is sent')); },
+        hasMine: !!mine && !ed, mineTxt: mine ? t('Ditt erbjudande: ', 'Your offer: ') + rng(mine.from, mine.to) : '', canChange: open,
+        mineSub: !mine ? '' : open ? t('Väntar på svar från den som ordnar vikarier.', 'Waiting for an answer from the person arranging substitutes.') : mine.status === 'won' ? t('Du fick passet. Det står nu i Mina pass.', 'You got the shift. It is now under My shifts.') : t('Passet är tillsatt. Tack för ditt erbjudande!', 'The shift has been filled. Thank you for your offer!'),
+        done: false, doneTxt: '', doneFg: '#5A6B7A' }; }) : [];
+    const subDays = isSubMe ? [...new Set(s.shifts.filter(x => x.staff === me).map(x => x.week * 10 + x.day))].sort((a, b) => a - b).map(k => { const w = Math.floor(k / 10), d = k % 10, sh = shifts(me, w, d), u = unitOf(sh), f = FR.find(z => (z.won || []).some(o => o.sub === me) && z.week === w && z.day === d);
       const mates = [...mod.STAFF, ...mod.SUBS].filter(p => p.id !== me && !absOf(p.id, w, d)).map(p => { const ps = shifts(p.id, w, d).filter(x => u && x.group === u.id); return ps.length ? { name: p.name, range: rangeOf(ps), start: ps[0].start } : null; }).filter(Boolean).sort((a, b) => a.start - b.start);
-      const cf = f && f.status === 'confirmed';
+      const cf = !f || f.status === 'awarded';
       return { when: LD(d) + ' ' + dLab(w, d), range: rangeOf(sh), unit: u ? u.name : '', ...(u ? UC[u.id] : {}), status: !f || cf ? t('Bekräftat', 'Confirmed') : t('Väntar på bekräftelse', 'Waiting for confirmation'), sBg: !f || cf ? '#E2F6D4' : '#FFF1CF', sFg: !f || cf ? '#2D6A1F' : '#6B5214',
         list: sh.map(x => ({ time: mod.fmt(x.start) + '–' + mod.fmt(x.end), type: TL[x.type], sw: PAL[x.type] })), mates, hasMates: mates.length > 0 }; }) : [];
     const send = r => { ctl.touch(x => mod.submitRequest(x, { staff: me, week: SH.w, day: SH.d, ...r })); this.setState({ sheet: null }); };
@@ -592,6 +725,45 @@ class Component extends DCLogic {
     const tabs = [['sched', t('Schema', 'Schedule'), 0], ['req', t('Förfrågningar', 'Requests'), pendingCount], ['notes', t('Meddelanden', 'Messages'), unread]].map(([k, name, b]) => {
       const a = st.tab === k; return { name, fw: a ? 600 : 500, fg: a ? '#1F7D97' : '#5A6B7A', bar: a ? '#1F7D97' : 'transparent', hasBadge: k === 'notes' && b > 0, badge: b, pick: () => { this.setState({ tab: k }); if (k === 'notes') markRead(); } };
     });
+    // "Me": the worker's own overview (week, month, hours) and a few settings.
+    const fmtH = m => { const v = Math.round(m / 6) / 10; return (sv ? String(v).replace('.', ',') : String(v)) + ' h'; };
+    const days = n => n + ' ' + (n === 1 ? t('dag', 'day') : t('dagar', 'days'));
+    const PW = Math.max(mod.W0, Math.min(mod.W1, st.pWeek ?? W)), pw = mod.personWeek(s, me, PW), wt = isSubMe ? null : mod.weekTarget(s, P, PW);
+    const goal = wt ? wt.target : 0, bar = (a, b) => (b ? Math.min(100, Math.round(a / b * 100)) : 0) + '%';
+    const weekNote = !pw.worked ? t('Inget schema ännu för den här veckan.', 'No schedule for this week yet.')
+      : wt && wt.owe > 15 ? t('Förra veckan blev ' + fmtH(wt.owe) + ' längre, så den här veckan är lika mycket kortare.', 'Last week was ' + fmtH(wt.owe) + ' longer, so this week is that much shorter.')
+      : pw.worked > goal + 15 ? t(fmtH(pw.worked - goal) + ' mer än ditt avtal. Nästa vecka blir lika mycket kortare.', fmtH(pw.worked - goal) + ' more than your contract. Next week is that much shorter.')
+      : pw.worked < goal - 15 ? t(fmtH(goal - pw.worked) + ' färre än ditt avtal.', fmtH(goal - pw.worked) + ' fewer than your contract.')
+      : t('Precis enligt ditt avtal.', 'Exactly your contract.');
+    const ST = { sick: t('Sjuk', 'Sick'), vacation: t('Semester', 'Holiday'), leave: t('Ledig', 'Away'), off: t('Ledig', 'Off'), none: '–' };
+    const monthOf = w => dt(w, 3).getMonth(), MONTHS = sv ? ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'] : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const mWeeks = []; for (let w = mod.W0; w <= mod.W1; w++) if (monthOf(w) === monthOf(PW)) mWeeks.push(w);
+    const mRows = mWeeks.map(w => { const q = mod.personWeek(s, me, w), g = isSubMe ? 0 : mod.weekTarget(s, P, w).target; return { w, q, g }; });
+    const sched = mRows.filter(r => r.q.worked), mSum = sched.reduce((a, r) => a + r.q.worked, 0), mGoal = sched.reduce((a, r) => a + r.g, 0);
+    const mAway = ['sickDays', 'vac', 'leave'].map((k, i) => [mRows.reduce((a, r) => a + r.q[k], 0), [t('Sjuk', 'Sick'), t('Semester', 'Holiday'), t('Ledig', 'Away')][i]]).filter(x => x[0]).map(x => x[1] + ' ' + days(x[0]));
+    const PREF = { offers: true, changes: true, remind: false, ...((s.phonePrefs || {})[me] || {}) };
+    const G0 = G(P.group), offDays = (P.off || []).map(d => lc(LD(d)));
+    const prof = {
+      initials: P.name.split(' ').map(x => x[0]).join('').slice(0, 2), name: P.name, 
+      meta: isSubMe ? t('Vikarie', 'Substitute') : (G0 ? G0.name + ' · ' : '') + fmtH(mod.contractH(P, PW) * 60) + t(' i veckan', ' a week') + ' (' + mod.contractPct(P, PW) + ' %)',
+      tags: [P.open && t('Får öppna', 'May open'), P.close && t('Får stänga', 'May close'), P.sn && t('Utbildad för särskilt stöd', 'Trained for special needs'), offDays.length && t('Ledig ', 'Off on ') + offDays.join(', '),
+        P.earliest != null && t('Tidigast ', 'Not before ') + mod.fmt(P.earliest), P.latest != null && t('Senast ', 'Not after ') + mod.fmt(P.latest)].filter(Boolean).map(x => ({ t: x })),
+      weekTitle: t('Vecka ', 'Week ') + PW, weekRange: wkRange(PW), prevFg: PW > mod.W0 ? '#1F2D3A' : '#C9D5E0', nextFg: PW < mod.W1 ? '#1F2D3A' : '#C9D5E0',
+      prev: () => this.setState({ pWeek: Math.max(mod.W0, PW - 1) }), next: () => this.setState({ pWeek: Math.min(mod.W1, PW + 1) }),
+      worked: fmtH(pw.worked), goal: isSubMe ? '' : t('av ', 'of ') + fmtH(goal), fill: bar(pw.worked, goal || pw.worked), fillBg: pw.worked > goal + 15 && !isSubMe ? '#E0A93B' : '#1F7D97', weekNote,
+      parts: [['contact', t('Med barnen', 'With children')], ['planning', t('Planering', 'Planning')], ['meeting', t('Möte', 'Meeting')], ['break', t('Rast', 'Break')]]
+        .filter(([k]) => pw[k] || k !== 'meeting').map(([k, name]) => ({ name, sw: PAL[k], val: fmtH(pw[k]) + (k === 'planning' && pw.N ? ' ' + t('av ', 'of ') + fmtH(pw.N) : '') })),
+      days: pw.days.map(x => { const m = x.child + x.non; return { short: SD[x.d], h: Math.round(Math.min(1, m / 540) * 100) + '%', val: m ? fmtH(m).replace(' h', '') : ST[x.st], fg: m ? '#1F2D3A' : x.st === 'sick' ? '#C2413D' : '#8796A5' }; }),
+      monthTitle: MONTHS[monthOf(PW)][0].toUpperCase() + MONTHS[monthOf(PW)].slice(1) + ' ' + dt(PW, 3).getFullYear(),
+      monthRows: mRows.map(r => ({ label: t('v.', 'w.') + r.w, fw: r.w === PW ? 600 : 500, val: r.q.worked ? fmtH(r.q.worked) + (isSubMe ? '' : ' ' + t('av ', 'of ') + fmtH(r.g)) : t('Inget schema ännu', 'Not scheduled yet'),
+        valFg: r.q.worked ? '#1F2D3A' : '#8796A5', fill: bar(r.q.worked, r.g || r.q.worked), fillBg: !isSubMe && r.q.worked > r.g + 15 ? '#E0A93B' : '#9FD8DE', pick: () => this.setState({ pWeek: r.w }) })),
+      monthSum: sched.length ? fmtH(mSum) + (isSubMe ? '' : ' ' + t('av ', 'of ') + fmtH(mGoal)) : '–', monthSumLbl: sched.length < mRows.length ? t('Hittills (schemalagda veckor)', 'So far (scheduled weeks)') : t('Hela månaden', 'Whole month'),
+      monthAway: mAway.join(' · '), hasAway: mAway.length > 0,
+      prefs: [['offers', t('Förfrågningar om att täcka pass', 'Requests to cover a shift'), t('När en kollega behöver hjälp', 'When a colleague needs help')],
+        ['changes', t('Ändringar i mitt schema', 'Changes to my schedule'), t('När den som planerar ändrar dina pass', 'When the planner changes your shifts')],
+        ['remind', t('Påminnelse kvällen före', 'Reminder the evening before'), t('Dina tider för nästa dag', 'Your times for the next day')]]
+        .map(([k, name, sub]) => { const on = PREF[k]; return { name, sub, track: on ? '#1F7D97' : '#C9D5E0', knob: on ? '20px' : '2px', toggle: () => ctl.touch(x => { x.phonePrefs = x.phonePrefs || {}; x.phonePrefs[me] = { ...PREF, [k]: !on }; }) }; }),
+    };
     return {
       ready: true, isA: V === 'a' && !isSubMe, isB: V === 'b' && !isSubMe, isSubV: isSubMe, subMeta: t('Vikarie · ', 'Substitute · ') + ((s.prefs || {}).school || 'Förskolan Solrosen'),
       subOffers, noSubOffers: !subOffers.length, subDays, noSubDays: !subDays.length, offers, hasOffers: offers.length > 0, hasOfferBanner: openOffers > 0 && !st.inbox,
@@ -612,7 +784,10 @@ class Component extends DCLogic {
       axis: [360, 540, 720, 900, 1080].map(m => ({ left: pc(m) + '%', label: String(m / 60).padStart(2, '0') })),
       workingTitle: t('Arbetar ', 'Working on ') + lc(sel.long), workingCount: working + ' ' + t('av ', 'of ') + mod.STAFF.length,
       isSplit: !!this.props.split, showMe: !this.props.split || st.bTab === 'me', showAll: !this.props.split || st.bTab === 'all', showDivider: !this.props.split,
-      bTabs: [['me', t('Mitt schema', 'My schedule')], ['all', t('Vem arbetar', "Who's working")]].map(([k, name]) => { const a = st.bTab === k; return { name, fw: a ? 600 : 500, fg: a ? '#1F7D97' : '#5A6B7A', bar: a ? '#1F7D97' : 'transparent', pick: () => this.setState({ bTab: k }) }; }),
+      showProf: !!this.props.split && st.bTab === 'prof', notProf: !this.props.split || st.bTab !== 'prof', prof,
+      bTabs: [['me', t('Mitt schema', 'My schedule')], ['all', t('Vem arbetar', "Who's working")]].map(([k, name]) => { const a = st.bTab === k; return { name, fw: a ? 600 : 500, fg: a ? '#1F7D97' : '#5A6B7A', bar: a ? '#1F7D97' : 'transparent', col: k === 'me' ? 1 : 3, pick: () => this.setState({ bTab: k }) }; }),
+      profBg: st.bTab === 'prof' ? '#1F2D3A' : '#1F7D97', profRing: st.bTab === 'prof' ? '0 0 0 3px #9FD8DE' : '0 2px 6px rgba(31,45,58,.25)', profLabel: t('Jag: översikt och inställningar', 'Me: overview and settings'),
+      pickProf: () => this.setState({ bTab: 'prof', pWeek: W }),
       oTimeline: O === 'timeline', oTime: O === 'time', oUnit: O === 'unit', byTime, offList, hasOff: offList.length > 0, offTitle: t('Arbetar inte', 'Not working'), unitCards,
       selSick: () => open('sick', W, D), selSwap: () => open('swap', W, D), selUn: () => open('un', W, D),
       myReqs, hasReqs: myReqs.length > 0, noReqs: !myReqs.length, myNotes, hasNotes: myNotes.length > 0, noNotes: !myNotes.length,
@@ -620,7 +795,12 @@ class Component extends DCLogic {
       newReq: () => open('pick', W, D),
       hasSheet: !!SH, sh: shVM, closeSheet: () => this.setState({ sheet: null }), stop: e => e.stopPropagation(),
       swapList, swapBg: st.swapWith ? '#1F7D97' : '#A9C9D2',
-      sendSick: () => { send({ type: 'sick' }); this.flash(t('Sjukanmälan skickad', 'Sick report sent')); },
+      sendSick: () => { send({ type: 'sick', from: st.part ? st.from : null, today: SH.w === tw && SH.d === TD }); this.flash(t('Sjukanmälan skickad', 'Sick report sent')); },
+      sickOpts: (() => { const l = SH && SH.kind === 'sick' ? shifts(me, SH.w, SH.d) : [], a = l.length ? l[0].start + 15 : 480, b = l.length ? l[l.length - 1].end - 15 : 960;
+        const now = Math.round(new Date().getHours() * 4 + new Date().getMinutes() / 15) * 15, at = Math.max(a, Math.min(b, SH && SH.w === tw && SH.d === TD ? now : Math.round((a + b) / 30) * 15));
+        return [segOpt(!st.part, t('Hela dagen', 'Whole day'), () => this.setState({ part: false })), segOpt(st.part, t('Från en tid', 'From a time'), () => this.setState({ part: true, from: at, sickA: a, sickB: b }))]; })(),
+      sickSteps: [{ label: t('Sjuk från', 'Sick from'), val: mod.fmt(st.from), dec: () => this.setState(x => ({ from: Math.max(x.sickA ?? 0, x.from - 15) })), inc: () => this.setState(x => ({ from: Math.min(x.sickB ?? 1440, x.from + 15) })) }],
+      sickPartTxt: t('Tiden före räknas som arbetad. Resten av passet blir ett ledigt pass.', 'The time before counts as worked. The rest of the shift becomes a free shift.'),
       sendSwap: () => { if (!st.swapWith) return; send({ type: 'swap', with: st.swapWith }); this.flash(t('Förfrågan skickad', 'Request sent')); },
       sendUn: () => { send({ type: 'unavail', from: st.part ? st.from : 0, to: st.part ? st.to : 1440 }); this.flash(t('Förfrågan skickad', 'Request sent')); },
       partOpts: [segOpt(!st.part, t('Hela dagen', 'Whole day'), () => this.setState({ part: false })), segOpt(st.part, t('Del av dagen', 'Part of the day'), () => this.setState({ part: true }))], isPart: st.part,
@@ -636,6 +816,8 @@ class Component extends DCLogic {
         subOffers: t('Erbjudanden', 'Offers'), noSubOffers: t('Inga lediga pass just nu. Du får ett meddelande när ett pass erbjuds dig.', 'No free shifts right now. You get a message when one is offered to you.'), freeShift: t('Ledigt pass', 'Free shift'),
         taken: t('Passet är tillsatt.', 'The shift has been taken.'), myShifts: t('Mina pass', 'My shifts'), noSubDays: t('Du har inga bokade pass.', 'You have no booked shifts.'), mates: t('Du arbetar med', 'You work with'), bUn: t('Kan inte', "Can't work"),
         aSick: t('Sjukanmäl dig', 'Report sick'), aSwap: t('Be om att byta pass', 'Ask to swap'), aUn: t('Säg att du inte kan arbeta', "Say you can't work"),
+        settings: t('Inställningar', 'Settings'), setNote: t('Avtal, hemavdelning och tider ändras av den som planerar. Säg till om något är fel.', 'Contract, home unit and times are changed by the planner. Tell them if something is wrong.'),
+        partOffer: t('En del av tiden', 'Part of the time'), cantOffer: t('Kan inte', "Can't"), change: t('Ändra', 'Change'),
         sendSick: t('Sjukanmäl', 'Report sick'), sendReq: t('Skicka förfrågan', 'Send request'), cancel: t('Avbryt', 'Cancel') },
     };
   }

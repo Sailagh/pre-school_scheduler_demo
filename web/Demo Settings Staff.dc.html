@@ -246,13 +246,13 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;ctl&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;mod&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;pid&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;rev&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onShow&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(pid:string)=&gt;void&quot;}}">
-const UC = { g1: { letter: 'B', ub: '#C9DDF5', uf: '#1E3F73' }, g2: { letter: 'L', ub: '#FFD3D0', uf: '#8E2A27' }, g3: { letter: 'H', ub: '#FFE3B8', uf: '#7A4A0C' } };
 class Component extends DCLogic {
   state = { sel: null, q: '', cw: null, cp: 75, kind: 'vacation', w1: null, d1: 0, w2: null, d2: 4 };
   componentDidUpdate(pp) { if (pp.pid !== this.props.pid && this.props.pid) this.setState({ sel: null }); }
   renderVals() {
     const { ctl, mod } = this.props, sv = this.props.lang === 'sv', t = (a, b) => sv ? a : b;
     if (!ctl || !mod) return { ready: false };
+    const UC = mod.UNITS;  // unit badges: colour and a letter from the unit's name
     const s = ctl.store.get(), wk = s.week, W0 = mod.W0, W1 = mod.W1, fmt = mod.fmt, n = v => mod.fmtN(v, this.props.lang);
     const DS = sv ? ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
     const so = this.state.sort || 'name', gi = id => mod.GROUPS.findIndex(g => g.id === id);

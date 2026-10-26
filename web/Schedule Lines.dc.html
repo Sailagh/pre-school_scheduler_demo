@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex;flex-direction:column;width:100%;height:100%;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#fff;font-variant-numeric:tabular-nums">
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:none;display:flex;flex-direction:column;gap:12px;padding:16px 24px 14px;border-bottom:1px solid #D3DDEA;background:#F7FAFB">
+    <div style="display:flex;align-items:flex-start;gap:16px">
+      <button onClick="{{ close }}" style="flex:none;height:36px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;border-radius:8px;font:inherit;font-size:13px;font-weight:600;color:#1F7D97;cursor:pointer;white-space:nowrap">‹ {{ tx.back }}</button>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:20px;font-weight:600;letter-spacing:-.01em">{{ tx.title }}</div>
+        <div style="font-size:13px;line-height:1.45;color:#5A6B7A;max-width:900px;margin-top:2px">{{ tx.sub }}</div>
+      </div>
+      <label style="flex:none;display:inline-flex;align-items:center;height:36px;padding:0 12px;border:1px solid #C9D5E0;border-radius:8px;background:#fff;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap">{{ tx.import }}<input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange="{{ onFile }}" style="display:none"></label>
+      <button onClick="{{ doExport }}" style="flex:none;height:36px;padding:0 12px;border:1px solid #1F7D97;background:#1F7D97;color:#fff;border-radius:8px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">{{ exportTxt }}</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">
+      <div style="display:inline-flex;gap:2px;padding:2px;background:#E3EAF0;border-radius:7px">
+        <sc-for list="{{ srcOpts }}" as="x"><button onClick="{{ x.pick }}" style="height:32px;padding:0 12px;border:0;border-radius:5px;font:inherit;font-size:13px;font-weight:{{ x.fw }};color:{{ x.fg }};background:{{ x.bg }};box-shadow:{{ x.sh }};cursor:pointer;white-space:nowrap">{{ x.name }}</button></sc-for>
+      </div>
+      <sc-if value="{{ isOurs }}">
+        <sc-for list="{{ steppers }}" as="r">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-size:13px;color:#3C4B5A">{{ r.label }}</span>
+            <div style="display:inline-flex;align-items:stretch;height:32px;border:1px solid #C9D5E0;border-radius:6px;overflow:hidden;background:#fff">
+              <button onClick="{{ r.dec }}" style="width:30px;border:0;background:#fff;color:#3C4B5A;font-size:15px;cursor:pointer;padding:0">−</button>
+              <div style="min-width:64px;padding:0 6px;display:flex;align-items:center;justify-content:center;font:500 13px 'IBM Plex Mono',monospace;border-left:1px solid #E3EAF0;border-right:1px solid #E3EAF0;white-space:nowrap">{{ r.val }}</div>
+              <button onClick="{{ r.inc }}" style="width:30px;border:0;background:#fff;color:#3C4B5A;font-size:15px;cursor:pointer;padding:0">+</button>
+            </div>
+          </div>
+        </sc-for>
+        <button onClick="{{ repeat }}" title="{{ repeatTip }}" style="height:32px;padding:0 12px;border:1px solid #C9D5E0;background:#fff;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;opacity:{{ repeatOp }};white-space:nowrap">{{ repeatTxt }}</button>
+      </sc-if>
+      <sc-if value="{{ isImport }}">
+        <div style="font-size:13px;color:#3C4B5A">{{ importInfo }}</div>
+        <button onClick="{{ dropImport }}" style="height:32px;padding:0 10px;border:0;background:transparent;color:#C2413D;font:inherit;font-size:13px;font-weight:500;cursor:pointer">{{ tx.drop }}</button>
+      </sc-if>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:#3C4B5A"><sc-for list="{{ legend }}" as="g"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:22px;height:12px;border-radius:2px;background:{{ g.bg }};box-shadow:{{ g.sh }}"></span>{{ g.t }}</span></sc-for></div>
+    <sc-if value="{{ hasMsg }}"><div style="font-size:13px;line-height:1.45;color:{{ msgFg }};background:{{ msgBg }};border-radius:6px;padding:8px 12px;max-width:1000px">{{ msg }}</div></sc-if>
+  </div>
+
+  <div style="flex:1;min-height:0;overflow:auto">
+    <div style="display:grid;grid-template-columns:{{ cols }};width:max-content;font-size:12px">
+      <sc-for list="{{ head1 }}" as="h"><div style="grid-column:span {{ h.span }};position:sticky;left:{{ h.left }};top:0;z-index:{{ h.z }};background:#EEF4F7;height:30px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;border-bottom:1px solid #D3DDEA;border-right:1px solid #D3DDEA;white-space:nowrap;padding:0 6px;color:{{ h.fg }}">{{ h.t }}</div></sc-for>
+      <sc-for list="{{ head2 }}" as="h"><div style="position:sticky;left:{{ h.left }};top:30px;z-index:{{ h.z }};background:#F7FAFB;height:26px;display:flex;align-items:center;justify-content:{{ h.jc }};padding:0 8px;font-size:11px;font-weight:600;color:#5A6B7A;border-bottom:1px solid #D3DDEA;border-right:{{ h.br }}">{{ h.t }}</div></sc-for>
+      <sc-for list="{{ rows }}" as="r">
+        <div title="{{ r.tip }}" style="position:sticky;left:0;z-index:2;background:{{ r.bg }};display:flex;flex-direction:column;justify-content:center;padding:4px 10px;min-height:38px;box-sizing:border-box;border-bottom:1px solid #EEF3F6;border-right:1px solid #D3DDEA;box-shadow:inset 3px 0 {{ r.edge }}">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap">{{ r.label }}</div>
+          <sc-if value="{{ r.hasSub }}"><div style="font-size:11px;color:#5A6B7A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.sub }}</div></sc-if>
+        </div>
+        <sc-for list="{{ r.cells }}" as="c"><div onClick="{{ c.go }}" title="{{ c.tip }}" style="display:flex;align-items:center;justify-content:center;min-height:38px;box-sizing:border-box;padding:0 3px;border-bottom:1px solid #EEF3F6;border-right:{{ c.br }};background:{{ c.bg }};color:{{ c.fg }};font:{{ c.font }};cursor:{{ c.cur }};white-space:nowrap;box-shadow:{{ c.ring }}">{{ c.t }}</div></sc-for>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;padding:20px 24px 40px;max-width:1100px">
+      <div style="font-size:16px;font-weight:600">{{ tx.checkTitle }}</div>
+      <sc-for list="{{ checks }}" as="k">
+        <div style="border:1px solid #E3EAF0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:22px;height:22px;border-radius:50%;background:{{ k.dotBg }};color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ k.mark }}</span><span style="font-size:14px;font-weight:600">{{ k.title }}</span><span style="font-size:13px;color:#5A6B7A">{{ k.sum }}</span></div>
+          <sc-for list="{{ k.items }}" as="i"><div style="font-size:13px;line-height:1.45;color:#3C4B5A;padding-left:32px">{{ i.t }}</div></sc-for>
+        </div>
+      </sc-for>
+      <div style="font-size:12px;line-height:1.5;color:#5A6B7A">{{ tx.assume }}</div>
+    </div>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;ctl&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;mod&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;sv&quot;],&quot;default&quot;:&quot;sv&quot;,&quot;tsType&quot;:&quot;'en'|'sv'&quot;},&quot;rev&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;},&quot;onClose&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;},&quot;onGo&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(w:number,d:number)=&gt;void&quot;}}">
+// Schedule lines: the schedule as Medvind shows a base schedule (grundschema), one row per schedule line and one
+// time range per day, in a rotation of N weeks; reading and writing Medvind's Excel export; and a check of the
+// rotation against the rules in Settings (mod.checkRotation).
+const seg = (a, name, pick) => ({ name, pick, bg: a ? '#fff' : 'transparent', fg: a ? '#1F2D3A' : '#3C4B5A', fw: a ? 600 : 500, sh: a ? '0 1px 2px rgba(15,30,45,.12),0 0 0 1px #D3DDEA' : 'none' });
+const md = m => String(Math.floor(m / 60)).padStart(2, '0') + '.' + String(m % 60).padStart(2, '0');
+class Component extends DCLogic {
+  state = { src: null, msg: null };
+  renderVals() {
+    const ctl = this.props.ctl, mod = this.props.mod; if (!ctl || !mod) return { ready: false };
+    const sv = this.props.lang !== 'en', t = (a, b) => sv ? a : b, s = ctl.store.get(), R = s.rotation || { ...mod.ROT0, start: Math.min(s.week, mod.W1 - mod.ROT0.n + 1) };
+    const H = m => (Math.round(m / 6) / 10 + '').replace('.', sv ? ',' : '.') + ' h';
+    const imp = s.medvindImport, src = this.state.src ? (this.state.src === 'import' && imp ? 'import' : 'ours') : imp ? 'import' : 'ours';
+    const rot = src === 'import' ? imp.rotation : mod.rotationFromShifts(s, R.start, R.n), chk = mod.checkRotation(rot, s, sv ? 'sv' : 'en');
+    const weekend = rot.lines.some(l => l.cells.some(w => w[5] || w[6])), D = weekend ? 7 : 5, weeks = [...Array(rot.weeks).keys()];
+    const DSH = sv ? ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const say = (text, bad) => this.setState({ msg: { text, bad } });
+    const flagAt = {}; (rot.flags || []).forEach(f => { if (f.week) flagAt[f.row + '-' + (f.week - 1) + '-' + f.day] = f; });
+    const head1 = [{ t: '', span: 1, left: '0', z: 4 }, ...weeks.map(n => ({ t: t('Vecka ', 'Week ') + (n + 1) + (n + 1 === rot.start && src === 'import' ? t(': Startvecka', ': start week') : '') + (src === 'ours' ? ' · ' + t('v.', 'w.') + (R.start + n) : ''), span: D + 1, left: 'auto', z: 3, fg: n + 1 === rot.start && src === 'import' ? '#1F7D97' : '#1F2D3A' })),
+      { t: t('Snitt per vecka', 'Average a week'), span: 1, left: 'auto', z: 3, fg: '#1F2D3A' }];
+    const head2 = [{ t: t('Schemarad', 'Schedule line'), left: '0', z: 4, jc: 'flex-start', br: '1px solid #D3DDEA' },
+      ...weeks.flatMap(() => [...DSH.slice(0, D).map(d => ({ t: d, left: 'auto', z: 3, jc: 'center', br: '1px solid #EEF3F6' })), { t: 'h', left: 'auto', z: 3, jc: 'center', br: '1px solid #D3DDEA' }]),
+      { t: t('i schemat · arbetat', 'scheduled · worked'), left: 'auto', z: 3, jc: 'center', br: '0' }];
+    const rows = rot.lines.map((l, i) => {
+      const c = chk.lines[i], bad = c.issues.filter(x => x.rule !== 'breaks'), rest = new Set(c.issues.filter(x => x.rule === 'rest').map(x => (x.week - 1) + '-' + x.day));
+      const two = new Set(c.issues.filter(x => x.rule === 'breaks' && x.need > 1).map(x => (x.week - 1) + '-' + x.day));
+      const cells = weeks.flatMap(n => [...[...Array(D).keys()].map(d => {
+        const x = l.cells[n][d], f = flagAt[l.row + '-' + n + '-' + d], k = n + '-' + d;
+        const tip = [x && md(x.from) + '–' + md(x.to) + ' (' + H(x.to - x.from) + ')', f && f.note && t('Cell ', 'Cell ') + f.cell + ': "' + f.raw + '". ' + f.note, rest.has(k) && t('För kort vila efter den här dagen.', 'Too little rest after this day.'), two.has(k) && t('Behöver två raster.', 'Needs two breaks.')].filter(Boolean).join(' ');
+        const go = src === 'ours' && d < 5 ? () => this.props.onGo && this.props.onGo(R.start + n, d) : null;
+        return { t: x ? md(x.from) + '–' + md(x.to) : f ? f.raw : '', tip, go, cur: go ? 'pointer' : 'default', br: d === D - 1 ? '0' : '1px solid #EEF3F6', font: "500 12px 'IBM Plex Mono',monospace",
+          bg: f && !x ? '#FFDAD8' : f ? '#FFE3B8' : rest.has(k) ? '#FFDAD8' : x ? '#EAF6F8' : '#fff', fg: f && !x ? '#8E2A27' : '#1F2D3A', ring: two.has(k) ? 'inset 0 -3px #E0A93B' : 'none' };
+      }), { t: H(c.span[n]).replace(' h', ''), tip: t('Vecka ', 'Week ') + (n + 1) + ': ' + H(c.span[n]) + t(' i schemat, ', ' scheduled, ') + H(c.work[n]) + t(' arbetat', ' worked'), go: null, cur: 'default', br: '1px solid #D3DDEA', font: "600 12px 'IBM Plex Sans',sans-serif", bg: '#F7FAFB', fg: '#3C4B5A', ring: 'none' }]);
+      cells.push({ t: H(c.avgSpan) + ' · ' + H(c.avgWork), tip: '', go: null, cur: 'default', br: '0', font: "600 12px 'IBM Plex Sans',sans-serif", bg: bad.some(x => x.rule === 'avg') ? '#FFDAD8' : '#fff', fg: bad.some(x => x.rule === 'avg') ? '#8E2A27' : '#1F2D3A', ring: 'none' });
+      const sub = [l.name, src === 'import' ? (l.unit || (l.extra ? t('Extra', 'Extra') : t('ingen avdelning', 'no unit'))) : ''].filter(Boolean).join(' · ');
+      return { label: l.label, sub, hasSub: !!sub, cells, tip: bad.map(x => x.text).join('\n'), bg: '#fff', edge: bad.length ? '#C2413D' : (rot.flags || []).some(f => f.row === l.row && f.kind === 'noUnit') ? '#E0A93B' : 'transparent' };
+    });
+    // The rule check, per rule.
+    const byRule = k => chk.lines.flatMap(l => l.issues.filter(x => x.rule === k).map(x => ({ ...x, line: l.label })));
+    const avg = byRule('avg'), rest = byRule('rest'), brk = byRule('breaks'), n = chk.lines.length;
+    const checks = [
+      { title: t('Arbetstid i snitt över rotationen', 'Hours worked, averaged over the rotation') + (chk.rules.avg ? ' (' + chk.rules.avg.code + ')' : ''), ok: !avg.length,
+        sum: avg.length ? t(avg.length + ' av ' + n + ' schemarader är över gränsen', avg.length + ' of ' + n + ' schedule lines are over the limit') : t('Alla ' + n + ' schemarader håller sig inom ' + H((chk.rules.avg || { h: 40 }).h * 60) + ' i snitt', 'All ' + n + ' schedule lines stay within ' + H((chk.rules.avg || { h: 40 }).h * 60) + ' on average'),
+        items: avg.map(x => ({ t: x.line + ': ' + x.text })) },
+      { title: t('Dygnsvila', 'Daily rest') + (chk.rules.rest ? ' (' + chk.rules.rest.code + ', ' + chk.rules.rest.h + ' h)' : ''), ok: !rest.length,
+        sum: rest.length ? t(rest.length + ' gånger för kort vila', rest.length + ' times too little rest') : t('Minst ' + (chk.rules.rest || { h: 11 }).h + ' h vila mellan alla arbetsdagar, också från sista veckan till första', 'At least ' + (chk.rules.rest || { h: 11 }).h + ' h rest between all working days, also from the last week back to the first'),
+        items: rest.map(x => ({ t: x.line + ': ' + x.text })) },
+      { title: t('Raster', 'Breaks') + (chk.rules.cont ? ' (' + chk.rules.cont.code + ', ' + t('högst ', 'at most ') + chk.rules.cont.h + ' h ' + t('utan rast', 'without a break') + ')' : ''), ok: null,
+        sum: t(brk.length + ' pass behöver rast, varav ' + brk.filter(x => x.need > 1).length + ' behöver två. Kan inte kontrolleras: exporten har en tid per dag och visar inte rasterna.', brk.length + ' shifts need a break, of which ' + brk.filter(x => x.need > 1).length + ' need two. Cannot be checked: the export has one range per day and does not show breaks.'),
+        items: brk.filter(x => x.need > 1).slice(0, 8).map(x => ({ t: x.line + ': ' + x.text })) },
+    ].map(k => ({ ...k, mark: k.ok === null ? '?' : k.ok ? '✓' : '!', dotBg: k.ok === null ? '#8796A5' : k.ok ? '#2D7A38' : '#C2413D' }));
+    const download = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); };
+    const failed = e => say(e.message === 'unreachable' ? t('Servern svarar inte. Excel-filer läses och skrivs av demons server på den här datorn; starta demon med start.py.', "The server does not answer. Excel files are read and written by the demo's server on this computer; start the demo with start.py.") : e.message, true);
+    const last = Math.min(mod.W1, R.start + R.n - 1), canRepeat = R.start + R.n <= mod.W1;
+    const setR = fn => ctl.touch(st => { st.rotation = { ...R }; fn(st.rotation); st.rotation.start = Math.max(mod.W0, Math.min(mod.W1 - st.rotation.n + 1, st.rotation.start)); });
+    const msg = this.state.msg;
+    return {
+      legend: [{ bg: '#EAF6F8', sh: 'none', t: t('Arbetsdag', 'Working day') }, { bg: '#EAF6F8', sh: 'inset 0 -3px #E0A93B', t: t('Behöver två raster (över 10,5 h)', 'Needs two breaks (over 10.5 h)') },
+        { bg: '#FFE3B8', sh: 'none', t: t('Tiden är tolkad, kontrollera', 'Time was guessed, check it') }, { bg: '#FFDAD8', sh: 'none', t: t('Kunde inte läsas, eller för kort vila efter', 'Could not be read, or too little rest after') },
+        { bg: '#fff', sh: 'inset 3px 0 #C2413D', t: t('Schemaraden bryter mot en regel', 'The line breaks a rule') }],
+      ready: true, close: () => this.props.onClose && this.props.onClose(), cols: '210px ' + weeks.map(() => '92px '.repeat(D) + '48px').join(' ') + ' 150px',
+      isOurs: src === 'ours', isImport: src === 'import', head1, head2, rows, checks,
+      srcOpts: [seg(src === 'ours', t('Vårt schema', 'Our schedule'), () => this.setState({ src: 'ours', msg: null })), ...(imp ? [seg(src === 'import', t('Importerat: ', 'Imported: ') + imp.name, () => this.setState({ src: 'import', msg: null }))] : [])],
+      steppers: [{ label: t('Rotation', 'Rotation'), val: R.n + t(' veckor', ' weeks'), dec: () => setR(r => { r.n = Math.max(1, r.n - 1); }), inc: () => setR(r => { r.n = Math.min(8, r.n + 1); }) },
+        { label: t('Börjar', 'Starts'), val: t('v.', 'w.') + R.start, dec: () => setR(r => { r.start--; }), inc: () => setR(r => { r.start++; }) }],
+      repeatTxt: canRepeat ? t('Upprepa till vecka ', 'Repeat to week ') + mod.W1 : t('Upprepa', 'Repeat'), repeatOp: canRepeat ? 1 : .45,
+      repeatTip: canRepeat ? t('Vecka ' + (R.start + R.n) + '–' + mod.W1 + ' får samma pass som rotationen v.' + R.start + '–' + last + '. Det som finns där nu ersätts. Går att ångra.', 'Weeks ' + (R.start + R.n) + '–' + mod.W1 + ' get the same shifts as the rotation w.' + R.start + '–' + last + '. What is there now is replaced. Can be undone.') : t('Rotationen räcker redan till sista veckan.', 'The rotation already reaches the last week.'),
+      repeat: () => { if (!canRepeat) return; let to = []; ctl.store.set(st => { to = mod.repeatRotation(st, R.start, R.n); }); say(t('Vecka ' + to[0] + '–' + to[to.length - 1] + ' har fått samma pass som rotationen. Ångra för att ta bort det.', 'Weeks ' + to[0] + '–' + to[to.length - 1] + ' now have the rotation’s shifts. Undo to remove them.'), false); },
+      exportTxt: src === 'import' ? t('Exportera igen (.xlsx)', 'Export again (.xlsx)') : t('Exportera till Medvind (.xlsx)', 'Export to Medvind (.xlsx)'),
+      doExport: () => mod.medvindWrite(rot).then(b => { download(b, src === 'import' ? imp.name.replace(/\.xlsx$/i, '') + '-rattad.xlsx' : 'grundschema-v' + R.start + '-' + last + '.xlsx'); say(src === 'import' ? t('Filen är sparad med samma layout. Tider skrivs som 06.00-13.00; tolkade celler är markerade i gult.', 'Saved in the same layout. Times are written as 06.00-13.00; guessed cells are marked yellow.') : t('Filen är sparad i Medvinds layout: en schemarad per person, en tid per dag (första start till sista slut), vecka 1 = v.' + R.start + ' är startvecka.', "Saved in Medvind's layout: one schedule line per person, one range per day (first start to last end), week 1 = w." + R.start + ' is the start week.'), false); }).catch(failed),
+      onFile: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+        mod.medvindRead(f).then(rot => { ctl.touch(st => { st.medvindImport = { name: f.name, at: Date.now(), rotation: rot }; }); this.setState({ src: 'import' });
+          const g = rot.flags.filter(x => x.kind === 'guessed').length, u = rot.flags.filter(x => x.kind === 'unread').length, nu = rot.flags.filter(x => x.kind === 'noUnit').length;
+          say(t('Läste ' + rot.lines.length + ' schemarader i ' + rot.weeks + ' veckor (startvecka ' + rot.start + ').', 'Read ' + rot.lines.length + ' schedule lines over ' + rot.weeks + ' weeks (start week ' + rot.start + ').') + ' '
+            + (g + u + nu ? t('Kontrollera: ', 'Check: ') + [g && t(g + ' tider är tolkade (gula)', g + ' times were guessed (yellow)'), u && t(u + ' celler gick inte att läsa (röda) och är inte med', u + ' cells could not be read (red) and are left out'), nu && t(nu + ' schemarad saknar avdelning', nu + ' line has no unit')].filter(Boolean).join(', ') + '. ' + rot.flags.map(x => x.cell + ' "' + x.raw + '"').join(', ') + '.' : t('Alla celler gick att läsa.', 'Every cell could be read.')), g + u > 0); }).catch(failed); },
+      importInfo: imp ? t(imp.rotation.weeks + ' veckor, startvecka ' + imp.rotation.start + ', ' + imp.rotation.lines.length + ' schemarader. Finns bara i den här webbläsaren.', imp.rotation.weeks + ' weeks, start week ' + imp.rotation.start + ', ' + imp.rotation.lines.length + ' schedule lines. Kept only in this browser.') : '',
+      dropImport: () => { ctl.touch(st => { delete st.medvindImport; }); this.setState({ src: 'ours', msg: null }); },
+      hasMsg: !!msg, msg: msg ? msg.text : '', msgFg: msg && msg.bad ? '#6B3A0C' : '#24502A', msgBg: msg && msg.bad ? '#FFF1CF' : '#E7F4E4',
+      tx: { back: t('Tillbaka till schemat', 'Back to the schedule'), title: t('Schemarader', 'Schedule lines'),
+        sub: t('Schemat så som Medvind visar ett grundschema: en rad per schemarad, en tid per dag, i en rotation som upprepas. Raster och planering syns inte här, bara när dagen börjar och slutar. Klicka på en dag i vårt schema för att öppna den.', 'The schedule the way Medvind shows a base schedule: one row per schedule line, one time a day, in a rotation that repeats. Breaks and planning are not shown here, only when the day starts and ends. Click a day in our schedule to open it.'),
+        import: t('Importera från Medvind…', 'Import from Medvind…'), drop: t('Ta bort importen', 'Remove the import'), checkTitle: t('Kontroll mot reglerna', 'Check against the rules'),
+        assume: t('Arbetad tid = tiden i schemat minus rasterna, som är obetalda: ' + chk.breakMin + ' min för varje påbörjad period över ' + H(chk.runMax) + ' (en rast på en vanlig dag, två på dagar över ' + H(2 * chk.runMax + chk.breakMin) + '). Reglerna och deras värden kommer från Inställningar › Regler.', 'Worked time = the time in the schedule less the breaks, which are unpaid: ' + chk.breakMin + ' min for each stretch over ' + H(chk.runMax) + ' (one break on an ordinary day, two on days over ' + H(2 * chk.runMax + chk.breakMin) + '). The rules and their values come from Settings › Rules.') },
+    };
+  }
+}
+</script>
+</body>
+</html>

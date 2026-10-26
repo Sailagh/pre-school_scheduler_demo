@@ -4,3 +4,7 @@ __pycache__/
 .venv/
 .env
 .wrangler/
+
+# Real data from the municipality: never committed
+private/
+bench/results/solutions/

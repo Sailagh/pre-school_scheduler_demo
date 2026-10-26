@@ -1,0 +1,241 @@
+// Browser test of the planner: empty week, Make schedule form, report, undo, demo, dates, Swedish.
+// Needs the demo running (start.py on :8000 with BASE=http://localhost:8000, or cd web && npx http-server -p 5173) and Playwright.
+// The solver should NOT be running: the test uses the saved schedule.     Run: node tests/e2e.cjs
+const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
+const assert = require('node:assert/strict');
+const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc.html?solver=http://localhost:1';
+
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1440, height: 900 } }), errs = [];
+  p.on('pageerror', e => errs.push(e.message));
+  const body = () => p.innerText('body'), btn = (name, exact) => p.getByRole('button', { name, exact });
+  const step = async (name, fn) => { try { await fn(); console.log('ok  ', name); } catch (e) { console.log('FAIL', name, '\n     ', e.message.split('\n')[0]); process.exitCode = 1; } };
+  await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.goto(URL); await p.waitForTimeout(3000);
+
+  await step('an empty week shows the three choices', async () => {
+    assert.match(await body(), /Week 42 has no schedule yet/);
+    assert.equal(await btn(/Copy week 41/).count(), 0, 'no copy when last week is empty');
+  });
+  await step('an empty week has no warnings', async () => {
+    assert.match(await body(), /Things to check\s*0/);
+  });
+  await step('a public holiday closes the preschool with one click', async () => {
+    for (let i = 0; i < 10; i++) await btn('›').click();
+    await btn('Make schedule', true).click(); await btn(/The preschool is closed/).click();
+    await btn(/Christmas Day \(Fri w\.52\)/).click(); await p.waitForTimeout(200);
+    assert.match(await body(), /Week 52 · Friday – Christmas Day: the preschool is closed all day/);
+    await btn(/The preschool is closed/).click(); await p.waitForTimeout(200);
+    assert.equal(await btn(/Christmas Day \(Fri/).count(), 0, 'not offered twice');
+    await btn('Cancel', true).click(); await btn('Close', true).click();
+    await btn(/^Friday/).click(); await p.waitForTimeout(200);
+    assert.match(await body(), /★ Christmas Day: the preschool is closed all day/);
+    await btn(/^Tuesday/).click();
+    for (let i = 0; i < 10; i++) await btn('‹').click();
+  });
+  await step('dates are real dates', async () => {
+    assert.match(await body(), /12–16 Oct 2026/);
+    for (let i = 0; i < 3; i++) await btn('›').click();
+    assert.match(await body(), /2–6 Nov 2026/);
+    for (let i = 0; i < 7; i++) await btn('›').click();
+    assert.match(await body(), /21–25 Dec 2026/);
+    for (let i = 0; i < 10; i++) await btn('‹').click();
+  });
+  await step('Draw it myself hides the card for that week only', async () => {
+    await btn('Draw it myself').click(); await p.waitForTimeout(300);
+    assert.doesNotMatch(await body(), /has no schedule yet/);
+    await btn('›').click(); await p.waitForTimeout(300);
+    assert.match(await body(), /Week 43 has no schedule yet/);
+    await btn('‹').click();
+  });
+  await step('a special day can be added and removed', async () => {
+    await btn('Make schedule', true).click();
+    await btn(/Staff hope to finish early/).click();
+    await btn('Add', true).click(); await p.waitForTimeout(200);
+    assert.doesNotMatch(await body(), /Week 42 · /, 'Add does nothing until a day is picked');
+    await btn('Tue', true).click(); await btn('Add', true).click(); await p.waitForTimeout(200);
+    assert.match(await body(), /Week 42 · Tuesday – staff hope to finish by 17:00/);
+    await p.locator('button[title="×"]').first().click(); await p.waitForTimeout(200);
+    assert.doesNotMatch(await body(), /Week 42 · Tuesday/);
+  });
+  await step('without the solver, the saved schedule is used and the report says so', async () => {
+    await btn('2 weeks').click(); await btn(/Make schedule for weeks 42–43/).click();
+    await p.waitForFunction(() => /This is how it turned out/.test(document.body.innerText), null, { timeout: 30000 });
+    const t = await body();
+    assert.match(t, /solver was not running/); assert.match(t, /WEEK 42/); assert.match(t, /WEEK 43/);
+    assert.match(t, /Enough adults with the children all day, every day/);
+  });
+  await step('the schedule has no warnings and can be undone in one step', async () => {
+    await btn('Good, close').click(); await p.waitForTimeout(300);
+    assert.match(await body(), /Things to check\s*0/);
+    await btn(/Undo/).first().click(); await p.waitForTimeout(300);
+    assert.match(await body(), /Week 42 has no schedule yet|0 h \/ 612 h/);
+    await btn(/Redo/).first().click(); await p.waitForTimeout(300);
+  });
+  await step('a break can be dragged anywhere in the day; other blocks stay put', async () => {
+    const day = () => p.evaluate(() => JSON.parse(localStorage.getItem('schema-demo-v5')).s.shifts.filter(x => x.staff === 'p1' && x.week === 42 && x.day === 1).sort((a, b) => a.start - b.start).map(x => [x.type, x.start, x.end]));
+    const before = await day(), brk = before.find(x => x[0] === 'break'), others = before.filter(x => x[0] !== 'contact' && x[0] !== 'break');
+    const el = await p.evaluate(() => { const row = document.querySelector('[data-row="p1"]'); for (const e of row.querySelectorAll('[data-track] > div')) if (getComputedStyle(e).backgroundColor === 'rgb(255, 218, 216)') { const r = e.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; } });
+    await p.mouse.move(el.x, el.y); await p.mouse.down(); for (let i = 1; i <= 20; i++) await p.mouse.move(el.x + i * 12, el.y); await p.mouse.up(); await p.waitForTimeout(300);
+    const after = await day(), moved = after.find(x => x[0] === 'break');
+    assert.ok(moved[1] - brk[1] >= 120, 'the break moved well past its old neighbours: ' + JSON.stringify(after));
+    assert.deepEqual(after.filter(x => x[0] !== 'contact' && x[0] !== 'break'), others, 'planning stays put');
+    const sum = d => d.reduce((a, x) => ({ ...a, [x[0]]: (a[x[0]] || 0) + x[2] - x[1] }), {});
+    assert.deepEqual(sum(after), sum(before)); assert.equal(after[0][1], before[0][1]); assert.equal(after.at(-1)[2], before.at(-1)[2]);
+    await btn(/Undo/).first().click(); await p.waitForTimeout(300);
+    assert.deepEqual(await day(), before, 'undo puts it back');
+  });
+  await step('a week with shifts offers to keep them and fill in around them', async () => {
+    await btn('Make schedule', true).click(); await p.waitForTimeout(200);
+    const t = await body();
+    assert.match(t, /Week 42 already has shifts for 18 people/);
+    assert.match(t, /Keep them and fill in around them/); assert.match(t, /Start over: replace the whole week/);
+    await btn('Close', true).click();
+  });
+  await step('substitute desk: a draft; ask a colleague, publish, deadline, escalate, offers, award', async () => {
+    assert.equal(await btn('Sick cover', true).count(), 0, 'not in the top bar any more');
+    await p.locator('[data-row="p8"]').first().click({ position: { x: 60, y: 20 } }).catch(() => {}); await p.getByText('Ahmed Karimi').first().click(); await p.waitForTimeout(300);
+    await btn(/Mark sick today/).click(); await p.waitForTimeout(400); await btn(/Substitute desk/).click(); await p.waitForTimeout(600);
+    let t = await body();
+    assert.match(t, /Draft/); assert.match(t, /Where adults are missing now/); assert.match(t, /1\. Can you cover some of it inside\?/);
+    assert.match(t, /A substitute is needed 07:15–13:30 \(6\.3 h\) of the shift 06:00–13:30\. The rest \(06:00–07:15\) is already covered by the staff\./);
+    assert.match(t, /could publish straight away/);
+    await btn('Whole shift', true).click(); await p.waitForTimeout(300);
+    assert.match(await body(), /A substitute is needed 06:00–13:30 \(7\.5 h\) – the whole shift\./);
+    await btn('Only where it is short now', true).click(); await p.waitForTimeout(300);
+    const before = await p.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('schema-demo-v5')).s.shifts));
+    await btn('Ask', true).first().click(); await p.waitForTimeout(400);
+    assert.match(await body(), /Asked .* opens|Waiting/, 'the colleague is asked');
+    assert.equal(await p.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('schema-demo-v5')).s.shifts)), before, 'asking does not change the schedule');
+    await btn('Answer yes (demo)', true).first().click(); await p.waitForTimeout(400);
+    assert.match(await body(), /Yes, in the schedule/); assert.match(await body(), /said yes: .*opens/, 'a yes is written into the schedule');
+    await btn(/3\. Publish to substitutes/).click(); await p.waitForTimeout(400);
+    assert.match(await body(), /Published\. Staffing has 0 offers/, 'the principal hands it over');
+    await btn('View as staffing ›', true).click(); await p.waitForTimeout(400);
+    t = await body(); assert.match(t, /Published to /); assert.match(t, /No offers yet/); assert.match(t, /Answers by \d\d:\d\d · \d+ min left/);
+    await btn(/Skip to the deadline/).click(); await p.waitForTimeout(400);
+    assert.match(await body(), /5\. Not covered in time: next step/);
+    await btn(/Send to the municipality's substitute portal/).click(); await p.waitForTimeout(300);
+    assert.match(await body(), /✓ Send to the municipality's substitute portal/); assert.match(await body(), /Next step: Send to/);
+    await btn(/Simulate answers from substitutes/).click(); await p.waitForTimeout(400);
+    t = await body(); assert.match(t, /The chosen offers cover all of|The chosen offers leave/);
+    await btn(/^Award \(\d\)/).click(); await p.waitForTimeout(400);
+    assert.match(await body(), /Awarded/);
+    await btn('Principal', true).click(); await btn(/Substitute desk/).click(); await p.waitForTimeout(300);
+  });
+  await step('Copy last week appears once the week before has a schedule', async () => {
+    for (let i = 0; i < 2; i++) await btn('›').click(); await p.waitForTimeout(300);
+    await btn(/Copy week 43/).click(); await p.waitForTimeout(300);
+    assert.doesNotMatch(await body(), /has no schedule yet/);
+    for (let i = 0; i < 2; i++) await btn('‹').click();
+  });
+  await step("the phone opens on the scheduled week, with today's Sick button", async () => {
+    // Only week 42 is scheduled while the real date is later (as when trying the demo): week 42 plays "this week".
+    await p.evaluate(() => { const j = JSON.parse(localStorage.getItem('schema-demo-v5')); j.s.shifts = j.s.shifts.filter(x => x.week === 42); localStorage.setItem('schema-demo-v5', JSON.stringify(j)); });
+    await p.goto(URL); await p.waitForTimeout(3000);
+    await btn("Staff's phone", true).click(); await p.waitForTimeout(1000);
+    try {
+      assert.equal(await p.getByText('Week 42', { exact: true }).count(), 1, 'opens on week 42, not an empty week');
+      assert.equal(await btn('Sick', true).count(), 1, 'today is not treated as past');
+    } finally { await btn('Close', true).click(); }
+  });
+  await step('the round Me button shows hours for the week and month, and settings that are kept', async () => {
+    await btn("Staff's phone", true).click(); await p.waitForTimeout(800);
+    try {
+      await btn(/Me: overview and settings/).click(); await p.waitForTimeout(400);
+      assert.equal(await p.getByText('October 2026', { exact: true }).count(), 1);
+      assert.equal(await p.getByText(/^\d+(\.\d)? h$/).first().count(), 1, 'the week shows hours');
+      await btn(/Requests to cover a shift/).click(); await p.waitForTimeout(500);
+      const prefs = await p.evaluate(() => JSON.parse(localStorage.getItem('schema-demo-v5')).s.phonePrefs);
+      assert.equal(prefs.p1.offers, false);
+    } finally { await btn('Close', true).click(); }
+  });
+  await step('children can come from counted Edlevo bookings; raw data with child ids is refused', async () => {
+    await btn(/Settings/).first().click(); await p.waitForTimeout(400); await btn('Children and units', true).click(); await p.waitForTimeout(300);
+    await btn('From Edlevo (counted)', true).click(); await p.waitForTimeout(800);
+    let t = await body();
+    assert.match(t, /Avd 2: 18 children with bookings/); assert.match(t, /must run inside the municipality/);
+    await p.setInputFiles('input[type=file]', require('path').join(__dirname, '../edlevo/mock/svar-001.xml')); await p.waitForTimeout(400);
+    assert.match(await body(), /has the children's ids \(raw Edlevo data\) and is not used/);
+    await btn(/Back to the schedule/).click(); await p.waitForTimeout(400);
+    assert.equal(await p.getByText('Edlevo', { exact: true }).count(), 1, 'the Children row says the numbers come from Edlevo');
+  });
+  await step('schedule lines: our schedule as a rotation, export to Medvind, import a Medvind file with flagged cells', async () => {
+    await p.goto(URL.replace(/\?solver=.*$/, '')); await p.waitForTimeout(2500);  // Excel goes through the demo's own server
+    await btn(/Schedule lines/).click(); await p.waitForTimeout(800);
+    assert.match(await body(), /1, Avd 1/); assert.match(await body(), /Week 1 · w\.\d+/);
+    const [dl] = await Promise.all([p.waitForEvent('download'), btn(/Export to Medvind/).click()]);
+    assert.match(dl.suggestedFilename(), /^grundschema-v\d+-\d+\.xlsx$/);
+    await p.setInputFiles('input[type=file]', require('path').join(__dirname, '../medvind/exempel-grundschema.xlsx')); await p.waitForTimeout(1500);
+    const t = await body();
+    assert.match(t, /Read 10 schedule lines over 6 weeks \(start week 4\)/); assert.match(t, /G4 "6\.3014\.0", I7 "7\.30-"/);
+    assert.match(t, /Week 4: start week/); assert.match(t, /Check against the rules/);
+    await btn(/Remove the import/).click(); await btn(/Back to the schedule/).click(); await p.waitForTimeout(300);
+  });
+  await step('the guides: the schedule, Settings and the phone', async () => {
+    await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.goto(URL); await p.waitForTimeout(3000);
+    assert.equal(await btn('▶ Demo').count(), 0, 'the demo is no longer in the top bar');
+    for (const [guide, first, last] of [['The schedule', /Make a schedule/, /This guide, guides to Settings and the phone/], ['Settings', /The preschool's name, language/, /The rules the schedule is checked against/], ["Staff's phone", /The week at the top, the chosen day below/, /On the start page, Phone opens the app/]]) {
+      await btn(/Show the guide|Guides and demo/).first().click(); await p.waitForTimeout(200);
+      await p.getByRole('button', { name: new RegExp('^' + guide + '\\s?(The planner|Staff, children|My schedule)') }).click(); await p.waitForTimeout(500);
+      assert.match(await body(), first, guide);
+      assert.doesNotMatch(await body(), /has no schedule yet/, 'the empty-week card steps aside while a guide runs');
+      for (let i = 0; i < 20 && await btn('Next', true).count(); i++) { await btn('Next', true).click(); await p.waitForTimeout(250); }
+      assert.match(await body(), last, guide + ': last step');
+      await btn('Done', true).click(); await p.waitForTimeout(300);
+    }
+  });
+  await step('a sick report step by step: moves on only when you press Next', async () => {
+    await btn(/Show the guide|Guides and demo/).first().click(); await p.waitForTimeout(200);
+    await p.getByRole('button', { name: /^A sick report step by step/ }).click(); await p.waitForTimeout(2500);
+    assert.match(await body(), /Her shift today is \d\d:\d\d–\d\d:\d\d in /);
+    await p.waitForTimeout(2500);
+    assert.match(await body(), /1 \/ 7/, 'waits for Next');
+    await btn('Next', true).click(); await p.waitForTimeout(1500);
+    assert.match(await body(), /To do \(1\)/, 'the free shift shows up as a draft');
+    assert.match(await body(), /A draft at the substitute desk/);
+    await btn('Next', true).click(); await p.waitForTimeout(1500);
+    assert.match(await body(), /The principal asks a colleague/); assert.match(await body(), /The principal asks if you can help/, "the colleague's phone shows the question");
+    for (let i = 0; i < 4; i++) { await btn('Next', true).click(); await p.waitForTimeout(1500); }
+    assert.match(await body(), /7 \/ 7/); assert.match(await body(), /Awarded/); await btn('Done', true).click();
+  });
+  await step('on the phone, a sick report can start at a given time; the time before stays worked', async () => {
+    await btn("Staff's phone", true).click(); await p.waitForTimeout(1000);
+    try {
+      await p.locator('select:has(option[value="p2"])').first().selectOption('p2'); await p.waitForTimeout(800);
+      await btn('Sick', true).click(); await p.waitForTimeout(300);
+      await btn('From a time', true).click(); await p.waitForTimeout(200);
+      assert.match(await body(), /Sick from/); assert.match(await body(), /The time before counts as worked/);
+      await p.getByRole('button', { name: 'Report sick', exact: true }).click(); await p.waitForTimeout(400);
+    } finally { await btn('Close', true).click(); }
+    await btn(/Substitute desk/).click(); await p.waitForTimeout(600);
+    await btn('Principal', true).click(); await p.waitForTimeout(300);
+    if (!/sick from \d\d:\d\d/.test(await body())) { await p.getByText(/Erik Johansson sick/).first().click(); await p.waitForTimeout(400); }
+    assert.match(await body(), /\(sick from \d\d:\d\d, the time before counts as worked\)/);
+    await btn(/Substitute desk/).click();
+  });
+  await step('export: the week shown, or a range of weeks you choose', async () => {
+    await btn(/Settings/).first().click(); await p.waitForTimeout(500);
+    try {
+      await btn('Import and export', true).click(); await p.waitForTimeout(300);
+      assert.equal(await btn(/^This week \(w\.\d+\)$/).count(), 1);
+      await btn('Export', true).click(); await p.waitForTimeout(200);
+      assert.match(await body(), /schema-v\d+\.xlsx is ready/);
+      await btn('Choose weeks', true).click(); await p.waitForTimeout(200);
+      assert.match(await body(), /4 weeks, w\.(\d+)–\d+/);
+      const from = +(await body()).match(/4 weeks, w\.(\d+)/)[1];
+      await btn('+', true).first().click();  // From week's + await p.waitForTimeout(200);
+      assert.match(await body(), new RegExp('3 weeks, w\\.' + (from + 1) + '–' + (from + 3)));
+      await btn('Export', true).click(); await p.waitForTimeout(200);
+      assert.match(await body(), new RegExp('schema-v' + (from + 1) + '-' + (from + 3) + '\\.xlsx is ready'));
+    } finally { await btn(/Back to the schedule/).click(); await p.waitForTimeout(300); }
+  });
+  await step('Swedish', async () => {
+    await btn('SV', true).click(); await btn('Skapa schema', true).click(); await p.waitForTimeout(300);
+    const t = await body();
+    assert.match(t, /Vilka veckor\?/); assert.match(t, /eller upp till 2 timmar till om nästa vecka är lika mycket kortare/);
+    await p.reload(); await p.waitForTimeout(2500);
+    assert.match(await body(), /Förskolans schema/, 'Swedish is kept after a reload');
+  });
+  assert.deepEqual(errs, []);
+  await b.close();
+})();
