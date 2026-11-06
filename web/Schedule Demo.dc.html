@@ -15,7 +15,7 @@
 <template id="__bundler_thumbnail" data-bg-color="#EEF4F7"><svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect x="300" y="250" width="600" height="300" rx="24" fill="#fff"/><rect x="360" y="310" width="260" height="50" rx="10" fill="#BFE6EF"/><rect x="460" y="380" width="300" height="50" rx="10" fill="#F6C9D6"/><rect x="400" y="450" width="220" height="50" rx="10" fill="#F5E3A1"/></svg></template>
 <x-dc>
 <helmet><link href="vendor/fonts/plex.css" rel="stylesheet"><style>body{margin:0}a{color:#1F7D97}a:hover{color:#16627A}@media print{[data-ghost]{display:none!important}}</style></helmet>
-<div data-root="1" ref="{{ rootRef }}" style="position:relative;width:1440px;font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#fff;user-select:none;-webkit-user-select:none;border:1px solid #D3DDEA;box-sizing:border-box;transform-origin:0 0">
+<div data-root="1" ref="{{ rootRef }}" style="position:relative;width:{{ rootW }};font-family:'IBM Plex Sans',system-ui,sans-serif;color:#1F2D3A;background:#fff;user-select:none;-webkit-user-select:none;border:1px solid #D3DDEA;box-sizing:border-box;transform-origin:0 0">
 <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
   <div style="display:flex;align-items:center;gap:8px;padding:12px 20px;background:#fff;border-bottom:1px solid #D3DDEA">
     <div style="font-weight:600;font-size:16px;white-space:nowrap">{{ L.app }}</div>
@@ -383,7 +383,7 @@
     </div>
   </sc-if>
   <sc-if value="{{ gDone }}">
-    <div style="position:absolute;top:57px;right:0;bottom:0;width:600px;z-index:30;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
+    <div style="position:absolute;top:57px;right:84px;bottom:0;width:600px;z-index:30;background:#fff;border-left:1px solid #D3DDEA;box-shadow:-16px 0 40px rgba(15,30,45,.12);display:flex;flex-direction:column">
       <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 24px 14px;border-bottom:1px solid #E3EAF0">
         <div style="flex:1"><div style="font-size:20px;font-weight:600">{{ genTitle }}</div><div style="font-size:14px;line-height:1.5;color:#5A6B7A;margin-top:2px">{{ gDoneSub }}</div></div>
         <button onClick="{{ genClose }}" title="{{ genCloseTxt }}" aria-label="{{ genCloseTxt }}" style="border:0;background:#EEF3F6;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;color:#3C4B5A;flex:none">×</button>
@@ -584,6 +584,8 @@ class Component extends DCLogic {
     selRing: '0 0 0 2px #1F2D3A', warnRing: '0 0 0 2px #D9534F', w_rule: '#C2413D', w_cover: '#C2413D', w_staffing: '#D9A23A', w_role: '#1F7D97',
   };
   rootRef = React.createRef();
+  // Inside a page (?embed, e.g. a 1180 × 820 tablet screen) the canvas is narrower, so it fills a 1.44 : 1 frame.
+  rootW = typeof location !== 'undefined' && /(^|&)embed(=|&|$)/.test((location.search || '').slice(1)) ? '1260px' : '1440px';
   // Guides: each step points at parts of the page (data-guide) and can open a panel first (set) or tell the phone
   // what to show (cmd). Settings and the phone are separate pages, so their steps point at the whole panel.
   GUIDES = {
@@ -939,7 +941,7 @@ class Component extends DCLogic {
       { head: t('Om allt inte går ihop', 'If not everything fits'), lines: [t('1. Tillräckligt många vuxna med barnen på varje avdelning, och en utbildad vuxen för barn i behov av särskilt stöd. Personal kan hjälpa till på en annan avdelning när det behövs.', '1. Enough adults with the children in every unit, and a trained adult for children who need special support. Staff can help in another unit when needed.'), t('2. Allas avtalade timmar. Över veckogränsen bara om barnen behöver det, eftersom det tröttar.', "2. Everyone's contract hours. Over the weekly limit only if the children need it, because it is tiring."), t('3. Önskemål som att sluta tidigt.', '3. Wishes such as finishing early.'), t('4. Planeringstid.', '4. Planning time.'), t('Det som inte går visas efteråt, med förklaring.', 'Anything that does not fit is shown afterwards, with the reason.')], link: '', go: null },
     ].map(x => ({ ...x, lines: x.lines.map(t => ({ t })), hasLink: !!x.go }));
     const secs = n * 40;
-    out.gRunTxt = t('Skapa schema för ', 'Make schedule for ') + rangeTxt; out.gRunNote = t('Tar ungefär ' + (secs < 60 ? secs + ' sekunder' : Math.round(secs / 60) + ' minuter') + ', längre på en långsammare dator.', 'Takes about ' + (secs < 60 ? secs + ' seconds' : Math.round(secs / 60) + ' minutes') + ', longer on a slower computer.');
+    out.gRunTxt = t('Skapa schema för ', 'Make schedule for ') + rangeTxt; out.gRunNote = mod.DEMO ? t('Webbdemo: lösaren körs inte här. Det ser ut som att den arbetar en stund, sedan läggs ett schema in som OR-Tools gjort tidigare för samma personal och barn. I den fullständiga versionen tar det ungefär ' + (secs < 60 ? secs + ' sekunder' : Math.round(secs / 60) + ' minuter') + ' på den egna datorn.', 'Web demo: the solver does not run here. It looks busy for a moment, then a schedule OR-Tools made earlier for the same staff and children is put in. In the full version this takes about ' + (secs < 60 ? secs + ' seconds' : Math.round(secs / 60) + ' minutes') + ' on your own computer.') : t('Tar ungefär ' + (secs < 60 ? secs + ' sekunder' : Math.round(secs / 60) + ' minuter') + ', längre på en långsammare dator.', 'Takes about ' + (secs < 60 ? secs + ' seconds' : Math.round(secs / 60) + ' minutes') + ', longer on a slower computer.');
     out.gRun = async () => {
       if (G.add) return;
       this.setState({ gen: { ...G, running: { i: 0, n, w } } });
@@ -956,7 +958,7 @@ class Component extends DCLogic {
         : t('OR-Tools hann inte bli klar' + errTxt + '. Försök igen – det brukar gå andra gången. Händer det igen, titta vad det svarta fönstret skriver.', 'OR-Tools could not finish' + errTxt + '. Try again – it usually works the second time. If it happens again, look at what the black window says.');
       out.gFailed = !!R.failed; out.gFailedTxt = t('Inget schema gjordes för vecka ' + wks + '. ', 'No schedule was made for ' + (miss.length > 1 ? 'weeks ' : 'week ') + wks + '. ') + why;
       out.gMissing = !R.failed && !!miss.length; out.gMissingTxt = t('Vecka ' + wks + ' kunde inte göras. ', (miss.length > 1 ? 'Weeks ' : 'Week ') + wks + ' could not be made. ') + why;
-      out.gSaved = !!R.saved; out.gSavedTxt = t('Lösaren var inte igång, så schemat hämtades från ett som gjorts tidigare för demodata. Det du lagt till under 2 är inte med.', 'The solver was not running, so the schedule was loaded from one made earlier for the demo data. What you added under 2 is not included.');
+      out.gSaved = !!R.saved; out.gSavedTxt = mod.DEMO ? t('Webbdemo: schemat gjordes tidigare av OR-Tools för samma personal och barn. Det du lagt till under 2 är inte med. I den fullständiga versionen körs lösaren på den egna datorn och tar hänsyn till allt.', 'Web demo: the schedule was made earlier by OR-Tools for the same staff and children. What you added under 2 is not included. In the full version the solver runs on your own computer and takes everything into account.') : t('Lösaren var inte igång, så schemat hämtades från ett som gjorts tidigare för demodata. Det du lagt till under 2 är inte med.', 'The solver was not running, so the schedule was loaded from one made earlier for the demo data. What you added under 2 is not included.');
       out.gReport = R.failed ? [] : mod.scheduleReport(s, R.weeks, lang, !!R.saved).map(r => ({ head: t('Vecka ', 'Week ') + r.week, items: r.items.map(i => ({ ...i, icon: i.ok ? '✓' : '!', ibg: i.ok ? '#E2F6D4' : '#FFF1CF', ifg: i.ok ? '#2D6A1F' : '#6B5214', more: (i.more || []).map(t => ({ t })) })) }));
       out.gDoneSub = t('Här ser du vad som blev bra och vad som inte gick, och varför. Schemat syns till vänster.', 'Here is what worked and what did not, and why. The schedule is on the left.');
       out.gDoneHead = R.failed ? t('Inget schema', 'No schedule') : t('Klart. Så här blev det:', 'Done. This is how it turned out:');
@@ -969,7 +971,7 @@ class Component extends DCLogic {
     const lang = (!this.props.onLang && this.state.langPicked) ? this.state.lang : (this.props.lang ?? this.state.lang), sv = lang === 'sv';
     const setLang = l => { try { localStorage.setItem('schema-lang', l); } catch (e) {} this.props.onLang ? this.props.onLang(l) : this.setState({ lang: l, langPicked: true }); };
     const on = a => a ? ['#1F2D3A', '#fff'] : ['#fff', '#1F2D3A'];
-    const base = { setEn: () => setLang('en'), setSv: () => setLang('sv'), enBg: on(!sv)[0], enFg: on(!sv)[1], svBg: on(sv)[0], svFg: on(sv)[1] };
+    const base = { rootW: this.rootW, setEn: () => setLang('en'), setSv: () => setLang('sv'), enBg: on(!sv)[0], enFg: on(!sv)[1], svBg: on(sv)[0], svFg: on(sv)[1] };
     if (!this.ctl) return { ready: false, ...base };
     const ctl = this.ctl, fid = this.state.focus;
     if (fid) ctl.ui.focus = fid;

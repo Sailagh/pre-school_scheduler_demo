@@ -8,3 +8,6 @@ __pycache__/
 # Real data from the municipality: never committed
 private/
 bench/results/solutions/
+
+# Built portfolio screen (python portfolio/build.py)
+dist/

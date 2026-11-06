@@ -229,6 +229,27 @@ const URL = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc
       assert.match(await body(), new RegExp('schema-v' + (from + 1) + '-' + (from + 3) + '\\.xlsx is ready'));
     } finally { await btn(/Back to the schedule/).click(); await p.waitForTimeout(300); }
   });
+  await step('web demo (?embed): pretends to run, loads the saved schedule, and shows an example Medvind import', async () => {
+    const E = (process.env.BASE || 'http://localhost:5173') + '/Schedule%20Demo.dc.html?embed';
+    await p.goto(E); await p.evaluate(() => { localStorage.clear(); localStorage.setItem('schema-lang', 'en'); }); await p.goto(E); await p.waitForTimeout(3000);
+    try {
+      assert.equal(await p.evaluate(() => document.querySelector('[data-root]').offsetWidth), 1260, 'a narrower canvas that fills a 1.44 : 1 frame');
+      await btn(/Make a suggestion for me/).click(); await p.waitForTimeout(300);
+      assert.match(await body(), /Web demo: the solver does not run here/);
+      await btn(/Make schedule for/).click(); await p.waitForTimeout(500);
+      assert.match(await body(), /Making week 42/, 'it looks busy for a moment');
+      await p.waitForFunction(() => /This is how it turned out/.test(document.body.innerText), null, { timeout: 30000 });
+      assert.match(await body(), /Web demo: the schedule was made earlier by OR-Tools/);
+      await btn('Good, close').click(); await p.waitForTimeout(300);
+      assert.match(await body(), /Things to check\s*0/);
+      await btn(/Schedule lines/).click(); await p.waitForTimeout(500);
+      await btn('Show an imported example file').click(); await p.waitForTimeout(500);
+      assert.match(await body(), /An invented example of a Medvind export/); assert.match(await body(), /G4 "6\.3014\.0"/);
+      await btn(/Export again/).click(); await p.waitForTimeout(300);
+      assert.match(await body(), /Not in the web demo/);
+      await btn(/Back to the schedule/).first().click();
+    } finally { await p.goto(URL); await p.waitForTimeout(2500); }
+  });
   await step('Swedish', async () => {
     await btn('SV', true).click(); await btn('Skapa schema', true).click(); await p.waitForTimeout(300);
     const t = await body();

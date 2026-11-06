@@ -312,6 +312,9 @@ export const daysLabel = (days, lang) => days.length === 5 ? (lang === 'sv' ? 'h
 // The solver (solver/ in the repo) gets one self-contained problem per week and returns shifts and opener/closer roles.
 const SOLVER_SLOT = 15;
 // Where the solver runs: the server the page came from (solver/server.py serves both), or ?solver=https://… in the page URL.
+// The web demo (?embed or ?demo, e.g. inside a portfolio page): no solver and no server. Making a schedule only
+// pretends to run and loads one OR-Tools made earlier for the same data; Medvind files are not read or written.
+export const DEMO = typeof location !== 'undefined' && /(^|&)(embed|demo)(=|&|$)/.test((location.search || '').slice(1));
 const SOLVER_URL = ((typeof location !== 'undefined' && (new URLSearchParams(location.search).get('solver') || (/^https?:$/.test(location.protocol) && location.origin))) || 'http://localhost:8000').replace(/\/$/, '');
 export const checkWeek = (s, w, lang = 'en') => derive({ ...s, week: w }, T[lang] || T.en, lang).warns;
 // With `keep`, people who already have shifts in a week keep them (the principal scheduled them by hand):
@@ -428,7 +431,7 @@ export function scheduleReport(s, weeks, lang, saved = false) {
     if (helped.length) items.push({ ok: true, text: sv ? 'Hjälper till på en annan avdelning än sin egen, så att alla avdelningar har tillräckligt med vuxna:' : 'Help in another unit than their own, so every unit has enough adults:', more: helped });
     if (lessPlan.length) items.push({ ok: false, text: sv ? 'Mindre planeringstid än vanligt, eftersom barnen behövde de vuxna:' : 'Less planning time than usual, because the children needed the adults:', more: lessPlan });
     for (const x of (s.special || []).filter(x => x.week === w)) {
-      if (saved) { items.push({ ok: false, text: cap(daysLabel(x.days, lang)) + ': ' + specialLabel(x, lang) + (sv ? ' – inte med, eftersom lösaren inte var igång.' : ' – not included, because the solver was not running.') }); continue; }
+      if (saved) { items.push({ ok: false, text: cap(daysLabel(x.days, lang)) + ': ' + specialLabel(x, lang) + (DEMO ? (sv ? ' – inte med, eftersom webbdemon använder ett schema som gjorts tidigare.' : ' – not included, because the web demo uses a schedule made earlier.') : (sv ? ' – inte med, eftersom lösaren inte var igång.' : ' – not included, because the solver was not running.')) }); continue; }
       if (x.kind !== 'finishBy') { items.push({ ok: true, text: cap(daysLabel(x.days, lang)) + ': ' + specialLabel(x, lang) + (sv ? ' – med i schemat.' : ' – included.') }); continue; }
       for (const d of x.days) {
         const late = STAFF.filter(p => s.shifts.some(z => z.staff === p.id && z.week === w && z.day === d && z.end > x.time));
@@ -1289,7 +1292,12 @@ export function controller(comp) {
   const generate = async (weeks, onProgress, { keep = false } = {}) => {
     const done = [], missing = [], errors = []; let saved = false, unreachable = false;
     store.begin();
-    for (let i = 0; i < weeks.length; i++) {
+    if (DEMO) {
+      const ms = Math.max(900, Math.min(2500, 10000 / weeks.length));
+      for (let i = 0; i < weeks.length; i++) { onProgress && onProgress(i, weeks.length, weeks[i]); await new Promise(r => setTimeout(r, ms)); }
+      saved = true;
+    }
+    for (let i = 0; i < weeks.length && !DEMO; i++) {
       onProgress && onProgress(i, weeks.length, weeks[i]);
       let sol = null, reached = false;
       try {
@@ -1312,7 +1320,7 @@ export function controller(comp) {
     } catch (e) {}
     if (!done.length) { store.cancel(); return { done, missing: weeks, errors, unreachable, saved: false }; }
     up({ sel: null }); store.commit();
-    return { done, saved, missing, errors, unreachable };
+    return { done, saved, missing, errors, unreachable, demo: DEMO };
   };
   return { store, ui, view, up, touch, resetDemo, generate };
 }
@@ -1375,10 +1383,13 @@ export function checkRotation(rot, s, lang = 'sv') {
 }
 // Reading and writing Medvind's Excel file goes through the local server (solver/server.py, medvind/medvind.py).
 const medvindCall = async (path, body, json) => {
+  if (DEMO) throw new Error('demo');
   let r; try { r = await fetch(SOLVER_URL + path, { method: 'POST', headers: { 'Content-Type': json ? 'application/json' : 'application/octet-stream' }, body }); }
   catch (e) { throw new Error('unreachable'); }
   if (!r.ok) { let m = ''; try { m = (await r.json()).error; } catch (e) {} throw new Error(m || 'HTTP ' + r.status); }
   return r;
 };
 export const medvindRead = async file => (await medvindCall('/medvind/read', await file.arrayBuffer())).json();
+// The web demo shows an invented example export, read earlier by medvind.py (medvind/exempel-grundschema.xlsx).
+export const medvindExample = async () => (await fetch(new URL('medvind-example.json', import.meta.url))).json();
 export const medvindWrite = async rot => (await medvindCall('/medvind/write', JSON.stringify(rot), true)).blob();

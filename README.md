@@ -79,6 +79,12 @@ The number of children per unit every 15 minutes can come from booked times in E
 
 **▦ Schemarader** (next to the weekdays) shows the schedule the way Medvind shows a base schedule: one row per schedule line, one time range per day, in a rotation of N weeks that can be repeated over the following weeks. It reads and writes Medvind's Excel export, tolerating hand-typed times and flagging cells it cannot read, and checks the rotation against the rules. See [medvind/README.md](medvind/README.md).
 
+## Web demo (no server)
+
+`Schedule Demo.dc.html?embed` runs the planner as a web demo, for example inside a portfolio page: no solver and no server. *Make schedule* looks busy for a few seconds and then loads the schedule OR-Tools made earlier (`web/solved-schedule.json`); the form and the report say so, and special days are not included. Medvind's Excel files are not read or written; *Show an imported example file* loads an invented export read in advance (`web/medvind-example.json`). Everything else works in the visitor's browser. With `?embed` the canvas is 1260 px wide, so it fills a 1180 × 820 (1.44 : 1) screen.
+
+    python3 portfolio/build.py      # writes dist/portfolio/screens/01-forskolans-schema.html and its folder
+
 ## Tests
 
     node --test tests/core.test.mjs                    # shared logic, rules, saved schedule (seconds)
